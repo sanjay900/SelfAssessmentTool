@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SelfAssessmentTool.iml" filepath="$PROJECT_DIR$/.idea/modules/SelfAssessmentTool.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SelfAssessmentTool_main.iml" filepath="$PROJECT_DIR$/.idea/modules/SelfAssessmentTool_main.iml" group="SelfAssessmentTool" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SelfAssessmentTool_test.iml" filepath="$PROJECT_DIR$/.idea/modules/SelfAssessmentTool_test.iml" group="SelfAssessmentTool" />
+    </modules>
+  </component>
+</project>
