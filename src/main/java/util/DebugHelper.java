@@ -112,4 +112,9 @@ public final class DebugHelper {
     public static void print(double num) {
         System.out.println(Double.toString(num));
     }
+
+    public static void printError(Exception exc) {
+        System.out.println("An exception occured: " + exc.getMessage());
+        exc.printStackTrace();
+    }
 }
