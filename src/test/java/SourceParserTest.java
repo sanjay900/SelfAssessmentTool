@@ -33,6 +33,7 @@ public class SourceParserTest {
 
     @Test
     public void testParsing1() {
+        assertNotNull(lines);
         assertFalse(lines.isEmpty());
         for (String s : lines) {
             System.out.println(s);

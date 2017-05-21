@@ -72,7 +72,8 @@ public final class SourceParser {
                         if (rawArgs.contains(WRITE_COMMENT_NAME)) {
                             final int index = rawArgs.indexOf(WRITE_COMMENT_NAME) + WRITE_COMMENT_NAME.length() + 1; // +1 to remove = symbol
                             try {
-
+                                final String after = rawArgs.substring(index);
+                                shouldWriteComment = Boolean.parseBoolean(after.substring(0, after.contains(",") ? after.indexOf(",") : after.indexOf(")")));
                             } catch (NumberFormatException exc) {
                                 throw new ParsingException(rawArgs.substring(index));
                             }
@@ -101,8 +102,6 @@ public final class SourceParser {
      */
     private static void hideRange(List<String> lines, Set<Integer> range, Scanner scanner, boolean hideSignature, boolean writeComment) {
         int currentLine = 0;
-        System.out.println(Arrays.toString(range.toArray()));
-        System.out.println("hideSignature: " + hideSignature + ", showComment: " + writeComment);
 
         String signature = scanner.nextLine();
         if (!hideSignature) {
