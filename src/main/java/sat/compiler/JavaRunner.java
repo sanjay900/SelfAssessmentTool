@@ -1,15 +1,11 @@
 package sat.compiler;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import org.apache.commons.io.IOUtils;
 import sat.AbstractTask;
+import sat.util.AnnotationProcessor;
 
 import javax.tools.*;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -113,17 +109,29 @@ public class JavaRunner {
         return clazz;
     }
     @SuppressWarnings("unchecked")
-    public static AbstractTask getTask(String name, String code) {
+    public static AbstractTask getTask(String name, String code, InputStream is) {
         try {
-            String task = IOUtils.toString(JavaRunner.class.getClassLoader().getResourceAsStream(name+".java"));
-            String userCode = String.format("public class %sUser extends %s {\n%s\n}",name,name+"Replaced",code);
-            DynamicJavaSourceCodeObject[] filesToCompile = {new DynamicJavaSourceCodeObject(name,task),new DynamicJavaSourceCodeObject(name+"User",userCode)};
-            return (AbstractTask) compile(filesToCompile,name+"User").newInstance();
+            String task = IOUtils.toString(is);
+            if (code == null) {
+                DynamicJavaSourceCodeObject[] filesToCompile = {new DynamicJavaSourceCodeObject(name, task)};
+                return (AbstractTask) compile(filesToCompile, name +
+                        AnnotationProcessor.TEXT_ONLY_CLASS_SUFFIX).newInstance();
+            } else {
+                String userCode = String.format("public class %s extends %s {\n%s\n}", name+AnnotationProcessor.BROWSER_CLASS_SUFFIX,
+                        name + AnnotationProcessor.GENERATED_CLASS_SUFFIX, code);
+                DynamicJavaSourceCodeObject[] filesToCompile = {new DynamicJavaSourceCodeObject(name, task),
+                        new DynamicJavaSourceCodeObject(name + AnnotationProcessor.BROWSER_CLASS_SUFFIX, userCode)};
+                return (AbstractTask) compile(filesToCompile, name + AnnotationProcessor.BROWSER_CLASS_SUFFIX).newInstance();
+            }
         } catch (IOException | IllegalAccessException | InstantiationException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
         return null;
+    }
+
+    public static AbstractTask getTask(String name, InputStream is) {
+        return getTask(name,null,is);
     }
 }

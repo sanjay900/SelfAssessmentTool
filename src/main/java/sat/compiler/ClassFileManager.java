@@ -62,4 +62,8 @@ class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
         classMap.put(className,jclassObject);
         return jclassObject;
     }
+    @Override
+    public boolean isSameFile(FileObject a, FileObject b) {
+        return a.getName().equals(b.getName());
+    }
 }

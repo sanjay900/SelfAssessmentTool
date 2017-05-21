@@ -15,14 +15,13 @@ import static org.junit.Assert.*;
 public class SourceParserTest {
 
     /** had to use the absolute path cause it wasn't working (and I forgot how to reference relative file pos */
-    private static final String TASK_NAME = "C:\\Users\\Arbiter\\IdeaProjects\\SelfAssessmentTool\\src\\test\\resources\\SampleTask.java";
+    private static final String TASK_NAME = "SampleTask.java";
     private List<String> lines;
 
     @Before
     public void setup() {
         try {
-            System.out.println("Setting up the parser");
-            this.lines = SourceParser.parseSourceFile(TASK_NAME);
+            this.lines = SourceParser.parseSourceFile(SourceParserTest.class.getClassLoader().getResourceAsStream(TASK_NAME));
         } catch (Throwable th) {
             System.out.println(th.getMessage());
             th.printStackTrace();

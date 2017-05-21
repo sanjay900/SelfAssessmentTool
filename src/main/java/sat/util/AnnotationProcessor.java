@@ -138,12 +138,39 @@ public class AnnotationProcessor extends AbstractProcessor {
             endClass+= StringEscapeUtils.escapeJava(toFill.toString());
             endClass+="\";\n}\n}";
             endClass=endClass.replace("@Assessment()","");
-            endClass = endClass.replace("class "+classEle.getQualifiedName(),"class "+classEle.getQualifiedName()+"Replaced");
-            endClass = endClass.replace(" "+classEle.getQualifiedName()+"() {"," "+classEle.getQualifiedName()+"Replaced() {");
+            endClass = endClass.replace("class "+classEle.getQualifiedName(),"class "+classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX);
+            endClass = endClass.replace(" "+classEle.getQualifiedName()+"() {"," "+classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX +"() {");
             endClass = fixWeirdCompilationIssues(endClass);
             JavaFileObject jfo;
             try {
-                jfo = processingEnv.getFiler().createSourceFile(classEle.getQualifiedName()+"Replaced");
+                jfo = processingEnv.getFiler().createSourceFile(classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX);
+                BufferedWriter bw = new BufferedWriter(jfo.openWriter());
+                if (!packageElement.isUnnamed()) {
+                    bw.append("package ");
+                    bw.append(packageElement.getQualifiedName());
+                    bw.append(";");
+                }
+                bw.newLine();
+                bw.newLine();
+                bw.append(endClass);
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            endClass = flatten(path.getCompilationUnit().getImports());
+
+            endClass+= "public class "+classEle.getQualifiedName()+TEXT_ONLY_CLASS_SUFFIX+" extends AbstractTask {";
+            endClass+= "@Override\npublic String getCodeToDisplay() { return \"";
+            endClass+= StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(shown.toString()));
+            endClass+="\";\n}";
+            endClass+= "@Override\npublic String getMethodsToFill() { return \"";
+            endClass+= StringEscapeUtils.escapeJava(toFill.toString());
+            endClass+="\";\n}\n";
+            endClass+= "@Override\npublic void run() {throw new RuntimeException(\"This class only has implementations"+
+                    " for getting text, as no user code was supplied!\");}\n";
+            endClass+="}";
+            try {
+                jfo = processingEnv.getFiler().createSourceFile(classEle.getQualifiedName()+TEXT_ONLY_CLASS_SUFFIX);
                 BufferedWriter bw = new BufferedWriter(jfo.openWriter());
                 if (!packageElement.isUnnamed()) {
                     bw.append("package ");
@@ -211,4 +238,10 @@ public class AnnotationProcessor extends AbstractProcessor {
             return super.visitVariable(variableTree, trees);
         }
     }
+    //The generated class that only contains methods for rendering this class to the browser
+    public static final String TEXT_ONLY_CLASS_SUFFIX = "TextOnly";
+    //The generated class that contains browser code
+    public static final String BROWSER_CLASS_SUFFIX = "User";
+    //The generated class that contains rendering and is extended by the browser code
+    public static final String GENERATED_CLASS_SUFFIX = "Generated";
 }

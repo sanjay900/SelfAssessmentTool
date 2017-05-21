@@ -12,8 +12,10 @@ public class AnnotationParserTest {
         AbstractTask task = JavaRunner.getTask("SampleTask",
                 "public void foo() {" +
                 "System.out.println(\"Test code, running foo\");" +
-                "}");
+                "}",JavaRunner.class.getClassLoader().getResourceAsStream("SampleTask.java"));
         task.run();
+        task = JavaRunner.getTask("SampleTask",JavaRunner.class.getClassLoader().getResourceAsStream("SampleTask.java"));
+//        task.run();
         System.out.println(task.getCodeToDisplay());
     }
 }

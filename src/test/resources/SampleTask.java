@@ -10,7 +10,7 @@ import java.util.Random;
  */
 @Assessment
 public abstract class SampleTask extends AbstractTask {
-    @Hidden(shouldWriteComment=true)
+    @Hidden()
     private int someField = 1;
     private final int otherField = 2;
     private Random random = new Random();
