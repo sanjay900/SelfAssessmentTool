@@ -1,4 +1,4 @@
-package compiler;
+package sat.compiler;
 
 public class Error {
     int line;

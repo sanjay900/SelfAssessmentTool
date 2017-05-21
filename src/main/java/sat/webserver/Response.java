@@ -1,4 +1,4 @@
-package webserver;
+package sat.webserver;
 
 public class Response {
 

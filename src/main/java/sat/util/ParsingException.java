@@ -1,4 +1,4 @@
-package util;
+package sat.util;
 
 /**
  * Thrown when the parsing system fails to parse the parameters of a @Hidden annotation

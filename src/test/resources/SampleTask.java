@@ -1,13 +1,25 @@
-import util.Hidden;
+import sat.AbstractTask;
+import sat.util.Assessment;
+import sat.util.Hidden;
+
+import java.util.Random;
 
 /**
  * Simple task used as a sample for testing.
  * @author Kristian Hansen
  */
-public class SampleTask {
-    @Hidden(shouldWriteComment=false)
+@Assessment
+public abstract class SampleTask extends AbstractTask {
+    @Hidden(shouldWriteComment=true)
     private int someField = 1;
+    private final int otherField = 2;
+    private Random random = new Random();
+    private int test;
 
+    /**
+     * This runs the code and shit
+     * Blah blah blah
+     */
     public void run() {
         blarg();
         foo();
@@ -26,11 +38,16 @@ public class SampleTask {
         return sb.toString();
     }
 
-    @Hidden(lines="",showFunctionSignature=true,shouldWriteComment=false)
-    public void foo() {
+    public abstract void foo();
 
+    public class T {
+        public String name;
     }
-    public static void main(String[] args) {
-        new SampleTask().run();
+    @Hidden
+    public enum TY {
+        T,X;
+    }
+    public interface test {
+        String name();
     }
 }

@@ -1,23 +1,23 @@
-package util;
+package sat.util;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A utility class which contains helpful and shorthand methods to ease with debugging
- * @author Kristian Hansen
+ * @author Kristian Hansen and Sanjay Govind
  */
-public final class DebugHelper {
-
-    private DebugHelper() {} // no instances needed
+public class DebugHelper {
 
     /**
      * Takes an array of objects and formats it into a human-readable string which
      * prints to System.out
      * @param data Object data to print
      */
-    public static <T> void print(T[] data) {
+    public <T> void print(T[] data) {
         System.out.println(Arrays.toString(data));
     }
 
@@ -26,7 +26,7 @@ public final class DebugHelper {
      * @param object
      * @param <T>
      */
-    public static <T> void print(T object) {
+    public <T> void print(T object) {
         System.out.println(object.toString());
     }
 
@@ -37,31 +37,21 @@ public final class DebugHelper {
      * class you are creating a collection out of and printing its contents here
      * @param data Collection of data to print
      */
-    public static void print(Collection<?> data) {
+    public void print(Collection<?> data) {
         if (data.size() > 100) {
             System.out.println("Data too long to print out");
             return;
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append('[');
-        Iterator i = data.iterator();
-        int index = 0;
-        while (i.hasNext()) {
-            sb.append(i.next().toString());
-            index++;
-            if (index < data.size()) {
-                sb.append(", ");
-            }
-        }
-        sb.append(']');
-        System.out.println(sb.toString());
+        System.out.println(data);
     }
-
+    public void print(Stream<?> stream) {
+        System.out.println(stream.map(Object::toString).collect(Collectors.joining(",")));
+    }
     /**
      * Prints out the specified character value as a string
      * @param num Character value to print
      */
-    public static void print(char num) {
+    public void print(char num) {
         System.out.println(Character.toString(num));
     }
 
@@ -69,7 +59,7 @@ public final class DebugHelper {
      * Prints out the specified byte value as a string
      * @param num Byte value to print
      */
-    public static void print(byte num) {
+    public void print(byte num) {
         System.out.println(Byte.toString(num));
     }
 
@@ -77,7 +67,7 @@ public final class DebugHelper {
      * Prints out the specified short value as a string
      * @param num Short value to print
      */
-    public static void print(short num) {
+    public void print(short num) {
         System.out.println(Short.toString(num));
     }
 
@@ -85,7 +75,7 @@ public final class DebugHelper {
      * Prints out the specified int value to print
      * @param num Integer value to print
      */
-    public static void print(int num) {
+    public void print(int num) {
         System.out.println(Integer.toString(num));
     }
 
@@ -93,7 +83,7 @@ public final class DebugHelper {
      * Prints out the specified long value to print
      * @param num Long value to print
      */
-    public static void print(long num) {
+    public void print(long num) {
         System.out.println(Long.toString(num));
     }
 
@@ -101,7 +91,7 @@ public final class DebugHelper {
      * Prints out the specified float value to print
      * @param num Float value to print
      */
-    public static void print(float num) {
+    public void print(float num) {
         System.out.println(Float.toString(num));
     }
 
@@ -109,11 +99,11 @@ public final class DebugHelper {
      * Prints out the specified double value to print
      * @param num Double value to print
      */
-    public static void print(double num) {
+    public void print(double num) {
         System.out.println(Double.toString(num));
     }
 
-    public static void printError(Exception exc) {
+    public void printError(Exception exc) {
         System.out.println("An exception occured: " + exc.getMessage());
         exc.printStackTrace();
     }

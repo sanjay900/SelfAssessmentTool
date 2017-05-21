@@ -1,11 +1,8 @@
-package util;
+package sat.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.*;
-
-import static util.DebugHelper.*;
 
 /**
  *
@@ -88,7 +85,7 @@ public final class SourceParser {
                 }
             }
         } catch (FileNotFoundException exc) {
-            printError(exc);
+            exc.printStackTrace();
         } finally {
             if (scanner != null) {
                 scanner.close();
