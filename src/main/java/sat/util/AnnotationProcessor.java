@@ -166,7 +166,8 @@ public class AnnotationProcessor extends AbstractProcessor {
             endClass+=ctrees.get(0).toString();
             endClass = endClass.substring(0,endClass.length()-1);
             for (String str: toRemove) {
-                String newStr = str.replaceAll("abstract (.+);","$1 {\n\n\t}\n").replace("abstract ","");
+                String indent = (str.contains("class")?"\t":"");
+                String newStr = str.replaceAll("abstract (.+);","$1 {\n\n"+indent+"}\n").replace("abstract ","");
                 newStr=newStr.replaceAll("@ClassToComplete.*\n","");
                 //There is an extra \n at the start of each removed method, so we should remove it.
                 toFill.append(fixWeirdCompilationIssues(newStr).substring(1));

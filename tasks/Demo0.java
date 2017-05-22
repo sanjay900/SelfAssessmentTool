@@ -7,7 +7,7 @@ import java.util.Random;
 
 
 /**
- * Welcome to our self assessment tool. fill in the method below with 42 to pass this test.
+ * Welcome to our self assessment tool. Fill in the method below with 42 to pass this test.
  */
 @Task(name="Demo 0")
 public abstract class Demo0 extends AbstractTask {
