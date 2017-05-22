@@ -1,13 +1,10 @@
 package sat.webserver;
 
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
-import org.junit.internal.TextListener;
-import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
-import org.junit.runner.notification.Failure;
-import org.junit.runner.notification.RunListener;
 import sat.AbstractTask;
 import sat.compiler.CompilerError;
 import sat.compiler.JavaRunner;
@@ -19,6 +16,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by sanjay on 22/05/17.
@@ -33,8 +32,8 @@ public class WebSocketServer {
         String output = "";
         List<TestResult> junitOut = new ArrayList<>();
         List<Error> diagnostics = new ArrayList<>();
-        task = JavaRunner.getTask(request.file, new FileInputStream(request.file+".java"));
-        if (request.code != null) {
+        task = JavaRunner.getTask(request.file, new FileInputStream("tasks/"+request.file+".java"));
+        if (request.code != null && !request.code.isEmpty()) {
             StringWriter writer = new StringWriter();
             System.setOut(new PrintStream(new OutputStream() {
                 @Override
@@ -44,7 +43,7 @@ public class WebSocketServer {
                 }
             }));
             try {
-                task = JavaRunner.getTask(request.file, request.code, new FileInputStream(request.file+".java"));
+                task = JavaRunner.getTask(request.file, request.code, new FileInputStream("tasks/"+request.file+".java"));
                 JUnitCore junit = new JUnitCore();
                 JUnitRunListener listener = new JUnitRunListener();
                 junit.addListener(listener);
@@ -54,7 +53,13 @@ public class WebSocketServer {
                 junitOut = listener.getResults();
             } catch (CompilerError error) {
                 for (Diagnostic<? extends JavaFileObject> diag : error.getErrors()) {
-                    diagnostics.add(new Error(diag.getLineNumber()-2,diag.getColumnNumber(),diag.getMessage(Locale.getDefault())));
+                    String msg = diag.getMessage(Locale.getDefault());
+                    Matcher matcher = MISSING_METHOD.matcher(msg);
+                    if (matcher.matches()) {
+                        diagnostics.add(new Error(1,0,String.format(METHOD_ERROR,matcher.group(1))));
+                        continue;
+                    }
+                    diagnostics.add(new Error(diag.getLineNumber()-2,diag.getColumnNumber(),msg));
                 }
             }
         } else {
@@ -69,6 +74,7 @@ public class WebSocketServer {
         }
 
     }
-
+    private static Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(\\).+");
+    private static String METHOD_ERROR = "You are missing the method %s!";
 
 }

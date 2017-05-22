@@ -137,16 +137,27 @@ public class AnnotationProcessor extends AbstractProcessor {
             endClass+="import static "+TaskDebug.class.getName()+".*;";
             endClass+=ctrees.get(0).toString();
             endClass = endClass.substring(0,endClass.length()-1);
+
+            //getCodeToDisplay
             endClass+= "@Override\npublic String getCodeToDisplay() { return \"";
             endClass+= StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(shown.toString()));
             endClass+="\";\n}";
+
+            //getMethodsToFill
             endClass+= "@Override\npublic String getMethodsToFill() { return \"";
             endClass+= StringEscapeUtils.escapeJava(toFill.toString());
             endClass+="\";\n}";
+
             //getTestableMethods
             endClass+= "@Override\npublic String[] getTestableMethods() { return ";
             endClass+= "new String[]{"+tested.stream().map(s -> "\""+s+"\"").collect(Collectors.joining(","))+"};\n";
             endClass+= "}";
+
+            //getName
+            endClass+= "@Override\npublic String getName() { return \"";
+            endClass+= task.name();
+            endClass+="\";\n}";
+
             endClass+= "\n}";
             endClass=endClass.replaceAll("@Task.*","");
             endClass = endClass.replace("class "+classEle.getQualifiedName(),"class "+classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX);
@@ -171,10 +182,13 @@ public class AnnotationProcessor extends AbstractProcessor {
             //Now generate the Text only class
             endClass = flatten(path.getCompilationUnit().getImports());
 
+            //getCodeToDisplay
             endClass+= "public class "+classEle.getQualifiedName()+TEXT_ONLY_CLASS_SUFFIX+" extends AbstractTask {";
             endClass+= "@Override\npublic String getCodeToDisplay() { return \"";
             endClass+= StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(shown.toString()));
             endClass+="\";\n}";
+
+            //getMethodsToFill
             endClass+= "@Override\npublic String getMethodsToFill() { return \"";
             endClass+= StringEscapeUtils.escapeJava(toFill.toString());
             endClass+="\";\n}\n";
@@ -182,6 +196,12 @@ public class AnnotationProcessor extends AbstractProcessor {
             endClass+= "@Override\npublic String[] getTestableMethods() { return ";
             endClass+= "new String[]{"+tested.stream().map(s -> "\""+s+"\"").collect(Collectors.joining(","))+"};\n";
             endClass+= "}";
+
+            //getName
+            endClass+= "@Override\npublic String getName() { return \"";
+            endClass+= task.name();
+            endClass+="\";\n}";
+
             endClass+="}";
             try {
                 jfo = processingEnv.getFiler().createSourceFile(classEle.getQualifiedName()+TEXT_ONLY_CLASS_SUFFIX);

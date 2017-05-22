@@ -12,7 +12,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://C:/Program Files/Java/jdk1.8.0_45/lib/tools.jar!/" />
+          <root url="jar:///usr/lib/jvm/java-8-jdk/lib/tools.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -46,7 +46,5 @@
     <orderEntry type="library" scope="PROVIDED" name="Gradle: org.projectlombok:lombok:1.16.16" level="project" />
     <orderEntry type="library" name="Gradle: org.eclipse.jetty:jetty-util:9.3.2.v20150730" level="project" />
     <orderEntry type="library" name="Gradle: org.eclipse.jetty:jetty-security:9.3.2.v20150730" level="project" />
-    <orderEntry type="library" name="jquery" level="application" />
-    <orderEntry type="library" name="lodash" level="application" />
   </component>
 </module>

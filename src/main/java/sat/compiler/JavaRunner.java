@@ -28,7 +28,6 @@ public class JavaRunner {
         JavaCompiler.CompilationTask compilerTask = compiler.getTask(null, manager, diagnostics, compileOptions, null, compilationUnits);
         boolean status = compilerTask.call();
         if (!status){
-            System.out.println(diagnostics.getDiagnostics());
             throw new CompilerError(diagnostics.getDiagnostics());
         }
         Class<?> clazz;

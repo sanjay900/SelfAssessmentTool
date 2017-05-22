@@ -26,6 +26,21 @@ $("#compileBt").click(function() {
 userInput.getSession().on('change', function() {
     socket.send(JSON.stringify({file:"SampleTask",code:userInput.getValue()}));
 });
+$.get( "listTasks", function( data ) {
+    const availTasks = JSON.parse(data);
+    let html = "";
+    for (var i in availTasks) {
+        const task = availTasks[i];
+        html +="<li><a href=\"#"+task.name+"\" onclick=\"loadFile('"+task.name+"')\">"+task.fullName+"</a></li>"
+    }
+    $("#sidenav").html(html);
+});
+let file = null;
+function loadFile(str) {
+    file = str;
+    reload = true;
+    socket.send(JSON.stringify({file: file, code: null}));
+}
 socket.onmessage = function (msg) {
     let results = JSON.parse(msg.data);
     if (userInput.getValue().length === 0 || reload) {
@@ -41,6 +56,7 @@ socket.onmessage = function (msg) {
     const lines = {};
     for (const i in results.errors) {
         const error = results.errors[i];
+        if (error.line === 0) error.line = 1;
         if (lines[error.line]) {
             lines[error.line]+="\n"+error.error;
         } else {
@@ -70,7 +86,6 @@ socket.onmessage = function (msg) {
 };
 socket.onopen = function () {
     $("#serverStatus").html("<img class='status-badge' src='https://img.shields.io/badge/-Online-brightgreen.svg'/>")
-    socket.send(JSON.stringify({file:"SampleTask",code:null}));
 };
 socket.onclose = function () {
     $("#serverStatus").html("<img class='status-badge' src='https://img.shields.io/badge/-Offline-red.svg'/>")
