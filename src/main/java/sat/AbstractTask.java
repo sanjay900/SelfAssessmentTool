@@ -1,8 +1,8 @@
 package sat;
 
-import sat.util.DebugHelper;
+import sat.util.TaskDebug;
 
-public abstract class AbstractTask extends DebugHelper {
+public abstract class AbstractTask extends TaskDebug {
     public abstract String getCodeToDisplay();
     public abstract String getMethodsToFill();
     public abstract void run();

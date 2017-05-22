@@ -1,8 +1,10 @@
 import sat.AbstractTask;
 import sat.util.Assessment;
 import sat.util.Hidden;
-
+import org.junit.Test;
+import static org.junit.Assert.*;
 import java.util.Random;
+
 
 /**
  * Simple task used as a sample for testing.
@@ -20,9 +22,11 @@ public abstract class SampleTask extends AbstractTask {
      * This runs the code and shit
      * Blah blah blah
      */
+    @Test
     public void run() {
         blarg();
         foo();
+        assertTrue(true);
     }
 
     @Hidden // random bullshit

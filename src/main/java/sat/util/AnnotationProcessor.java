@@ -109,6 +109,9 @@ public class AnnotationProcessor extends AbstractProcessor {
                     shown.append(method).append("\n");
                 }
             }
+            //Make sure to show new classes last.
+            //TODO: is it possible to traverse the AST and thus support abstract class implementations?
+            //For example, in swen221 we had to extend a class sometimes, so we should support that.
             for (ClassTree tree : ctrees) {
                 if (tree.getSimpleName().equals(clazz.getSimpleName())) continue;
                 String treeStr = tree.toString();
@@ -128,6 +131,7 @@ public class AnnotationProcessor extends AbstractProcessor {
                 }
                 shown.append(treeStr).append("\n");
             }
+            //Generate the middleman class that the user code extends.
             TreePath path = trees.getPath(clazz);
             String endClass = flatten(path.getCompilationUnit().getImports())+ctrees.get(0).toString();
             endClass = endClass.substring(0,endClass.length()-1);
@@ -157,6 +161,7 @@ public class AnnotationProcessor extends AbstractProcessor {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            //Now generate the Text only class
             endClass = flatten(path.getCompilationUnit().getImports());
 
             endClass+= "public class "+classEle.getQualifiedName()+TEXT_ONLY_CLASS_SUFFIX+" extends AbstractTask {";
@@ -202,6 +207,10 @@ public class AnnotationProcessor extends AbstractProcessor {
         code = code.replaceAll(" /\\* = new \\w*\\(\\) \\*/","");
         return code;
     }
+
+    /**
+     * A TreePathScanner that traverses the AST to give us back source code.
+     */
     @Getter
     private static class TypeScanner extends TreePathScanner<Object, Trees> {
         private List<MethodTree> methodTrees = new ArrayList<>();

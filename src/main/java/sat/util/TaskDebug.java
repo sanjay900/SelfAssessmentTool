@@ -10,7 +10,7 @@ import java.util.stream.Stream;
  * A utility class which contains helpful and shorthand methods to ease with debugging
  * @author Kristian Hansen and Sanjay Govind
  */
-public class DebugHelper {
+public class TaskDebug {
 
     /**
      * Takes an array of objects and formats it into a human-readable string which
