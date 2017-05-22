@@ -1,5 +1,5 @@
 import sat.AbstractTask;
-import sat.util.Assessment;
+import sat.util.Task;
 import sat.util.Hidden;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -10,7 +10,7 @@ import java.util.Random;
  * Simple task used as a sample for testing.
  * @author Kristian Hansen
  */
-@Assessment
+@Task(name="Sample Task")
 public abstract class SampleTask extends AbstractTask {
     @Hidden()
     private int someField = 1;
@@ -28,7 +28,9 @@ public abstract class SampleTask extends AbstractTask {
         foo();
         assertTrue(true);
     }
-
+    @Test
+    public void run2() {
+    }
     @Hidden // random bullshit
     public String blarg() {
         int i = 0;
