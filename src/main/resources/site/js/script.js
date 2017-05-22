@@ -48,9 +48,7 @@ socket.onmessage = function (msg) {
     let jhtml = "";
     for (const i in results.junitResults) {
         const res = results.junitResults[i];
-        const passed = res.passed?"Passed!":"Failed!";
-        jhtml += res.name+": "+passed+"<br>";
-        console.log(results.junitResults[i]);
+        jhtml += res.name+": "+res.status+"<br>";
     }
     $("#junit-test-list-display").html(jhtml);
 

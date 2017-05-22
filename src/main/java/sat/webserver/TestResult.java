@@ -10,5 +10,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class TestResult {
     private String name;
-    boolean passed;
+    private String status;
 }

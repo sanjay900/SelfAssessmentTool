@@ -57,6 +57,10 @@ public class WebSocketServer {
                     diagnostics.add(new Error(diag.getLineNumber()-2,diag.getColumnNumber(),diag.getMessage(Locale.getDefault())));
                 }
             }
+        } else {
+            for (String method : task.getTestableMethods()) {
+                junitOut.add(new TestResult(method,"Not Tested"));
+            }
         }
         try {
             user.getRemote().sendString(JSONUtils.toJSON(new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(),output, task.getTestableMethods(), junitOut, diagnostics)));
