@@ -6,6 +6,12 @@ const codeDisplay = ace.edit("code-output-display");
 codeDisplay.getSession().setMode("ace/mode/java");
 codeDisplay.setReadOnly(true);
 
+var COLOR_MAPPING = {
+    SUCCESS : {color: "#00ec00", status: "Passed"}, // everything normal
+    NOT_EXECUTED : {color: "#9090ff", status: "Not Tested"}, // assertions failed, but no error thrown
+    ERROR : {color: "#ec0000", status: "Failed"} // error thrown
+};
+
 var userInput = ace.edit("user-input-box");
 userInput.setWrapBehavioursEnabled(false);
 codeDisplay.setWrapBehavioursEnabled(false);
@@ -48,9 +54,17 @@ socket.onmessage = function (msg) {
     let jhtml = "";
     for (const i in results.junitResults) {
         const res = results.junitResults[i];
-        jhtml += res.name+": "+res.status+"<br>";
+        var colorValue = "none";
+        for (var o in COLOR_MAPPING) { // find color that is mapped to status
+            var map = COLOR_MAPPING[o];
+            if (map.status == res.status) {
+                colorValue = map.color;
+            }
+        }
+        jhtml += "<tr style=\"background: " + colorValue + ";\"><td class=\"l-col\">" +
+            res.name+"</td><td class=\"r-col\">"+res.status+"</td></tr>"; // add row to table
     }
-    $("#junit-test-list-display").html(jhtml);
+    $("#junit-test-list").html(jhtml);
 
     $("#console-output-screen").text(results.console);
 };
