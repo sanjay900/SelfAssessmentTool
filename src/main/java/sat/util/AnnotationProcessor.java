@@ -134,7 +134,7 @@ public class AnnotationProcessor extends AbstractProcessor {
             //Generate the middleman class that the user code extends.
             TreePath path = trees.getPath(clazz);
             String endClass = flatten(path.getCompilationUnit().getImports());
-            endClass+="import static "+TaskDebug.class.getName()+".*;";
+            endClass+="import static "+PrintUtils.class.getName()+".*;";
             endClass+=ctrees.get(0).toString();
             endClass = endClass.substring(0,endClass.length()-1);
 

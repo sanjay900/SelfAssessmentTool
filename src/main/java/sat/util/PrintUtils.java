@@ -10,7 +10,7 @@ import java.util.stream.Stream;
  * A utility class which contains helpful and shorthand methods to ease with debugging
  * @author Kristian Hansen and Sanjay Govind
  */
-public class TaskDebug {
+public class PrintUtils {
     /**
      * Takes any object then prints it with a newline
      * @param o the object
@@ -26,8 +26,13 @@ public class TaskDebug {
     public static <T> void println(T[] data) {
         System.out.println(Arrays.toString(data));
     }
+
+    /**
+     * Takes a stream and prints its contents
+     * @param stream the stream
+     */
     public static void println(Stream<?> stream) {
-        System.out.println(stream.map(Object::toString).collect(Collectors.joining(",")));
+        System.out.println("["+stream.map(Object::toString).collect(Collectors.joining(","))+"]");
     }
     /**
      * Takes an array of objects and formats it into a human-readable string which
@@ -46,9 +51,12 @@ public class TaskDebug {
         System.out.print(object.toString());
     }
 
-
+    /**
+     * Takes a stream and prints its contents
+     * @param stream the stream
+     */
     public static void print(Stream<?> stream) {
-        System.out.print(stream.map(Object::toString).collect(Collectors.joining(",")));
+        System.out.print("["+stream.map(Object::toString).collect(Collectors.joining(","))+"]");
     }
 
     public static void printError(Exception exc) {

@@ -3,14 +3,13 @@ package sat.compiler;
 import org.apache.commons.io.IOUtils;
 import sat.AbstractTask;
 import sat.util.AnnotationProcessor;
-import sat.util.TaskDebug;
+import sat.util.PrintUtils;
 
 import javax.tools.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.*;
 
 public class JavaRunner {
     /**
@@ -51,7 +50,10 @@ public class JavaRunner {
                 return (AbstractTask) compile(filesToCompile, name +
                         AnnotationProcessor.TEXT_ONLY_CLASS_SUFFIX).newInstance();
             } else {
-                String imports = "import static "+TaskDebug.class.getName()+".*;";
+                String imports = "import static "+PrintUtils.class.getName()+".*;";
+                imports += "import java.util.*;";
+                imports += "import java.util.stream.*;";
+                imports += "import java.util.function.*;";
                 String userCode = String.format("%s\npublic class %s extends %s {\n%s\n}", imports,name+AnnotationProcessor.BROWSER_CLASS_SUFFIX,
                         name + AnnotationProcessor.GENERATED_CLASS_SUFFIX, code);
                 DynamicJavaSourceCodeObject[] filesToCompile = {new DynamicJavaSourceCodeObject(name, task),

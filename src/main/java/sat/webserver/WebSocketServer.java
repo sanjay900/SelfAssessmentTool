@@ -1,6 +1,7 @@
 package sat.webserver;
 
 import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
+import org.eclipse.jetty.io.WriterOutputStream;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
@@ -35,13 +36,7 @@ public class WebSocketServer {
         task = JavaRunner.getTask(request.file, new FileInputStream("tasks/"+request.file+".java"));
         if (request.code != null && !request.code.isEmpty()) {
             StringWriter writer = new StringWriter();
-            System.setOut(new PrintStream(new OutputStream() {
-                @Override
-                public void write(int b) throws IOException {
-                    writer.write(b);
-                    normal.write(b);
-                }
-            }));
+            System.setOut(new PrintStream(new WriterOutputStream(writer)));
             try {
                 task = JavaRunner.getTask(request.file, request.code, new FileInputStream("tasks/"+request.file+".java"));
                 JUnitCore junit = new JUnitCore();
