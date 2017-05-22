@@ -31,13 +31,14 @@ $.get( "listTasks", function( data ) {
     let html = "";
     for (var i in availTasks) {
         const task = availTasks[i];
-        html +="<li><a href=\"#"+task.name+"\" onclick=\"loadFile('"+task.name+"')\">"+task.fullName+"</a></li>"
+        html +="<li><a href=\"#"+task.name+"\" onclick=\"loadFile('"+task.name+"','"+task.fullName+"')\">"+task.fullName+"</a></li>"
     }
     $("#sidenav").html(html);
 });
 let file = null;
-function loadFile(str) {
-    file = str;
+function loadFile(name,fullName) {
+    file = name;
+    $("#asstitle").text(fullName);
     reload = true;
     socket.send(JSON.stringify({file: file, code: null}));
 }
