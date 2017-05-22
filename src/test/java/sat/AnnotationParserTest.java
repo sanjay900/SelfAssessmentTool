@@ -17,7 +17,6 @@ public class AnnotationParserTest {
                     "public void foo() {" +
                             "System.out.println(\"Test code, running foo\");" +
                             "}",new FileInputStream("SampleTask.java"));
-            task.run();
             task = JavaRunner.getTask("SampleTask",new FileInputStream("SampleTask.java"));
 //        task.run();
             System.out.println(task.getCodeToDisplay());

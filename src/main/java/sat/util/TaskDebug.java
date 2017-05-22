@@ -17,7 +17,7 @@ public class TaskDebug {
      * prints to System.out
      * @param data Object data to print
      */
-    public <T> void print(T[] data) {
+    public static <T> void print(T[] data) {
         System.out.println(Arrays.toString(data));
     }
 
@@ -26,7 +26,7 @@ public class TaskDebug {
      * @param object
      * @param <T>
      */
-    public <T> void print(T object) {
+    public static <T> void print(T object) {
         System.out.println(object.toString());
     }
 
@@ -37,21 +37,21 @@ public class TaskDebug {
      * class you are creating a collection out of and printing its contents here
      * @param data Collection of data to print
      */
-    public void print(Collection<?> data) {
+    public static void print(Collection<?> data) {
         if (data.size() > 100) {
             System.out.println("Data too long to print out");
             return;
         }
         System.out.println(data);
     }
-    public void print(Stream<?> stream) {
+    public static void print(Stream<?> stream) {
         System.out.println(stream.map(Object::toString).collect(Collectors.joining(",")));
     }
     /**
      * Prints out the specified character value as a string
      * @param num Character value to print
      */
-    public void print(char num) {
+    public static void print(char num) {
         System.out.println(Character.toString(num));
     }
 
@@ -59,7 +59,7 @@ public class TaskDebug {
      * Prints out the specified byte value as a string
      * @param num Byte value to print
      */
-    public void print(byte num) {
+    public static void print(byte num) {
         System.out.println(Byte.toString(num));
     }
 
@@ -67,7 +67,7 @@ public class TaskDebug {
      * Prints out the specified short value as a string
      * @param num Short value to print
      */
-    public void print(short num) {
+    public static void print(short num) {
         System.out.println(Short.toString(num));
     }
 
@@ -75,7 +75,7 @@ public class TaskDebug {
      * Prints out the specified int value to print
      * @param num Integer value to print
      */
-    public void print(int num) {
+    public static void print(int num) {
         System.out.println(Integer.toString(num));
     }
 
@@ -83,7 +83,7 @@ public class TaskDebug {
      * Prints out the specified long value to print
      * @param num Long value to print
      */
-    public void print(long num) {
+    public static void print(long num) {
         System.out.println(Long.toString(num));
     }
 
@@ -91,7 +91,7 @@ public class TaskDebug {
      * Prints out the specified float value to print
      * @param num Float value to print
      */
-    public void print(float num) {
+    public static void print(float num) {
         System.out.println(Float.toString(num));
     }
 
@@ -99,11 +99,11 @@ public class TaskDebug {
      * Prints out the specified double value to print
      * @param num Double value to print
      */
-    public void print(double num) {
+    public static void print(double num) {
         System.out.println(Double.toString(num));
     }
 
-    public void printError(Exception exc) {
+    public static void printError(Exception exc) {
         System.out.println("An exception occured: " + exc.getMessage());
         exc.printStackTrace();
     }

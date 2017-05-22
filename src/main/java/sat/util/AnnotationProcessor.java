@@ -12,7 +12,6 @@ import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 import javax.tools.JavaFileObject;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -23,24 +22,16 @@ import java.util.stream.Collectors;
  * Created by sanjay on 21/05/17.
  */
 @AutoService(Processor.class)
-@SupportedAnnotationTypes({"sat.util.Hidden","sat.util.Assessment"})
+@SupportedAnnotationTypes({"sat.util.Hidden","sat.util.Task"})
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class AnnotationProcessor extends AbstractProcessor {
-
-    private Types typeUtils;
     private Elements elementUtils;
-    private Filer filer;
-    private Messager messager;
     private Trees trees;
-//    private Map<String, FactoryGroupedClasses> factoryClasses = new LinkedHashMap<String, FactoryGroupedClasses>();
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
-        typeUtils = processingEnv.getTypeUtils();
         elementUtils = processingEnv.getElementUtils();
-        filer = processingEnv.getFiler();
-        messager = processingEnv.getMessager();
         trees = Trees.instance(processingEnv);
     }
     private String flatten(Collection<?> mods) {
@@ -48,7 +39,7 @@ public class AnnotationProcessor extends AbstractProcessor {
     }
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        for (Element clazz : roundEnv.getElementsAnnotatedWith(Assessment.class)) {
+        for (Element clazz : roundEnv.getElementsAnnotatedWith(Task.class)) {
             TypeElement classEle = (TypeElement) clazz;
             PackageElement packageElement =
                     (PackageElement) classEle.getEnclosingElement();
@@ -133,7 +124,9 @@ public class AnnotationProcessor extends AbstractProcessor {
             }
             //Generate the middleman class that the user code extends.
             TreePath path = trees.getPath(clazz);
-            String endClass = flatten(path.getCompilationUnit().getImports())+ctrees.get(0).toString();
+            String endClass = flatten(path.getCompilationUnit().getImports());
+            endClass+="import static "+TaskDebug.class.getName()+".*;";
+            endClass+=ctrees.get(0).toString();
             endClass = endClass.substring(0,endClass.length()-1);
             endClass+= "@Override\npublic String getCodeToDisplay() { return \"";
             endClass+= StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(shown.toString()));
@@ -141,7 +134,7 @@ public class AnnotationProcessor extends AbstractProcessor {
             endClass+= "@Override\npublic String getMethodsToFill() { return \"";
             endClass+= StringEscapeUtils.escapeJava(toFill.toString());
             endClass+="\";\n}\n}";
-            endClass=endClass.replace("@Assessment()","");
+            endClass=endClass.replace("@Task()","");
             endClass = endClass.replace("class "+classEle.getQualifiedName(),"class "+classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX);
             endClass = endClass.replace(" "+classEle.getQualifiedName()+"() {"," "+classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX +"() {");
             endClass = fixWeirdCompilationIssues(endClass);
@@ -171,8 +164,6 @@ public class AnnotationProcessor extends AbstractProcessor {
             endClass+= "@Override\npublic String getMethodsToFill() { return \"";
             endClass+= StringEscapeUtils.escapeJava(toFill.toString());
             endClass+="\";\n}\n";
-            endClass+= "@Override\npublic void run() {throw new RuntimeException(\"This class only has implementations"+
-                    " for getting text, as no user code was supplied!\");}\n";
             endClass+="}";
             try {
                 jfo = processingEnv.getFiler().createSourceFile(classEle.getQualifiedName()+TEXT_ONLY_CLASS_SUFFIX);
