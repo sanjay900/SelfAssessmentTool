@@ -151,6 +151,31 @@ html,body {
     background: #fafafa;
 }
 
+#junit-test-list-table {
+    position: relative;
+    width: 100%;
+}
+
+.l-col {
+    text-align: left;
+    width: 60%;
+    max-width: 60%;
+    word-wrap: break-word;
+}
+
+.r-col {
+    text-align: center;
+    width: 40%;
+    max-width: 40%;
+    word-wrap: break-word;
+}
+
+th {
+    text-align: center;
+    font-weight: 200;
+    background: #fbfbfb;
+}
+
 
 /*
  * Main content
