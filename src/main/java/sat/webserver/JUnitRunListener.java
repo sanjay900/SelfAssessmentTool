@@ -23,6 +23,6 @@ public class JUnitRunListener extends RunListener {
 
     @Override
     public void testFinished(Description description) throws Exception {
-        results.add(new TestResult(description.getMethodName(),description.getChildren().contains(FAILED)?"Failed!":"Passed"));
+        results.add(new TestResult(description.getMethodName(),description.getChildren().contains(FAILED)?"Failed":"Passed"));
     }
 }
