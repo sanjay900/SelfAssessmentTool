@@ -82,8 +82,8 @@ socket.onmessage = function (msg) {
             res.name+"</td><td class=\"r-col\">"+res.status+"</td></tr>"; // add row to table
     }
     $("#junit-test-list").html(jhtml);
-
-    $("#console-output-screen").text(results.console);
+    results.console = results.console.replace(/(?:\r\n|\r|\n)/g, '<br />');
+    $("#console-output-screen").html(results.console);
 };
 socket.onopen = function () {
     $("#serverStatus").html("<img class='status-badge' src='https://img.shields.io/badge/-Online-brightgreen.svg'/>")
