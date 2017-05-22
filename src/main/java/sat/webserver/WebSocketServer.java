@@ -54,6 +54,9 @@ public class WebSocketServer {
                     }
                     //TODO: Find some way to deal with the column being off if the code starts with a tab.
                     diagnostics.add(new Error(diag.getLineNumber()-task.getProcessedSource().split("\n").length,diag.getColumnNumber(),msg));
+                    for (String method : task.getTestableMethods()) {
+                        junitOut.add(new TestResult(method,"Failed"));
+                    }
                 }
             } finally {
                 System.setOut(normal);
