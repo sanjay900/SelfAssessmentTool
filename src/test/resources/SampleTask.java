@@ -26,10 +26,24 @@ public class SampleTask {
         return sb.toString();
     }
 
-    @Hidden(lines="",showFunctionSignature=true,shouldWriteComment=false)
+    @Hidden(lines="1-4,7-8,10,12",showFunctionSignature=true,shouldWriteComment=false)
     public void foo() {
-
+		final byte b = 9;
+		if (b == 9) {
+			b = 10;
+		}
+		String s = blarg();
+		something();
+		something();
+		// sample code just to test line hiding
+		do {
+			b++;
+		} while (b <= 15);
+		return;
     }
+	private void something() {
+		
+	}
     public static void main(String[] args) {
         new SampleTask().run();
     }

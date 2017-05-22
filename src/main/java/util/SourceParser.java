@@ -31,17 +31,19 @@ public final class SourceParser {
             scanner = new Scanner(new File(name));
             while (scanner.hasNext()) {
                 String line = scanner.nextLine();
+                if (removeWhitespace(line).startsWith("package") || removeWhitespace(line).startsWith("import")) { // disclude import and package statements - useless here
+                    continue;
+                }
                 if (line.contains("@Hidden")) {
                     if (line.contains("(")) { // has args, so find them and use them
-                        final String rawArgs = removeWhitespace(line.substring(line.indexOf('('), line.indexOf(')')));
+                        final String rawArgs = removeWhitespace(line.substring(line.indexOf('('), line.indexOf(')') + 1));
                         Set<Integer> excludedLines = new HashSet<Integer>();
                         boolean hideSignature = false;
                         boolean shouldWriteComment = true;
                         // code checking for arguments of specific lines to hide
                         if (rawArgs.contains("lines")) {
                             int firstOccurence = rawArgs.indexOf("\"");
-                            String lineArgs = rawArgs.substring(firstOccurence + 1, rawArgs.substring(firstOccurence).indexOf("\""));
-                            System.out.println(lineArgs); // TODO: remove
+                            String lineArgs = rawArgs.substring(firstOccurence + 1, rawArgs.indexOf("\"", firstOccurence + 1));
                             String[] individualArgs = lineArgs.split(",");
                             for (String s : individualArgs) {
                                 try {
@@ -60,7 +62,7 @@ public final class SourceParser {
                                 }
                             }
                         }
-                        if (rawArgs.contains(SHOW_SIGNATURE_NAME)) {
+                        if (rawArgs.contains(SHOW_SIGNATURE_NAME)) { // check if function signature is present
                             final int index = rawArgs.indexOf(SHOW_SIGNATURE_NAME) + SHOW_SIGNATURE_NAME.length() + 1;
                             try {
                                 final String after = rawArgs.substring(index);
@@ -69,7 +71,7 @@ public final class SourceParser {
                                 throw new ParsingException(rawArgs.substring(index));
                             }
                         }
-                        if (rawArgs.contains(WRITE_COMMENT_NAME)) {
+                        if (rawArgs.contains(WRITE_COMMENT_NAME)) { // check if show comment parameter is present
                             final int index = rawArgs.indexOf(WRITE_COMMENT_NAME) + WRITE_COMMENT_NAME.length() + 1; // +1 to remove = symbol
                             try {
                                 final String after = rawArgs.substring(index);
