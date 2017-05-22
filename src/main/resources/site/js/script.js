@@ -19,7 +19,7 @@ socket.onmessage = function (msg) {
     userInput.setValue(results.starting_code,-1);
     if (codeDisplay.getValue().length === 0 || reload) {
         codeDisplay.setValue(results.code_to_display, -1);
-        reload = true;
+        reload = false;
     }
 };
 socket.onopen = function () {
