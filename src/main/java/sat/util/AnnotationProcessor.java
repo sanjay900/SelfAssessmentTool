@@ -7,6 +7,7 @@ import com.sun.source.util.TreePathScanner;
 import com.sun.source.util.Trees;
 import lombok.Getter;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.junit.Test;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
@@ -40,12 +41,14 @@ public class AnnotationProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element clazz : roundEnv.getElementsAnnotatedWith(Task.class)) {
+            Task task = clazz.getAnnotation(Task.class);
             TypeElement classEle = (TypeElement) clazz;
             PackageElement packageElement =
                     (PackageElement) classEle.getEnclosingElement();
             List<ClassTree> ctrees = new TypeScanner().scan(this.trees.getPath(clazz),this.trees).getClassTrees();
             StringBuilder shown = new StringBuilder();
             StringBuilder toFill = new StringBuilder();
+            List<String> tested = new ArrayList<>();
             Map<String, Hidden> classAnnotations = new HashMap<>();
             for (Element element : clazz.getEnclosedElements()) {
                 Hidden hidden = element.getAnnotation(Hidden.class);
@@ -73,9 +76,15 @@ public class AnnotationProcessor extends AbstractProcessor {
                     shown.append(var).append(";\n");
                 }
                 if (element.getKind() == ElementKind.METHOD) {
+                    if (element.getAnnotation(Test.class) != null) {
+                        tested.add(element.getSimpleName()+"");
+                    }
                     MethodTree methodTree = new TypeScanner().scan(this.trees.getPath(element), this.trees).getFirstMethod();
                     Set<Modifier> modifiers = new LinkedHashSet<>(methodTree.getModifiers().getFlags());
-                    String method = String.format("%s %s %s(%s)",flatten(modifiers),methodTree.getReturnType(),methodTree.getName(),methodTree.getParameters());
+                    String method = String.format("%s %s(%s)",methodTree.getReturnType(),methodTree.getName(),methodTree.getParameters());
+                    if (task.showModifiers()) {
+                        method = flatten(modifiers)+" "+method;
+                    }
                     String comment = elementUtils.getDocComment(element);
                     if (comment != null) {
                         comment = "/**\n *" + comment.replace("\n", "\n *") + "/\n";
@@ -133,8 +142,13 @@ public class AnnotationProcessor extends AbstractProcessor {
             endClass+="\";\n}";
             endClass+= "@Override\npublic String getMethodsToFill() { return \"";
             endClass+= StringEscapeUtils.escapeJava(toFill.toString());
-            endClass+="\";\n}\n}";
-            endClass=endClass.replace("@Task()","");
+            endClass+="\";\n}";
+            //getTestableMethods
+            endClass+= "@Override\npublic String[] getTestableMethods() { return ";
+            endClass+= "new String[]{"+tested.stream().map(s -> "\""+s+"\"").collect(Collectors.joining(","))+"};\n";
+            endClass+= "}";
+            endClass+= "\n}";
+            endClass=endClass.replaceAll("@Task.*","");
             endClass = endClass.replace("class "+classEle.getQualifiedName(),"class "+classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX);
             endClass = endClass.replace(" "+classEle.getQualifiedName()+"() {"," "+classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX +"() {");
             endClass = fixWeirdCompilationIssues(endClass);
@@ -164,6 +178,10 @@ public class AnnotationProcessor extends AbstractProcessor {
             endClass+= "@Override\npublic String getMethodsToFill() { return \"";
             endClass+= StringEscapeUtils.escapeJava(toFill.toString());
             endClass+="\";\n}\n";
+            //getTestableMethods
+            endClass+= "@Override\npublic String[] getTestableMethods() { return ";
+            endClass+= "new String[]{"+tested.stream().map(s -> "\""+s+"\"").collect(Collectors.joining(","))+"};\n";
+            endClass+= "}";
             endClass+="}";
             try {
                 jfo = processingEnv.getFiler().createSourceFile(classEle.getQualifiedName()+TEXT_ONLY_CLASS_SUFFIX);

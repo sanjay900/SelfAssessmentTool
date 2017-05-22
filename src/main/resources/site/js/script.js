@@ -23,10 +23,10 @@ userInput.getSession().on('change', function() {
 socket.onmessage = function (msg) {
     let results = JSON.parse(msg.data);
     if (userInput.getValue().length === 0 || reload) {
-        userInput.setValue(results.starting_code,-1);
+        userInput.setValue(results.startingCode,-1);
         reload = false;
     }
-    codeDisplay.setValue(results.code_to_display, -1);
+    codeDisplay.setValue(results.codeToDisplay, -1);
     const Range = ace.require("ace/range").Range;
     const editor = userInput.getSession();
 
@@ -45,6 +45,14 @@ socket.onmessage = function (msg) {
     for (const i in lines) {
         editor.setAnnotations([{row: i-1, column: 0, text: lines[i], type: "error"}]);
     }
+    let jhtml = "";
+    for (const i in results.junitResults) {
+        const res = results.junitResults[i];
+        const passed = res.passed?"Passed!":"Failed!";
+        jhtml += res.name+": "+passed+"<br>";
+        console.log(results.junitResults[i]);
+    }
+    $("#junit-test-list-display").html(jhtml);
 
     $("#console-output-screen").text(results.console);
 };

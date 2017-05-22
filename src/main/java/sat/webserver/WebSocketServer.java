@@ -59,7 +59,7 @@ public class WebSocketServer {
             }
         }
         try {
-            user.getRemote().sendString(JSONUtils.toJSON(new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(),output,junitOut,diagnostics)));
+            user.getRemote().sendString(JSONUtils.toJSON(new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(),output, task.getTestableMethods(), junitOut, diagnostics)));
         } catch (IOException e) {
             e.printStackTrace();
         }
