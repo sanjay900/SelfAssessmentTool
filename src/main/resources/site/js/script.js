@@ -16,11 +16,11 @@ const socket = new ReconnectingWebSocket("ws" + proto + "://" + location.hostnam
 let reload = false;
 socket.onmessage = function (msg) {
     let results = JSON.parse(msg.data);
-    userInput.setValue(results.starting_code,-1);
-    if (codeDisplay.getValue().length === 0 || reload) {
-        codeDisplay.setValue(results.code_to_display, -1);
+    if (userInput.getValue().length === 0 || reload) {
+        userInput.setValue(results.starting_code,-1);
         reload = false;
     }
+    codeDisplay.setValue(results.code_to_display, -1);
 };
 socket.onopen = function () {
     $("#serverStatus").html("<img class='status-badge' src='https://img.shields.io/badge/-Online-brightgreen.svg'/>")
