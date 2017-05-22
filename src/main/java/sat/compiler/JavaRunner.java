@@ -4,13 +4,11 @@ import org.apache.commons.io.IOUtils;
 import sat.AbstractTask;
 import sat.util.AnnotationProcessor;
 import sat.util.PrintUtils;
+import sat.webserver.WebSocketServer;
 
 import javax.tools.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class JavaRunner {
     /**
@@ -29,7 +27,9 @@ public class JavaRunner {
         boolean status = compilerTask.call();
         if (!status){
             for (Diagnostic<? extends JavaFileObject> diag : diagnostics.getDiagnostics()) {
-                if (!Objects.equals(diag.getSource().getName().substring(1), classToGet+".java")) continue;
+                if (!Objects.equals(diag.getSource().getName().substring(1), classToGet+".java")) {
+                    if (WebSocketServer.MISSING_METHOD.matcher(diag.getMessage(Locale.getDefault())).matches()) continue;
+                }
                 throw new CompilerError(diagnostics.getDiagnostics());
             }
         }

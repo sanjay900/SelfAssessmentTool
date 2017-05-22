@@ -45,6 +45,12 @@ public class AnnotationProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element clazz : roundEnv.getElementsAnnotatedWith(Task.class)) {
+            String taskComment = elementUtils.getDocComment(clazz);
+            if (taskComment != null) {
+                taskComment = "/**\n *" + taskComment.replace("\n", "\n *") + "/\n";
+            } else {
+                taskComment = "";
+            }
             List<String> toRemove = new ArrayList<>();
             Task task = clazz.getAnnotation(Task.class);
             TypeElement classEle = (TypeElement) clazz;
@@ -183,7 +189,7 @@ public class AnnotationProcessor extends AbstractProcessor {
             //getCodeToDisplay
             endClass+= "public class "+classEle.getQualifiedName()+TEXT_ONLY_CLASS_SUFFIX+" extends AbstractTask {";
             endClass+= "@Override\npublic String getCodeToDisplay() { return \"";
-            endClass+= StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(shown.toString()));
+            endClass+= StringEscapeUtils.escapeJava(taskComment+fixWeirdCompilationIssues(shown.toString()));
             endClass+="\";\n}";
 
             //getMethodsToFill

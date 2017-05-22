@@ -52,6 +52,7 @@ public class WebSocketServer {
                         diagnostics.add(new Error(1,0,String.format(METHOD_ERROR,matcher.group(1))));
                         continue;
                     }
+                    //TODO: Find some way to deal with the column being off if the code starts with a tab.
                     diagnostics.add(new Error(diag.getLineNumber()-task.getProcessedSource().split("\n").length,diag.getColumnNumber(),msg));
                 }
             } finally {
@@ -70,7 +71,7 @@ public class WebSocketServer {
         }
 
     }
-    private static Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(\\).+");
+    public static Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(.+\\).+");
     private static String METHOD_ERROR = "You are missing the method %s!";
 
 }
