@@ -7,9 +7,9 @@ codeDisplay.getSession().setMode("ace/mode/java");
 codeDisplay.setReadOnly(true);
 
 var COLOR_MAPPING = {
-    SUCCESS : {color: "#00ec00", status: "Passed"}, // everything normal
-    NOT_EXECUTED : {color: "#9090ff", status: "Not Tested"}, // assertions failed, but no error thrown
-    ERROR : {color: "#ec0000", status: "Failed"} // error thrown
+    SUCCESS : {color: "#5cb85c", status: "Passed"}, // everything normal
+    NOT_EXECUTED : {color: "#31b0d5", status: "Not Tested"}, // assertions failed, but no error thrown
+    ERROR : {color: "#d9534f", status: "Failed"} // error thrown
 };
 
 var userInput = ace.edit("user-input-box");
