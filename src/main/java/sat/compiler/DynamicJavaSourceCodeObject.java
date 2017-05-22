@@ -1,4 +1,4 @@
-package compiler;
+package sat.compiler;
 
 import javax.tools.SimpleJavaFileObject;
 import java.io.IOException;
@@ -11,8 +11,8 @@ class DynamicJavaSourceCodeObject extends SimpleJavaFileObject {
      * Converts the name to an URI, as that is the format expected by JavaFileObject
      *
      *
-     * @param String name given to the class file
-     * @param String source the source code string
+     * @param name given to the class file
+     * @param source the source code string
      */
     protected DynamicJavaSourceCodeObject(String name, String source) {
         super(URI.create("string:///" +name.replaceAll("\\.", "/") + Kind.SOURCE.extension), Kind.SOURCE);
@@ -23,9 +23,5 @@ class DynamicJavaSourceCodeObject extends SimpleJavaFileObject {
     public CharSequence getCharContent(boolean ignoreEncodingErrors)
             throws IOException {
         return sourceCode ;
-    }
-
-    public String getSourceCode() {
-        return sourceCode;
     }
 }

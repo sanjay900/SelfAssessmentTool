@@ -1,11 +1,9 @@
-package util;
+package sat.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
-
-import static util.DebugHelper.*;
 
 /**
  *
@@ -24,11 +22,11 @@ public final class SourceParser {
      * @param name Name (and directory) of the java source assignment task file to load
      * @return A list of strings (representing lines) that will be displayed
      */
-    public static List<String> parseSourceFile(String name) {
+    public static List<String> parseSourceFile(InputStream is) {
         List<String> linesToShow = new ArrayList<String>();
         Scanner scanner = null;
         try {
-            scanner = new Scanner(new File(name));
+            scanner = new Scanner(is);
             while (scanner.hasNext()) {
                 String line = scanner.nextLine();
                 if (removeWhitespace(line).startsWith("package") || removeWhitespace(line).startsWith("import")) { // disclude import and package statements - useless here
@@ -89,8 +87,6 @@ public final class SourceParser {
                     linesToShow.add(line);
                 }
             }
-        } catch (FileNotFoundException exc) {
-            printError(exc);
         } finally {
             if (scanner != null) {
                 scanner.close();

@@ -1,4 +1,4 @@
-package util;
+package sat.util;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
