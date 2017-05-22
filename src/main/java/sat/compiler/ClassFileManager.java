@@ -1,13 +1,9 @@
 package sat.compiler;
 
-import javax.tools.FileObject;
-import javax.tools.ForwardingJavaFileManager;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
+import javax.tools.*;
 import java.io.IOException;
 import java.security.SecureClassLoader;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
     //A map of strings to class objects, so that we can handle multiple files.
@@ -30,13 +26,27 @@ class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
             protected Class<?> findClass(String name)
                     throws ClassNotFoundException {
                 JavaClassObject jclassObject = classMap.get(name);
+                if (!classMap.containsKey(name)) {
+                    return super.findClass(name);
+                }
                 byte[] b = jclassObject.getBytes();
-                return super.defineClass(name, jclassObject
-                        .getBytes(), 0, b.length);
+                if ((((int)b[0])&0xff) == 0xCA && (((int)b[1])&0xff) == 0xFE && (((int)b[2])&0xff) == 0xBA && (((int)b[3])&0xff) == 0xBE) {
+                    return super.defineClass(name, jclassObject
+                            .getBytes(), 0, b.length);
+                }
+                compileSource(new DynamicJavaSourceCodeObject(name,new String(b)));
+                return findClass(name);
             }
         };
     }
-
+    public void compileSource(JavaFileObject obj) {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(obj);
+        List<String> compileOptions = new ArrayList<>();
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+        JavaCompiler.CompilationTask compilerTask = compiler.getTask(null, this, diagnostics, compileOptions, null, compilationUnits);
+        compilerTask.call();
+    }
     /**
      * Will be used by us to get the class loader for our
      * compiled class. It creates an anonymous class

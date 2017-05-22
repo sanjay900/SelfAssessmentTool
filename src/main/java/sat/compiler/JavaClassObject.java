@@ -52,4 +52,7 @@ class JavaClassObject extends SimpleJavaFileObject {
     public OutputStream openOutputStream() throws IOException {
         return bos;
     }
+    public InputStream openInputStream() throws IOException {
+        return new ByteArrayInputStream(bos.toByteArray());
+    }
 }

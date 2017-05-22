@@ -38,13 +38,11 @@ public class WebSocketServer {
             StringWriter writer = new StringWriter();
             System.setOut(new PrintStream(new WriterOutputStream(writer)));
             try {
-                task = JavaRunner.getTask(request.file, request.code, new FileInputStream("tasks/"+request.file+".java"));
+                Class<?> clazz = JavaRunner.getTask(request.file, request.code, new FileInputStream("tasks/"+request.file+".java"));
                 JUnitCore junit = new JUnitCore();
                 JUnitRunListener listener = new JUnitRunListener();
                 junit.addListener(listener);
-                junit.run(task.getClass());
-                System.setOut(normal);
-                output = writer.toString();
+                junit.run(clazz);
                 junitOut = listener.getResults();
             } catch (CompilerError error) {
                 for (Diagnostic<? extends JavaFileObject> diag : error.getErrors()) {
@@ -54,8 +52,11 @@ public class WebSocketServer {
                         diagnostics.add(new Error(1,0,String.format(METHOD_ERROR,matcher.group(1))));
                         continue;
                     }
-                    diagnostics.add(new Error(diag.getLineNumber()-2,diag.getColumnNumber(),msg));
+                    diagnostics.add(new Error(diag.getLineNumber()-task.getProcessedSource().split("\n").length,diag.getColumnNumber(),msg));
                 }
+            } finally {
+                System.setOut(normal);
+                output = writer.toString();
             }
         } else {
             for (String method : task.getTestableMethods()) {

@@ -4,7 +4,9 @@ import com.google.auto.service.AutoService;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.TreePathScanner;
+import com.sun.source.util.TreeScanner;
 import com.sun.source.util.Trees;
+import com.sun.tools.javac.tree.JCTree;
 import lombok.Getter;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.junit.Test;
@@ -17,6 +19,8 @@ import javax.tools.JavaFileObject;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +45,7 @@ public class AnnotationProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element clazz : roundEnv.getElementsAnnotatedWith(Task.class)) {
+            List<String> toRemove = new ArrayList<>();
             Task task = clazz.getAnnotation(Task.class);
             TypeElement classEle = (TypeElement) clazz;
             PackageElement packageElement =
@@ -93,10 +98,8 @@ public class AnnotationProcessor extends AbstractProcessor {
                     }
                     method = comment+method;
                     if (modifiers.contains(Modifier.ABSTRACT)) {
-                        modifiers.remove(Modifier.ABSTRACT);
-                        String nonAbstract = String.format("%s %s %s(%s) {\n\n}",flatten(modifiers),methodTree.getReturnType(),methodTree.getName(),methodTree.getParameters());
-                        toFill.append(nonAbstract).append("\n");
-                        method +=";";
+                        toRemove.add(methodTree.toString());
+                        continue;
                     } else {
                         method+=" "+methodTree.getBody();
                     }
@@ -112,8 +115,10 @@ public class AnnotationProcessor extends AbstractProcessor {
             //Make sure to show new classes last.
             //TODO: is it possible to traverse the AST and thus support abstract class implementations?
             //For example, in swen221 we had to extend a class sometimes, so we should support that.
+            outer:
             for (ClassTree tree : ctrees) {
                 if (tree.getSimpleName().equals(clazz.getSimpleName())) continue;
+
                 String treeStr = tree.toString();
                 if (classAnnotations.containsKey(tree.getSimpleName()+"")) {
                     //Remove the annotation.
@@ -129,56 +134,49 @@ public class AnnotationProcessor extends AbstractProcessor {
                         continue;
                     }
                 }
+                for (AnnotationTree annoTree:tree.getModifiers().getAnnotations()) {
+                    if (annoTree.getAnnotationType().toString().equals(ClassToComplete.class.getSimpleName())) {
+                        toRemove.add(tree.toString());
+                        continue outer;
+                    }
+                }
                 shown.append(treeStr).append("\n");
             }
             //Generate the middleman class that the user code extends.
             TreePath path = trees.getPath(clazz);
-            String endClass = flatten(path.getCompilationUnit().getImports());
+            String endClass = "";
+            if (!packageElement.isUnnamed()) {
+                endClass+=("package ");
+                endClass+=(packageElement.getQualifiedName());
+                endClass+=(";");
+                endClass+="\n";
+            }
+            endClass+=flatten(path.getCompilationUnit().getImports());
             endClass+="import static "+PrintUtils.class.getName()+".*;";
+            endClass+= "import static "+PrintUtils.class.getName()+".*;";
+            endClass += "import java.util.*;";
+            endClass += "import java.util.stream.*;";
+            endClass += "import java.util.function.*;";
             endClass+=ctrees.get(0).toString();
             endClass = endClass.substring(0,endClass.length()-1);
-
-            //getCodeToDisplay
-            endClass+= "@Override\npublic String getCodeToDisplay() { return \"";
-            endClass+= StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(shown.toString()));
-            endClass+="\";\n}";
-
-            //getMethodsToFill
-            endClass+= "@Override\npublic String getMethodsToFill() { return \"";
-            endClass+= StringEscapeUtils.escapeJava(toFill.toString());
-            endClass+="\";\n}";
-
-            //getTestableMethods
-            endClass+= "@Override\npublic String[] getTestableMethods() { return ";
-            endClass+= "new String[]{"+tested.stream().map(s -> "\""+s+"\"").collect(Collectors.joining(","))+"};\n";
-            endClass+= "}";
-
-            //getName
-            endClass+= "@Override\npublic String getName() { return \"";
-            endClass+= task.name();
-            endClass+="\";\n}";
-
-            endClass+= "\n}";
+            for (String str: toRemove) {
+                String newStr = str.replaceAll("abstract (.+);","$1 {\n\n\t}\n").replace("abstract ","");
+                newStr=newStr.replaceAll("@ClassToComplete.*\n","");
+                //There is an extra \n at the start of each removed method, so we should remove it.
+                toFill.append(fixWeirdCompilationIssues(newStr).substring(1));
+                //The indentation is different between the class and the method on its own, so we need to ignore indentation.
+                str = Pattern.quote(str);
+                str = str.replaceAll("\\s+", "\\\\E\\\\s+\\\\Q");
+                str = str.substring("\\Q\\E\\s+".length());
+                endClass = endClass.replaceAll(str,"");
+            }
             endClass=endClass.replaceAll("@Task.*","");
-            endClass = endClass.replace("class "+classEle.getQualifiedName(),"class "+classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX);
+            endClass=endClass.replaceAll("@ClassToComplete.*","");
+            endClass = endClass.replace("abstract class "+classEle.getQualifiedName(),"class "+classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX);
             endClass = endClass.replace(" "+classEle.getQualifiedName()+"() {"," "+classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX +"() {");
             endClass = fixWeirdCompilationIssues(endClass);
-            JavaFileObject jfo;
-            try {
-                jfo = processingEnv.getFiler().createSourceFile(classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX);
-                BufferedWriter bw = new BufferedWriter(jfo.openWriter());
-                if (!packageElement.isUnnamed()) {
-                    bw.append("package ");
-                    bw.append(packageElement.getQualifiedName());
-                    bw.append(";");
-                }
-                bw.newLine();
-                bw.newLine();
-                bw.append(endClass);
-                bw.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            endClass = endClass.replace("extends AbstractTask ","");
+            String processed = endClass;
             //Now generate the Text only class
             endClass = flatten(path.getCompilationUnit().getImports());
 
@@ -201,9 +199,14 @@ public class AnnotationProcessor extends AbstractProcessor {
             endClass+= "@Override\npublic String getName() { return \"";
             endClass+= task.name();
             endClass+="\";\n}";
+            //getProcessedSource
+            endClass+= "@Override\npublic String getProcessedSource() { return \"";
+            endClass+= StringEscapeUtils.escapeJava(processed);
+            endClass+="\";\n}";
 
             endClass+="}";
             try {
+                JavaFileObject jfo;
                 jfo = processingEnv.getFiler().createSourceFile(classEle.getQualifiedName()+TEXT_ONLY_CLASS_SUFFIX);
                 BufferedWriter bw = new BufferedWriter(jfo.openWriter());
                 if (!packageElement.isUnnamed()) {
@@ -230,13 +233,12 @@ public class AnnotationProcessor extends AbstractProcessor {
      * @return
      */
     private String fixWeirdCompilationIssues(String code) {
-        code = code.replaceAll("\\s*(?:public|private) \\w*\\(\\) \\{\\s*super\\(\\);\\s*}","");
+        code = code.replaceAll("\\s*(?:public|private)?\\s?\\w*\\(\\) \\{\\s*super\\(\\);\\s*}","");
         code = code.replaceAll("/\\*public static final\\*/ ","");
         code = code.replaceAll(" /\\* = new \\w*\\(\\) \\*/,\\s+",",");
         code = code.replaceAll(" /\\* = new \\w*\\(\\) \\*/","");
         return code;
     }
-
     /**
      * A TreePathScanner that traverses the AST to give us back source code.
      */
@@ -268,7 +270,7 @@ public class AnnotationProcessor extends AbstractProcessor {
         @Override
         public Object visitClass(ClassTree classTree, Trees trees) {
             this.classTrees.add(classTree);
-            return super.visitClass(classTree, trees);
+            return super.visitClass(classTree,trees);
         }
         @Override
         public Object visitVariable(VariableTree variableTree, Trees trees) {

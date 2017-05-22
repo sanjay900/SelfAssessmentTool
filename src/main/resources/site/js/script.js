@@ -21,10 +21,10 @@ const proto = window.location.protocol.replace("http","").replace(":","");
 const socket = new ReconnectingWebSocket("ws" + proto + "://" + location.hostname + ":" + location.port + "/socket/");
 let reload = false;
 $("#compileBt").click(function() {
-    socket.send(JSON.stringify({file:"SampleTask",code:userInput.getValue()}));
+    socket.send(JSON.stringify({file:file,code:userInput.getValue()}));
 });
 userInput.getSession().on('change', function() {
-    socket.send(JSON.stringify({file:"SampleTask",code:userInput.getValue()}));
+    socket.send(JSON.stringify({file:file,code:userInput.getValue()}));
 });
 $.get( "listTasks", function( data ) {
     const availTasks = JSON.parse(data);
