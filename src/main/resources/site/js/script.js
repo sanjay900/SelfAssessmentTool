@@ -1,7 +1,7 @@
 /**
  * Created by sanjay on 22/05/17.
  */
-var codeDisplay = ace.edit("code-output-display");
+const codeDisplay = ace.edit("code-output-display");
 //          codeDisplay.setTheme("ace/theme/monokai");
 codeDisplay.getSession().setMode("ace/mode/java");
 codeDisplay.setReadOnly(true);
@@ -10,13 +10,17 @@ const userInput = ace.edit("user-input-box");
 userInput.setWrapBehavioursEnabled(false);
 codeDisplay.setWrapBehavioursEnabled(false);
 //          userInput.setTheme("ace/theme/monokai");
-codeDisplay.getSession().setMode("ace/mode/java");
+userInput.getSession().setMode("ace/mode/java");
 const proto = window.location.protocol.replace("http","").replace(":","");
 const socket = new ReconnectingWebSocket("ws" + proto + "://" + location.hostname + ":" + location.port + "/socket/");
+let reload = false;
 socket.onmessage = function (msg) {
     let results = JSON.parse(msg.data);
     userInput.setValue(results.starting_code,-1);
-    codeDisplay.setValue(results.code_to_display,-1);
+    if (codeDisplay.getValue().length === 0 || reload) {
+        codeDisplay.setValue(results.code_to_display, -1);
+        reload = true;
+    }
 };
 socket.onopen = function () {
     $("#serverStatus").html("<img class='status-badge' src='https://img.shields.io/badge/-Online-brightgreen.svg'/>")
