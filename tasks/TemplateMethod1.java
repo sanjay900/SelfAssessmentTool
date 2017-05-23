@@ -35,6 +35,6 @@ public abstract class TemplateMethod1 {
     }
     void check(Integer expected,List<Integer> data){
         Integer result=new B().findMax(data);
-        assertTrue("on data: "+data+"expected: "+expected+" result: "+result, expected.equals(result));
+        assertTrue("on data: "+data+" expected: "+expected+" result: "+result, expected.equals(result));
     }
 }
