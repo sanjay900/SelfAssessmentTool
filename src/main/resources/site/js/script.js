@@ -26,15 +26,18 @@ $("#compileBt").click(function() {
 userInput.getSession().on('change', function() {
     socket.send(JSON.stringify({file:file,code:userInput.getValue()}));
 });
-$.get( "listTasks", function( data ) {
-    const availTasks = JSON.parse(data);
-    let html = "";
-    for (var i in availTasks) {
-        const task = availTasks[i];
-        html +="<li><a href=\"#"+task.name+"\" onclick=\"loadFile('"+task.name+"','"+task.fullName+"')\">"+task.fullName+"</a></li>"
-    }
-    $("#sidenav").html(html);
-});
+function updateTasks() {
+    $.get( "listTasks", function( data ) {
+        const availTasks = JSON.parse(data);
+        let html = "";
+        for (var i in availTasks) {
+            const task = availTasks[i];
+            html +="<li><a href=\"#"+task.name+"\" onclick=\"loadFile('"+task.name+"','"+task.fullName+"')\">"+task.fullName+"</a></li>"
+        }
+        $("#sidenav").html(html);
+    });
+}
+updateTasks();
 let file = null;
 function loadFile(name,fullName) {
     file = name;
@@ -44,6 +47,10 @@ function loadFile(name,fullName) {
 }
 socket.onmessage = function (msg) {
     let results = JSON.parse(msg.data);
+    if (results.updated) {
+        updateTasks();
+        return;
+    }
     if (userInput.getValue().length === 0 || reload) {
         userInput.setValue(results.startingCode,-1);
         reload = false;

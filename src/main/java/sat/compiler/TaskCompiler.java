@@ -184,6 +184,9 @@ public class TaskCompiler {
         }
         return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics);
     }
+    public static void clearCache() {
+        compiledTasks.clear();
+    }
     private static final Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(.+\\).+");
     private static final String METHOD_ERROR = "You are missing the method %s!";
     private static final String ERROR = "An error occurred with the source for this file.\n"+
