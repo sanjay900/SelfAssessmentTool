@@ -1,5 +1,5 @@
 /**
- * Created by sanjay on 22/05/17.
+ * Made by Kristian Hansen and Sanjay Govind
  */
 const codeDisplay = ace.edit("code-output-display");
 //          codeDisplay.setTheme("ace/theme/monokai");
