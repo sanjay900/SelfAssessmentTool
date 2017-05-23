@@ -12,7 +12,7 @@ import java.util.stream.*;
  * Welcome to streams. Here you will be given a stream. Write a method to add everything in the stream and reduce it..
  */
 @Task(name="Stream demo")
-public abstract class Streams1 extends AbstractTask {
+public abstract class Streams1 {
     @Test
     public void testStream() {
         assertEquals("Should be 6",6,add(Stream.of(1,2,3)));

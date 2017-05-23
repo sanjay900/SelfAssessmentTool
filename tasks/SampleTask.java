@@ -11,7 +11,7 @@ import java.util.Random;
  * @author Kristian Hansen
  */
 @Task(name="Sample Task")
-public abstract class SampleTask extends AbstractTask {
+public abstract class SampleTask {
     @Hidden()
     private int someField = 1;
     private final int otherField = 2;

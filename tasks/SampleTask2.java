@@ -5,7 +5,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 @Task(name="Test activity 1: Add 10 to value")
-public abstract class SampleTask2 extends AbstractTask {
+public abstract class SampleTask2 {
 
     /** complete the method to make the test return the value plus 10. The value passed in cannot be negative
     or MAX_VALUE, otherwise an IllegalArgumentException must be thrown. Can you do it?

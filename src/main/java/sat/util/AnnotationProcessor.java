@@ -102,7 +102,6 @@ public class AnnotationProcessor extends AbstractProcessor {
                     } else {
                         comment = "";
                     }
-                    method = comment+method;
                     if (modifiers.contains(Modifier.ABSTRACT)) {
                         toRemove.add(methodTree.toString());
                         continue;
@@ -110,11 +109,13 @@ public class AnnotationProcessor extends AbstractProcessor {
                         method+=" "+methodTree.getBody();
                     }
                     if (hidden != null && hidden.shouldWriteComment()) {
+                        shown.append(comment);
                         shown.append(method.substring(0,method.indexOf("\n")));
                         shown.append("\n    //omitted\n");
                         shown.append("}\n");
                         continue;
                     }
+                    shown.append(comment);
                     shown.append(method).append("\n");
                 }
             }

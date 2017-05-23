@@ -10,7 +10,7 @@ import static org.junit.Assert.assertTrue;
  * Created by sanjay on 22/05/17.
  */
 @Task(name="Template Method 1")
-public abstract class TemplateMethod1 extends AbstractTask {
+public abstract class TemplateMethod1 {
     abstract class A<T>{
         T findMax(List<T> that){
             if(that.isEmpty()){throw new java.util.NoSuchElementException();}

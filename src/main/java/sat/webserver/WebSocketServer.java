@@ -9,6 +9,7 @@ import sat.AbstractTask;
 import sat.compiler.CompilerError;
 import sat.compiler.JavaRunner;
 import sat.util.JSONUtils;
+import sat.util.Task;
 
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
