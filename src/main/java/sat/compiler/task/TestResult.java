@@ -1,4 +1,4 @@
-package sat.webserver;
+package sat.compiler.task;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class TaskNameInfo {
-    String name;
-    String fullName;
+public class TestResult {
+    private String name;
+    private String status;
 }

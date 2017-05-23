@@ -1,94 +1,27 @@
 package sat.webserver;
 
-import org.eclipse.jetty.io.WriterOutputStream;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
-import org.junit.runner.JUnitCore;
-import sat.util.TaskInfo;
-import sat.compiler.CompilerError;
-import sat.compiler.JavaRunner;
+import sat.compiler.TaskCompiler;
+import sat.compiler.task.TaskRequest;
 import sat.util.JSONUtils;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by sanjay on 22/05/17.
  */
 @WebSocket
 public class WebSocketServer {
-    private static PrintStream normal = System.out;
     @OnWebSocketMessage
-    public void onMessage(Session user, String message) throws FileNotFoundException {
+    public void onMessage(Session user, String message) {
         TaskRequest request = JSONUtils.fromJSON(message,TaskRequest.class);
         try {
-            user.getRemote().sendString(JSONUtils.toJSON(compile(request)));
+            user.getRemote().sendString(JSONUtils.toJSON(TaskCompiler.compile(request)));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
-    public TaskResponse compile(TaskRequest request) {
-        TaskInfo task;
-        String output = "";
-        List<TestResult> junitOut = new ArrayList<>();
-        List<Error> diagnostics = new ArrayList<>();
-        try {
-            task = JavaRunner.getTaskInfo(request.file, new FileInputStream("tasks/" + request.file + ".java"));
-        } catch (CompilerError e) {
-            System.out.println(e.getErrors());
-            return new TaskResponse("Error compiling: ","","",new String[]{}, junitOut,diagnostics);
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-            return new TaskResponse("Error compiling: ","","",new String[]{}, junitOut,diagnostics);
-        }
-        if (request.code != null && !request.code.isEmpty()) {
-            StringWriter writer = new StringWriter();
-            System.setOut(new PrintStream(new WriterOutputStream(writer)));
-            try {
-                Class<?> clazz = JavaRunner.compileTask(request.file, request.code, new FileInputStream("tasks/"+request.file+".java"));
-                JUnitCore junit = new JUnitCore();
-                JUnitRunListener listener = new JUnitRunListener();
-                junit.addListener(listener);
-                junit.run(clazz);
-                junitOut = listener.getResults();
-            } catch (CompilerError error) {
-                for (Diagnostic<? extends JavaFileObject> diag : error.getErrors()) {
-                    String msg = diag.getMessage(Locale.getDefault());
-                    Matcher matcher = MISSING_METHOD.matcher(msg);
-                    if (matcher.matches()) {
-                        diagnostics.add(new Error(1,0,String.format(METHOD_ERROR,matcher.group(1))));
-                        continue;
-                    }
-                    diagnostics.add(new Error(diag.getLineNumber()-task.getProcessedSource().split("\n").length,diag.getColumnNumber(),msg));
-
-                }
-                //There was a compile error. Fail all methods so they show on the web gui
-                for (String method : task.getTestableMethods()) {
-                    junitOut.add(new TestResult(method,"Failed"));
-                }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } finally {
-                System.setOut(normal);
-                output = writer.toString();
-            }
-        } else {
-            for (String method : task.getTestableMethods()) {
-                junitOut.add(new TestResult(method,"Not Tested"));
-            }
-        }
-        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(),output, task.getTestableMethods(), junitOut, diagnostics);
-    }
-    public static final Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(.+\\).+");
-    private static final String METHOD_ERROR = "You are missing the method %s!";
-
 }

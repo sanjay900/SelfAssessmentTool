@@ -1,9 +1,10 @@
-package sat.webserver;
+package sat.compiler;
 
 import lombok.Getter;
 import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
+import sat.compiler.task.TestResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.List;
  * Created by sanjay on 22/05/17.
  */
 @Getter
-public class JUnitRunListener extends RunListener {
+public class JUnitTestCollector extends RunListener {
     private List<TestResult> results = new ArrayList<>();
     private static final Description FAILED = Description.createTestDescription("failed", "failed");
 

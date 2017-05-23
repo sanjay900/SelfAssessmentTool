@@ -1,11 +1,11 @@
-package sat.compiler;
+package sat.compiler.java;
 
 import javax.tools.*;
 import java.io.IOException;
 import java.security.SecureClassLoader;
 import java.util.*;
 
-class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
+public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
     //A map of strings to class objects, so that we can handle multiple files.
     private Map<String,JavaClassObject> classMap = new HashMap<>();
     /**
@@ -34,7 +34,7 @@ class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
                     return super.defineClass(name, jclassObject
                             .getBytes(), 0, b.length);
                 }
-                compileSource(new DynamicJavaSourceCodeObject(name,new String(b)));
+                compileSource(new MemorySourceFile(name,new String(b)));
                 return findClass(name);
             }
         };

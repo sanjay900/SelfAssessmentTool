@@ -1,10 +1,10 @@
-package sat.compiler;
+package sat.compiler.java;
 
 import javax.tools.SimpleJavaFileObject;
 import java.io.IOException;
 import java.net.URI;
 
-class DynamicJavaSourceCodeObject extends SimpleJavaFileObject {
+public class MemorySourceFile extends SimpleJavaFileObject {
     private String sourceCode ;
 
     /**
@@ -14,7 +14,7 @@ class DynamicJavaSourceCodeObject extends SimpleJavaFileObject {
      * @param name given to the class file
      * @param source the source code string
      */
-    protected DynamicJavaSourceCodeObject(String name, String source) {
+    public MemorySourceFile(String name, String source) {
         super(URI.create("string:///" +name.replaceAll("\\.", "/") + Kind.SOURCE.extension), Kind.SOURCE);
         this.sourceCode = source ;
     }

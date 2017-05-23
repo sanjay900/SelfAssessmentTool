@@ -1,4 +1,4 @@
-package sat.compiler;
+package sat.compiler.java;
 
 import javax.tools.SimpleJavaFileObject;
 import java.io.*;

@@ -1,4 +1,4 @@
-package sat.webserver;
+package sat.compiler.task;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

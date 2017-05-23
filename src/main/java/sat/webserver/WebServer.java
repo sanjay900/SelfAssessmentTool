@@ -3,9 +3,10 @@ package sat.webserver;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sat.compiler.TaskCompiler;
+import sat.compiler.task.TaskNameInfo;
 import sat.util.TaskInfo;
-import sat.compiler.CompilerError;
-import sat.compiler.JavaRunner;
+import sat.compiler.java.CompilerError;
 import sat.util.JSONUtils;
 import spark.Spark;
 
@@ -51,7 +52,7 @@ public class WebServer {
         for (File task : new File("tasks").listFiles()) {
             try {
                 String name = FilenameUtils.getBaseName(task.getName());
-                TaskInfo taskInfo = JavaRunner.getTaskInfo(name,new FileInputStream(task));
+                TaskInfo taskInfo = TaskCompiler.getTaskInfo(name,new FileInputStream(task));
                 navs.add(new TaskNameInfo(name, taskInfo.getName()));
             } catch (IllegalAccessException | InstantiationException | IOException | ClassNotFoundException e) {
                 e.printStackTrace();

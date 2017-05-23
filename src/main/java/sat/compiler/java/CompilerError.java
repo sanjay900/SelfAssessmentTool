@@ -1,4 +1,4 @@
-package sat.compiler;
+package sat.compiler.java;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
