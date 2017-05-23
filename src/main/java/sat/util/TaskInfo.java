@@ -6,5 +6,5 @@ public abstract class TaskInfo {
     public abstract String[] getTestableMethods();
     public abstract String getName();
     public abstract String getProcessedSource();
-    public abstract String[] getExcluded();
+    public abstract String[] getRestricted();
 }

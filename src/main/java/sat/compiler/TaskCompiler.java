@@ -92,8 +92,12 @@ public class TaskCompiler {
             ex.printStackTrace();
             return new TaskResponse("Error compiling: ","","",new String[]{}, junitOut,diagnostics);
         }
+        //There was a compile error. Fail all methods so they show on the web gui
+        for (String method : task.getTestableMethods()) {
+            junitOut.add(new TestResult(method,"Failed"));
+        }
         if (request.getCode() != null && !request.getCode().isEmpty()) {
-            for (String str: task.getExcluded()) {
+            for (String str: task.getRestricted()) {
                 if (request.getCode().contains(str)) {
                     String[] split = request.getCode().split("\n");
                     for (int lineNum = 0; lineNum < split.length; lineNum++) {
@@ -129,10 +133,6 @@ public class TaskCompiler {
                     diagnostics.add(new Error(diagnostic.getLineNumber()-task.getProcessedSource().split("\n").length,diagnostic.getColumnNumber(),msg));
 
                 }
-                //There was a compile error. Fail all methods so they show on the web gui
-                for (String method : task.getTestableMethods()) {
-                    junitOut.add(new TestResult(method,"Failed"));
-                }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } finally {
@@ -140,6 +140,7 @@ public class TaskCompiler {
                 output = writer.toString();
             }
         } else {
+            junitOut.clear();
             for (String method : task.getTestableMethods()) {
                 junitOut.add(new TestResult(method,"Not Tested"));
             }

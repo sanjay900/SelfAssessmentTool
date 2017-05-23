@@ -194,7 +194,7 @@ public class AnnotationProcessor extends AbstractProcessor {
         String toDisplay = StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(shown.toString()));
         String toFill = StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(this.toFill.toString()));
         String testedMethods = escapeStringArray(tested.toArray(new String[tested.size()]));
-        String excluded = escapeStringArray(task.excluded());
+        String restricted = escapeStringArray(task.restricted());
         //Generate a TaskInfo for the class
         return flatten(path.getCompilationUnit().getImports()) +
                 "import " + TaskInfo.class.getName() + ";" +
@@ -202,7 +202,7 @@ public class AnnotationProcessor extends AbstractProcessor {
                 generateMethodSource(String.class,"getCodeToDisplay",toDisplay)+
                 generateMethodSource(String.class,"getMethodsToFill",toFill)+
                 generateMethodSource(String[].class,"getTestableMethods",testedMethods)+
-                generateMethodSource(String[].class,"getExcluded",excluded)+
+                generateMethodSource(String[].class,"getRestricted", restricted)+
                 generateMethodSource(String.class,"getName",task.name())+
                 generateMethodSource(String.class,"getProcessedSource",source)+
                 "}";

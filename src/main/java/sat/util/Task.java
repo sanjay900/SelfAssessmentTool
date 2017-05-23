@@ -22,8 +22,8 @@ public @interface Task {
     String name();
 
     /**
-     * Not quite sure what this property does lol, so you'd be better at writing the javadoc here
-     * @return
+     * Should this Task show modifiers in front of classes and methods (e.g. public, private)?
+     * @return true if it should, false otherwise
      */
     boolean showModifiers() default true;
 
@@ -37,8 +37,8 @@ public @interface Task {
      * student types one of these disallowed strings in. <br/><br/>
      * For example: {"+","Math","-","class"} would disallow the operators '+' and '-' being used, it would disallow an inner class
      * being created, and would disallow the use of Java's Math class. Note that this is only checked for within the code that the
-     * student types - not the whole task as excluded character sequences can be used elsewhere in the task class.
+     * student types - not the whole task as restricted character sequences can be used elsewhere in the task class.
      * @return Array of <code>String</code>s representing what sequences of characters are prohibited in the solution.
      */
-    String[] excluded() default {};
+    String[] restricted() default {};
 }
