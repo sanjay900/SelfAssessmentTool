@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 
 public class TaskCompiler {
     private static PrintStream normal = System.out;
+    private static Map<String,TaskInfo> compiledTasks = new HashMap<>();
     /**
      * Compile a class, and then return classToGet
      * @param classToGet the class to get from the classpath
@@ -92,8 +93,12 @@ public class TaskCompiler {
      * @throws CompilerException there was an issue compiling
      */
     public static TaskInfo getTaskInfo(String name, InputStream is) throws ClassNotFoundException, IllegalAccessException, InstantiationException, IOException, CompilerException{
+        //Check if the taskinfo cache contains the class, return if its in the cache
+        if (compiledTasks.containsKey(name)) return compiledTasks.get(name);
         String task = IOUtils.toString(is);
-        return (TaskInfo) compile(name, task, name + AnnotationProcessor.TASK_INFO_SUFFIX).newInstance();
+        TaskInfo info = (TaskInfo) compile(name, task, name + AnnotationProcessor.TASK_INFO_SUFFIX).newInstance();
+        compiledTasks.put(name,info);
+        return info;
     }
 
     /**
@@ -106,8 +111,8 @@ public class TaskCompiler {
         StringBuilder output = new StringBuilder();
         List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
+        if (request.getFile() == null) return new TaskResponse("","","",new String[]{}, junitOut,diagnostics);
         //First, compile the source class into a task.
-        //TODO: It might be a good idea to cache these once we have valid TaskInfos.
         try {
             task = TaskCompiler.getTaskInfo(request.getFile(), new FileInputStream("tasks/" + request.getFile() + ".java"));
         } catch (CompilerException e) {

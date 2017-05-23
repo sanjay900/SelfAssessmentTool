@@ -37,6 +37,8 @@ public class WebServer {
         webSocket("/socket",WebSocketServer.class);
         get("/listTasks", (req, res) -> JSONUtils.toJSON(listTasks()));
         logger.info(""+ansi().render("@|green Starting Socket.IO Server|@"));
+        //Compile all the current tasks so that we don't have to do it on the first connection.
+        listTasks();
     }
 
     /**
