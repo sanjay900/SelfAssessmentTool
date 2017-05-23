@@ -1,12 +1,10 @@
-import sat.AbstractTask;
-import sat.util.Task;
-import sat.util.Hidden;
 import org.junit.Test;
-import static org.junit.Assert.*;
-import static sat.util.AssertUtils.*;
-import java.util.Random;
+import sat.util.*;
 import java.util.*;
 import java.util.stream.*;
+
+import static org.junit.Assert.*;
+import static sat.util.AssertUtils.*;
 
 /**
  * Here you are required to make a method that can combine streams. FlatMap will be useful here.

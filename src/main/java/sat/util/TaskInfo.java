@@ -1,11 +1,10 @@
-package sat;
+package sat.util;
 
-import java.util.List;
-
-public abstract class AbstractTask {
+public abstract class TaskInfo {
     public abstract String getCodeToDisplay();
     public abstract String getMethodsToFill();
     public abstract String[] getTestableMethods();
     public abstract String getName();
     public abstract String getProcessedSource();
+    public abstract String[] getExcluded();
 }

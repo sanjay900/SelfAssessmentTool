@@ -9,7 +9,7 @@ public class AnnotationParserTest {
     @Test
     public void testAssessment() {
 //        try {
-//            AbstractTask task = JavaRunner.getTaskInfo("SampleTask",
+//            TaskInfo task = JavaRunner.getTaskInfo("SampleTask",
 //                    "public void foo() {" +
 //                            "System.out.println(\"Test code, running foo\");" +
 //                            "}",new FileInputStream("SampleTask.java"));

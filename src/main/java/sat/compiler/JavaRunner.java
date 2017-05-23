@@ -1,9 +1,8 @@
 package sat.compiler;
 
 import org.apache.commons.io.IOUtils;
-import sat.AbstractTask;
+import sat.util.TaskInfo;
 import sat.util.AnnotationProcessor;
-import sat.util.PrintUtils;
 import sat.webserver.WebSocketServer;
 
 import javax.tools.*;
@@ -49,7 +48,7 @@ public class JavaRunner {
     public static Class<?> compileTask(String name, String code, InputStream is) {
         try {
             String task = IOUtils.toString(is);
-            AbstractTask atask = (AbstractTask) compile(name, task, name +
+            TaskInfo atask = (TaskInfo) compile(name, task, name +
                     AnnotationProcessor.TEXT_ONLY_CLASS_SUFFIX).newInstance();
             String usercode = atask.getProcessedSource();
             usercode+=code;
@@ -65,8 +64,8 @@ public class JavaRunner {
         return null;
     }
 
-    public static AbstractTask getTaskInfo(String name, InputStream is) throws ClassNotFoundException, IllegalAccessException, InstantiationException, IOException {
+    public static TaskInfo getTaskInfo(String name, InputStream is) throws ClassNotFoundException, IllegalAccessException, InstantiationException, IOException {
         String task = IOUtils.toString(is);
-        return (AbstractTask) compile(name, task, name + AnnotationProcessor.TEXT_ONLY_CLASS_SUFFIX).newInstance();
+        return (TaskInfo) compile(name, task, name + AnnotationProcessor.TEXT_ONLY_CLASS_SUFFIX).newInstance();
     }
 }

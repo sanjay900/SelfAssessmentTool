@@ -3,7 +3,7 @@ package sat.webserver;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sat.AbstractTask;
+import sat.util.TaskInfo;
 import sat.compiler.CompilerError;
 import sat.compiler.JavaRunner;
 import sat.util.JSONUtils;
@@ -11,7 +11,6 @@ import spark.Spark;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
@@ -47,13 +46,13 @@ public class WebServer {
             return true;
         }
     }
-    private List<TaskInfo> listTasks() {
-        List<TaskInfo> navs = new ArrayList<>();
+    private List<TaskNameInfo> listTasks() {
+        List<TaskNameInfo> navs = new ArrayList<>();
         for (File task : new File("tasks").listFiles()) {
             try {
                 String name = FilenameUtils.getBaseName(task.getName());
-                AbstractTask abstractTask = JavaRunner.getTaskInfo(name,new FileInputStream(task));
-                navs.add(new TaskInfo(name,abstractTask.getName()));
+                TaskInfo taskInfo = JavaRunner.getTaskInfo(name,new FileInputStream(task));
+                navs.add(new TaskNameInfo(name, taskInfo.getName()));
             } catch (IllegalAccessException | InstantiationException | IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             } catch (CompilerError e) {

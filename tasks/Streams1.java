@@ -1,12 +1,10 @@
-import sat.AbstractTask;
-import sat.util.Task;
-import sat.util.Hidden;
 import org.junit.Test;
+import sat.util.*;
+import java.util.stream.*;
+
 import static org.junit.Assert.*;
 import static sat.util.AssertUtils.*;
-import java.util.Random;
 import java.util.*;
-import java.util.stream.*;
 
 /**
  * Welcome to streams. Here you will be given a stream. Write a method to add everything in the stream and reduce it..

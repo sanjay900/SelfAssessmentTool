@@ -1,9 +1,8 @@
-import sat.AbstractTask;
-import sat.util.Task;
-import sat.util.Hidden;
 import org.junit.Test;
-import static org.junit.Assert.*;
+import sat.util.*;
 import java.util.Random;
+
+import static org.junit.Assert.*;
 
 
 /**

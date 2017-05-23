@@ -5,17 +5,15 @@ import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.junit.runner.JUnitCore;
-import sat.AbstractTask;
+import sat.util.TaskInfo;
 import sat.compiler.CompilerError;
 import sat.compiler.JavaRunner;
 import sat.util.JSONUtils;
-import sat.util.Task;
 
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -38,7 +36,7 @@ public class WebSocketServer {
 
     }
     public TaskResponse compile(TaskRequest request) {
-        AbstractTask task;
+        TaskInfo task;
         String output = "";
         List<TestResult> junitOut = new ArrayList<>();
         List<Error> diagnostics = new ArrayList<>();

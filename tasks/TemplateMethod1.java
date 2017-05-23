@@ -3,7 +3,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 import sat.util.*;
-import sat.*;
+
 import static org.junit.Assert.assertTrue;
 
 /**

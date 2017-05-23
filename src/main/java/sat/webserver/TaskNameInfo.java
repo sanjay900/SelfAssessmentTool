@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class TaskInfo {
+public class TaskNameInfo {
     String name;
     String fullName;
 }

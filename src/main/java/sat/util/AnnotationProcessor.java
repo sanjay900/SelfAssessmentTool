@@ -4,9 +4,7 @@ import com.google.auto.service.AutoService;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.TreePathScanner;
-import com.sun.source.util.TreeScanner;
 import com.sun.source.util.Trees;
-import com.sun.tools.javac.tree.JCTree;
 import lombok.Getter;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.junit.Test;
@@ -19,7 +17,6 @@ import javax.tools.JavaFileObject;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -119,9 +116,6 @@ public class AnnotationProcessor extends AbstractProcessor {
                     shown.append(method).append("\n");
                 }
             }
-            //Make sure to show new classes last.
-            //TODO: is it possible to traverse the AST and thus support abstract class implementations?
-            //For example, in swen221 we had to extend a class sometimes, so we should support that.
             outer:
             for (ClassTree tree : ctrees) {
                 if (tree.getSimpleName().equals(clazz.getSimpleName())) continue;
@@ -160,7 +154,6 @@ public class AnnotationProcessor extends AbstractProcessor {
             }
             endClass+=flatten(path.getCompilationUnit().getImports());
             endClass+="import static "+PrintUtils.class.getName()+".*;";
-            endClass+= "import static "+PrintUtils.class.getName()+".*;";
             endClass += "import java.util.*;";
             endClass += "import java.util.stream.*;";
             endClass += "import java.util.function.*;";
@@ -183,13 +176,13 @@ public class AnnotationProcessor extends AbstractProcessor {
             endClass = endClass.replace("abstract class "+classEle.getQualifiedName(),"class "+classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX);
             endClass = endClass.replace(" "+classEle.getQualifiedName()+"() {"," "+classEle.getQualifiedName()+ GENERATED_CLASS_SUFFIX +"() {");
             endClass = fixWeirdCompilationIssues(endClass);
-            endClass = endClass.replace("extends AbstractTask ","");
             String processed = endClass;
             //Now generate the Text only class
             endClass = flatten(path.getCompilationUnit().getImports());
 
+            endClass+= "import "+ TaskInfo.class.getName()+";";
             //getCodeToDisplay
-            endClass+= "public class "+classEle.getQualifiedName()+TEXT_ONLY_CLASS_SUFFIX+" extends AbstractTask {";
+            endClass+= "public class "+classEle.getQualifiedName()+TEXT_ONLY_CLASS_SUFFIX+" extends TaskInfo {";
             endClass+= "@Override\npublic String getCodeToDisplay() { return \"";
             endClass+= StringEscapeUtils.escapeJava(taskComment+fixWeirdCompilationIssues(shown.toString()));
             endClass+="\";\n}";
@@ -203,6 +196,10 @@ public class AnnotationProcessor extends AbstractProcessor {
             endClass+= "new String[]{"+tested.stream().map(s -> "\""+s+"\"").collect(Collectors.joining(","))+"};\n";
             endClass+= "}";
 
+            //getFilters
+            endClass+= "@Override\npublic String[] getExcluded() { return ";
+            endClass+= "new String[]{"+Arrays.stream(task.excluded()).map(s -> "\""+s+"\"").collect(Collectors.joining(","))+"};\n";
+            endClass+= "}";
             //getName
             endClass+= "@Override\npublic String getName() { return \"";
             endClass+= task.name();
