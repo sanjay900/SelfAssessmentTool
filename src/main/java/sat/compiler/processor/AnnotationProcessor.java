@@ -32,6 +32,12 @@ import java.util.stream.Collectors;
 public class AnnotationProcessor extends AbstractProcessor {
     private Elements elementUtils;
     private Trees trees;
+    private StringBuilder shown;
+    private StringBuilder toFill;
+    //Keep a list of code we want to filter out of processed code
+    private List<String> codeToRemove = new ArrayList<>();
+    private List<String> tested = new ArrayList<>();
+    private Task task;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -39,43 +45,6 @@ public class AnnotationProcessor extends AbstractProcessor {
         elementUtils = processingEnv.getElementUtils();
         trees = Trees.instance(processingEnv);
     }
-    private String flatten(Collection<?> mods) {
-        return mods.stream().map(Object::toString).collect(Collectors.joining(" "));
-    }
-
-    /**
-     * Get the javadoc attached to an element
-     * @param element the element
-     * @return the javadoc style comment attached to the element, or an empty string if none exists.
-     */
-    private String getComment(Element element) {
-        String comment = elementUtils.getDocComment(element);
-        if (comment != null) {
-            return "/**\n *" + comment.replace("\n", "\n *") + "/\n";
-        }
-        return "";
-    }
-    private String stripAnnotation(String str) {
-        if (str.contains("@"))
-            return str.substring(str.indexOf("\n")+1);
-        return str;
-    }
-
-    /**
-     * Get the first line of str
-     * @param str
-     * @return the first line of str
-     */
-    private String getHeader(String str) {
-        return str.substring(0,str.indexOf('\n'));
-    }
-
-    private StringBuilder shown;
-    private StringBuilder toFill;
-    //Keep a list of code we want to filter out of processed code
-    private List<String> codeToRemove = new ArrayList<>();
-    private List<String> tested = new ArrayList<>();
-    private Task task;
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element taskElement : roundEnv.getElementsAnnotatedWith(Task.class)) {
@@ -250,10 +219,42 @@ public class AnnotationProcessor extends AbstractProcessor {
         } else if (ret == String.class) {
             body = escapeString(body);
         }
+        //Generate the method
         return "@Override\n"+
                 "public "+ret.getSimpleName()+" "+name+"() {\n"+
                 "return " + body + ";\n"+
                 "}";
+    }
+
+    private String flatten(Collection<?> mods) {
+        return mods.stream().map(Object::toString).collect(Collectors.joining(" "));
+    }
+
+    /**
+     * Get the javadoc attached to an element
+     * @param element the element
+     * @return the javadoc style comment attached to the element, or an empty string if none exists.
+     */
+    private String getComment(Element element) {
+        String comment = elementUtils.getDocComment(element);
+        if (comment != null) {
+            return "/**\n *" + comment.replace("\n", "\n *") + "/\n";
+        }
+        return "";
+    }
+    private String stripAnnotation(String str) {
+        if (str.contains("@"))
+            return str.substring(str.indexOf("\n")+1);
+        return str;
+    }
+
+    /**
+     * Get the first line of str
+     * @param str
+     * @return the first line of str
+     */
+    private String getHeader(String str) {
+        return str.substring(0,str.indexOf('\n'));
     }
     //Text to show in an ommitted block of code
     private static final String OMITTED_BLOCK = "\n\t//ommitted\n}\n";
