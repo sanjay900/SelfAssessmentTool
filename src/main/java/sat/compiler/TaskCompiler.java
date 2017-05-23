@@ -1,5 +1,6 @@
 package sat.compiler;
 
+import jdk.nashorn.internal.codegen.CompilationException;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.io.WriterOutputStream;
 import org.junit.runner.JUnitCore;
@@ -25,7 +26,7 @@ public class TaskCompiler {
      * @param classToGet the class to get from the classpath
      * @return classToGet from the classpath
      */
-    public static Class<?> compile(String name, String code, String classToGet) throws ClassNotFoundException {
+    public static Class<?> compile(String name, String code, String classToGet) throws ClassNotFoundException, CompilerException {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager stdFileManager = compiler.getStandardFileManager(null, null, null);
         ClassFileManager manager =  new ClassFileManager(stdFileManager);
@@ -53,7 +54,7 @@ public class TaskCompiler {
         return clazz;
     }
 
-    private static Class<?> compileTask(String name, String code, InputStream is) {
+    private static Class<?> compileTask(String name, String code, InputStream is) throws CompilerException {
         try {
             String task = IOUtils.toString(is);
             TaskInfo atask = (TaskInfo) compile(name, task, name +
@@ -72,7 +73,7 @@ public class TaskCompiler {
         return null;
     }
 
-    public static TaskInfo getTaskInfo(String name, InputStream is) throws ClassNotFoundException, IllegalAccessException, InstantiationException, IOException {
+    public static TaskInfo getTaskInfo(String name, InputStream is) throws ClassNotFoundException, IllegalAccessException, InstantiationException, IOException, CompilerException{
         String task = IOUtils.toString(is);
         return (TaskInfo) compile(name, task, name + AnnotationProcessor.TASK_INFO_SUFFIX).newInstance();
     }

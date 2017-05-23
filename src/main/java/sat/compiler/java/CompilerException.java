@@ -7,11 +7,8 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.util.List;
 
-/**
- * Created by sanjay on 22/05/17.
- */
 @AllArgsConstructor
 @Getter
-public class CompilerException extends RuntimeException {
+public class CompilerException extends Exception {
     private List<Diagnostic<? extends JavaFileObject>> errors;
 }
