@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * Welcome to streams. Here you will be given a stream. Write a method to add everything in the stream and reduce it..
  */
-@Task(name="Stream demo")
+@Task(name="3. Stream demo")
 public abstract class Streams1 {
     @Test
     public void testStream() {

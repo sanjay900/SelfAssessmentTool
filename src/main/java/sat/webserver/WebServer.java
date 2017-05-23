@@ -15,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.fusesource.jansi.Ansi.ansi;
@@ -74,6 +75,7 @@ public class WebServer {
                 System.out.println(e.getErrors());
             }
         }
+        navs.sort(Comparator.comparing(TaskNameInfo::getFullName));
         return navs;
     }
 }

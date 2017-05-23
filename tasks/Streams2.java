@@ -9,7 +9,7 @@ import static sat.util.AssertUtils.*;
 /**
  * Here you are required to make a method that can combine streams. FlatMap will be useful here.
  */
-@Task(name="Stream demo")
+@Task(name="4. Stream demo")
 public abstract class Streams2 {
     @Test
     public void testStream() {

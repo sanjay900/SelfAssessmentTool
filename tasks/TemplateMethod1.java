@@ -9,7 +9,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Created by sanjay on 22/05/17.
  */
-@Task(name="Template Method 1")
+@Task(name="2. Template Method 1")
 public abstract class TemplateMethod1 {
     abstract class A<T>{
         T findMax(List<T> that){

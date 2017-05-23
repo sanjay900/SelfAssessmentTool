@@ -8,7 +8,7 @@ import static org.junit.Assert.*;
  * Welcome to our self assessment tool. Fill in the method below with 42 to pass this test.
  * You may not use the word Math in your answer;
  */
-@Task(name="Demo 1",showModifiers=false,restricted="Math")
+@Task(name="1. Demo 1",showModifiers=false,restricted="Math")
 public abstract class Demo1 {
     @Test
     public void testThings() {

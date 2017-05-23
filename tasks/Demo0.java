@@ -7,7 +7,7 @@ import static org.junit.Assert.*;
 /**
  * Welcome to our self assessment tool. Fill in the method below with 42 to pass this test.
  */
-@Task(name="Demo 0",showModifiers=false)
+@Task(name="0. Demo 0",showModifiers=false)
 public abstract class Demo0 {
     @Test
     public void testThings() {

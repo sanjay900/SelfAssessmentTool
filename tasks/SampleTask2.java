@@ -2,7 +2,7 @@ import org.junit.Test;
 import sat.util.*;
 import static org.junit.Assert.*;
 
-@Task(name="Test activity 1: Add 10 to value")
+@Task(name="6. Test activity 1: Add 10 to value")
 public abstract class SampleTask2 {
 
     /** complete the method to make the test return the value plus 10. The value passed in cannot be negative

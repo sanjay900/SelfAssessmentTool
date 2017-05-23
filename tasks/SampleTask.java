@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
  * Simple task used as a sample for testing.
  * @author Kristian Hansen
  */
-@Task(name="Sample Task")
+@Task(name="5. Sample Task")
 public abstract class SampleTask {
     @Hidden()
     private int someField = 1;
