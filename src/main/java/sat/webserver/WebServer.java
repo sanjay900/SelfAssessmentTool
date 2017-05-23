@@ -54,7 +54,7 @@ public class WebServer {
                 String name = FilenameUtils.getBaseName(task.getName());
                 AbstractTask abstractTask = JavaRunner.getTaskInfo(name,new FileInputStream(task));
                 navs.add(new TaskInfo(name,abstractTask.getName()));
-            } catch (FileNotFoundException e) {
+            } catch (IllegalAccessException | InstantiationException | IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             } catch (CompilerError e) {
                 System.out.println(e.getErrors());

@@ -43,7 +43,12 @@ public class WebSocketServer {
         List<Error> diagnostics = new ArrayList<>();
         try {
             task = JavaRunner.getTaskInfo(request.file, new FileInputStream("tasks/" + request.file + ".java"));
-        } catch (Exception ex) {
+        } catch (CompilerError e) {
+            System.out.println(e.getErrors());
+            return new TaskResponse("Error compiling: ","","",new String[]{}, junitOut,diagnostics);
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
             return new TaskResponse("Error compiling: ","","",new String[]{}, junitOut,diagnostics);
         }
         if (request.code != null && !request.code.isEmpty()) {
