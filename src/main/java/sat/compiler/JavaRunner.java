@@ -46,7 +46,7 @@ public class JavaRunner {
         return clazz;
     }
     @SuppressWarnings("unchecked")
-    public static Class<?> getTask(String name, String code, InputStream is) {
+    public static Class<?> compileTask(String name, String code, InputStream is) {
         try {
             String task = IOUtils.toString(is);
             AbstractTask atask = (AbstractTask) compile(name, task, name +
@@ -65,15 +65,8 @@ public class JavaRunner {
         return null;
     }
 
-    public static AbstractTask getTask(String name, InputStream is){
-        try {
-            String task = IOUtils.toString(is);
-            return (AbstractTask) compile(name, task, name + AnnotationProcessor.TEXT_ONLY_CLASS_SUFFIX).newInstance();
-        } catch (IOException | IllegalAccessException | InstantiationException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        return null;
+    public static AbstractTask getTaskInfo(String name, InputStream is) throws ClassNotFoundException, IllegalAccessException, InstantiationException, IOException {
+        String task = IOUtils.toString(is);
+        return (AbstractTask) compile(name, task, name + AnnotationProcessor.TEXT_ONLY_CLASS_SUFFIX).newInstance();
     }
 }

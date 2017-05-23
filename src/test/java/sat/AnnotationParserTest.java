@@ -9,11 +9,11 @@ public class AnnotationParserTest {
     @Test
     public void testAssessment() {
 //        try {
-//            AbstractTask task = JavaRunner.getTask("SampleTask",
+//            AbstractTask task = JavaRunner.getTaskInfo("SampleTask",
 //                    "public void foo() {" +
 //                            "System.out.println(\"Test code, running foo\");" +
 //                            "}",new FileInputStream("SampleTask.java"));
-//            task = JavaRunner.getTask("SampleTask",new FileInputStream("SampleTask.java"));
+//            task = JavaRunner.getTaskInfo("SampleTask",new FileInputStream("SampleTask.java"));
 ////        task.run();
 //            System.out.println(task.getCodeToDisplay());
 //        } catch (FileNotFoundException e) {

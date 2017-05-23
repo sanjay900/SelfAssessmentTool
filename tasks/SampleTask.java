@@ -10,7 +10,7 @@ import java.util.Random;
  * Simple task used as a sample for testing.
  * @author Kristian Hansen
  */
-@Task(name="Sample Task With a Name")
+@Task(name="Sample Task")
 public abstract class SampleTask extends AbstractTask {
     @Hidden()
     private int someField = 1;
@@ -19,8 +19,7 @@ public abstract class SampleTask extends AbstractTask {
     private int test;
 
     /**
-     * This runs the code and shit
-     * Blah blah blah
+     * This runs the code
      */
     @Test
     public void run() {

@@ -14,6 +14,7 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -28,16 +29,28 @@ public class WebSocketServer {
     @OnWebSocketMessage
     public void onMessage(Session user, String message) throws FileNotFoundException {
         TaskRequest request = JSONUtils.fromJSON(message,TaskRequest.class);
+        try {
+            user.getRemote().sendString(JSONUtils.toJSON(compile(request)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+    public TaskResponse compile(TaskRequest request) {
         AbstractTask task;
         String output = "";
         List<TestResult> junitOut = new ArrayList<>();
         List<Error> diagnostics = new ArrayList<>();
-        task = JavaRunner.getTask(request.file, new FileInputStream("tasks/"+request.file+".java"));
+        try {
+            task = JavaRunner.getTaskInfo(request.file, new FileInputStream("tasks/" + request.file + ".java"));
+        } catch (Exception ex) {
+            return new TaskResponse("Error compiling: ","","",new String[]{}, junitOut,diagnostics);
+        }
         if (request.code != null && !request.code.isEmpty()) {
             StringWriter writer = new StringWriter();
             System.setOut(new PrintStream(new WriterOutputStream(writer)));
             try {
-                Class<?> clazz = JavaRunner.getTask(request.file, request.code, new FileInputStream("tasks/"+request.file+".java"));
+                Class<?> clazz = JavaRunner.compileTask(request.file, request.code, new FileInputStream("tasks/"+request.file+".java"));
                 JUnitCore junit = new JUnitCore();
                 JUnitRunListener listener = new JUnitRunListener();
                 junit.addListener(listener);
@@ -54,9 +67,12 @@ public class WebSocketServer {
                     diagnostics.add(new Error(diag.getLineNumber()-task.getProcessedSource().split("\n").length,diag.getColumnNumber(),msg));
 
                 }
+                //There was a compile error. Fail all methods so they show on the web gui
                 for (String method : task.getTestableMethods()) {
                     junitOut.add(new TestResult(method,"Failed"));
                 }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
             } finally {
                 System.setOut(normal);
                 output = writer.toString();
@@ -66,14 +82,9 @@ public class WebSocketServer {
                 junitOut.add(new TestResult(method,"Not Tested"));
             }
         }
-        try {
-            user.getRemote().sendString(JSONUtils.toJSON(new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(),output, task.getTestableMethods(), junitOut, diagnostics)));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(),output, task.getTestableMethods(), junitOut, diagnostics);
     }
-    public static Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(.+\\).+");
-    private static String METHOD_ERROR = "You are missing the method %s!";
+    public static final Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(.+\\).+");
+    private static final String METHOD_ERROR = "You are missing the method %s!";
 
 }
