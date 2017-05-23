@@ -80,17 +80,21 @@ public class TaskCompiler {
     private static PrintStream normal = System.out;
     public static TaskResponse compile(TaskRequest request) {
         TaskInfo task;
-        String output = "";
+        StringBuilder output = new StringBuilder();
         List<TestResult> junitOut = new ArrayList<>();
         List<Error> diagnostics = new ArrayList<>();
         try {
             task = TaskCompiler.getTaskInfo(request.getFile(), new FileInputStream("tasks/" + request.getFile() + ".java"));
         } catch (CompilerError e) {
-            System.out.println(e.getErrors());
-            return new TaskResponse("Error compiling: ","","",new String[]{}, junitOut,diagnostics);
+            for (Diagnostic<? extends JavaFileObject> diagnostic : e.getErrors()) {
+                String msg = diagnostic.getMessage(Locale.getDefault());
+                System.out.println(msg);
+                output.append(msg).append("\n");
+            }
+            return new TaskResponse(ERROR,"",output.toString(),new String[]{}, junitOut,diagnostics);
         } catch (Exception ex) {
             ex.printStackTrace();
-            return new TaskResponse("Error compiling: ","","",new String[]{}, junitOut,diagnostics);
+            return new TaskResponse(ERROR,"",ex.toString(),new String[]{}, junitOut,diagnostics);
         }
         //There was a compile error. Fail all methods so they show on the web gui
         for (String method : task.getTestableMethods()) {
@@ -109,7 +113,7 @@ public class TaskCompiler {
                         }
                     }
 
-                    return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(),output, task.getTestableMethods(), junitOut, diagnostics);
+                    return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics);
                 }
             }
             StringWriter writer = new StringWriter();
@@ -137,7 +141,7 @@ public class TaskCompiler {
                 e.printStackTrace();
             } finally {
                 System.setOut(normal);
-                output = writer.toString();
+                output = new StringBuilder(writer.toString());
             }
         } else {
             junitOut.clear();
@@ -145,8 +149,10 @@ public class TaskCompiler {
                 junitOut.add(new TestResult(method,"Not Tested"));
             }
         }
-        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(),output, task.getTestableMethods(), junitOut, diagnostics);
+        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics);
     }
     private static final Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(.+\\).+");
     private static final String METHOD_ERROR = "You are missing the method %s!";
+    private static final String ERROR = "An error occurred with the source for this file.\n"+
+            "contact a lecturer as this is a problem with the tool not your code.";
 }
