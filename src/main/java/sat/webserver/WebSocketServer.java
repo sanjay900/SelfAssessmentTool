@@ -1,6 +1,5 @@
 package sat.webserver;
 
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
 import org.eclipse.jetty.io.WriterOutputStream;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
@@ -52,11 +51,11 @@ public class WebSocketServer {
                         diagnostics.add(new Error(1,0,String.format(METHOD_ERROR,matcher.group(1))));
                         continue;
                     }
-                    //TODO: Find some way to deal with the column being off if the code starts with a tab.
                     diagnostics.add(new Error(diag.getLineNumber()-task.getProcessedSource().split("\n").length,diag.getColumnNumber(),msg));
-                    for (String method : task.getTestableMethods()) {
-                        junitOut.add(new TestResult(method,"Failed"));
-                    }
+
+                }
+                for (String method : task.getTestableMethods()) {
+                    junitOut.add(new TestResult(method,"Failed"));
                 }
             } finally {
                 System.setOut(normal);
