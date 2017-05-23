@@ -47,13 +47,13 @@ public class WebServer {
             return true;
         }
     }
-    private List<TaskNav> listTasks() {
-        List<TaskNav> navs = new ArrayList<>();
+    private List<TaskInfo> listTasks() {
+        List<TaskInfo> navs = new ArrayList<>();
         for (File task : new File("tasks").listFiles()) {
             try {
                 String name = FilenameUtils.getBaseName(task.getName());
-                AbstractTask abstractTask = JavaRunner.getTask(name,new FileInputStream(task));
-                navs.add(new TaskNav(name,abstractTask.getName()));
+                AbstractTask abstractTask = JavaRunner.getTaskInfo(name,new FileInputStream(task));
+                navs.add(new TaskInfo(name,abstractTask.getName()));
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (CompilerError e) {
