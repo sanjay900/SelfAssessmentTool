@@ -12,7 +12,7 @@ import java.util.stream.*;
  * Here you are required to make a method that can combine streams. FlatMap will be useful here.
  */
 @Task(name="Stream demo")
-public abstract class Streams extends AbstractTask {
+public abstract class Streams2 extends AbstractTask {
     @Test
     public void testStream() {
         List<List<?>> test = Arrays.asList(Arrays.asList(1,2),Arrays.asList(3,4));
