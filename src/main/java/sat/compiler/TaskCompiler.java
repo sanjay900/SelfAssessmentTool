@@ -4,14 +4,14 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.io.WriterOutputStream;
 import org.junit.runner.JUnitCore;
 import sat.compiler.java.ClassFileManager;
-import sat.compiler.java.CompilerError;
+import sat.compiler.java.CompilerException;
 import sat.compiler.java.MemorySourceFile;
 import sat.compiler.task.TaskRequest;
 import sat.compiler.task.TaskResponse;
 import sat.compiler.task.TestResult;
 import sat.util.TaskInfo;
 import sat.compiler.processor.AnnotationProcessor;
-import sat.compiler.task.Error;
+import sat.compiler.java.CompilationError;
 
 import javax.tools.*;
 import java.io.*;
@@ -39,7 +39,7 @@ public class TaskCompiler {
                 if (!Objects.equals(diag.getSource().getName().substring(1), classToGet+".java")) {
                     if (MISSING_METHOD.matcher(diag.getMessage(Locale.getDefault())).matches()) continue;
                 }
-                throw new CompilerError(diagnostics.getDiagnostics());
+                throw new CompilerException(diagnostics.getDiagnostics());
             }
         }
         Class<?> clazz;
@@ -82,10 +82,10 @@ public class TaskCompiler {
         TaskInfo task;
         StringBuilder output = new StringBuilder();
         List<TestResult> junitOut = new ArrayList<>();
-        List<Error> diagnostics = new ArrayList<>();
+        List<CompilationError> diagnostics = new ArrayList<>();
         try {
             task = TaskCompiler.getTaskInfo(request.getFile(), new FileInputStream("tasks/" + request.getFile() + ".java"));
-        } catch (CompilerError e) {
+        } catch (CompilerException e) {
             for (Diagnostic<? extends JavaFileObject> diagnostic : e.getErrors()) {
                 String msg = diagnostic.getMessage(Locale.getDefault());
                 System.out.println(msg);
@@ -109,7 +109,7 @@ public class TaskCompiler {
                         int indexOf = line.indexOf(str);
                         if (indexOf != -1) {
                             //The javascript gui expects line numbers to start from 1
-                            diagnostics.add(new Error(lineNum+1,indexOf+1,"You have attempted to use a restricted word: "+str));
+                            diagnostics.add(new CompilationError(lineNum+1,indexOf+1,"You have attempted to use a restricted word: "+str));
                         }
                     }
 
@@ -125,16 +125,16 @@ public class TaskCompiler {
                 junit.addListener(listener);
                 junit.run(clazz);
                 junitOut = listener.getResults();
-            } catch (CompilerError error) {
+            } catch (CompilerException error) {
                 for (Diagnostic<? extends JavaFileObject> diagnostic : error.getErrors()) {
                     String msg = diagnostic.getMessage(Locale.getDefault());
                     Matcher matcher = MISSING_METHOD.matcher(msg);
                     if (matcher.matches()) {
-                        diagnostics.add(new Error(1,0,String.format(METHOD_ERROR,matcher.group(1))));
+                        diagnostics.add(new CompilationError(1,0,String.format(METHOD_ERROR,matcher.group(1))));
                         continue;
                     }
                     //Remember, the line numbers are off by the size of the processed source.
-                    diagnostics.add(new Error(diagnostic.getLineNumber()-task.getProcessedSource().split("\n").length,diagnostic.getColumnNumber(),msg));
+                    diagnostics.add(new CompilationError(diagnostic.getLineNumber()-task.getProcessedSource().split("\n").length,diagnostic.getColumnNumber(),msg));
 
                 }
             } catch (FileNotFoundException e) {

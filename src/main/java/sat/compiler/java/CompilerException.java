@@ -12,6 +12,6 @@ import java.util.List;
  */
 @AllArgsConstructor
 @Getter
-public class CompilerError extends RuntimeException {
+public class CompilerException extends RuntimeException {
     private List<Diagnostic<? extends JavaFileObject>> errors;
 }

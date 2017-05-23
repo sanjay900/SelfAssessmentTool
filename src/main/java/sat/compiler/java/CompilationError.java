@@ -1,4 +1,4 @@
-package sat.compiler.task;
+package sat.compiler.java;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class Error {
+public class CompilationError {
     long line;
     long col;
     String error;

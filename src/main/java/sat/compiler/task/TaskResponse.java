@@ -2,6 +2,7 @@ package sat.compiler.task;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import sat.compiler.java.CompilationError;
 
 import java.util.List;
 
@@ -13,5 +14,5 @@ public class TaskResponse {
     private String console;
     private String[] testedMethods;
     private List<TestResult> junitResults;
-    private List<Error> errors;
+    private List<CompilationError> errors;
 }

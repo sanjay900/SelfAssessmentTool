@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.security.SecureClassLoader;
 import java.util.*;
 
+/**
+ * A class file manager designed to deal with files being stored in memory
+ */
 public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
     //A map of strings to class objects, so that we can handle multiple files.
     private Map<String,JavaClassObject> classMap = new HashMap<>();
@@ -30,16 +33,24 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
                     return super.findClass(name);
                 }
                 byte[] b = jclassObject.getBytes();
-                if ((((int)b[0])&0xff) == 0xCA && (((int)b[1])&0xff) == 0xFE && (((int)b[2])&0xff) == 0xBA && (((int)b[3])&0xff) == 0xBE) {
+                //Check if the file starts with the compiled magic numbers
+                if (Arrays.equals(Arrays.copyOf(b,4), COMPILED_MAGIC)) {
                     return super.defineClass(name, jclassObject
                             .getBytes(), 0, b.length);
                 }
                 compileSource(new MemorySourceFile(name,new String(b)));
+                //Now that we have compiled the class, running this function
+                //again should result in it picking up a compiled class.
                 return findClass(name);
             }
         };
     }
-    public void compileSource(JavaFileObject obj) {
+
+    /**
+     * Compile a JavaFileObject using this file manager
+     * @param obj the file to compile
+     */
+    private void compileSource(JavaFileObject obj) {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(obj);
         List<String> compileOptions = new ArrayList<>();
@@ -76,4 +87,7 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
     public boolean isSameFile(FileObject a, FileObject b) {
         return a.getName().equals(b.getName());
     }
+
+    //Compiled java classes start with the magic number 0xCAFEBABE
+    private static final byte[] COMPILED_MAGIC = new byte[]{(byte)0xCA,(byte)0xFE,(byte)0xBA,(byte)0xBE};
 }

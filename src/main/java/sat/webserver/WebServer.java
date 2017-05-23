@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import sat.compiler.TaskCompiler;
 import sat.compiler.task.TaskNameInfo;
 import sat.util.TaskInfo;
-import sat.compiler.java.CompilerError;
+import sat.compiler.java.CompilerException;
 import sat.util.JSONUtils;
 import spark.Spark;
 
@@ -56,7 +56,7 @@ public class WebServer {
                 navs.add(new TaskNameInfo(name, taskInfo.getName()));
             } catch (IllegalAccessException | InstantiationException | IOException | ClassNotFoundException e) {
                 e.printStackTrace();
-            } catch (CompilerError e) {
+            } catch (CompilerException e) {
                 System.out.println(e.getErrors());
             }
         }
