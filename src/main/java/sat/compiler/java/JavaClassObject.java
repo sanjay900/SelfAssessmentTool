@@ -7,7 +7,7 @@ import java.net.URI;
 class JavaClassObject extends SimpleJavaFileObject {
 
     /**
-     * Byte code created by the sat.compiler will be stored in this
+     * Byte code created by the compiler will be stored in this
      * ByteArrayOutputStream so that we can later get the
      * byte array out of it
      * and put it in the memory as an instance of our class.
@@ -44,14 +44,20 @@ class JavaClassObject extends SimpleJavaFileObject {
     }
 
     /**
-     * Will provide the sat.compiler with an output stream that leads
-     * to our byte array. This way the sat.compiler will write everything
+     * Will provide the compiler with an output stream that leads
+     * to our byte array. This way the compiler will write everything
      * into the byte array that we will instantiate later
      */
     @Override
     public OutputStream openOutputStream() throws IOException {
         return bos;
     }
+
+    /**
+     * Provices the compiler with an input stream that is read from our byte array.
+     * @return The current code as an input stream
+     * @throws IOException there was an error
+     */
     public InputStream openInputStream() throws IOException {
         return new ByteArrayInputStream(bos.toByteArray());
     }

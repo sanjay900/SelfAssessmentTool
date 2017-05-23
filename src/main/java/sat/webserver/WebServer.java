@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sat.compiler.TaskCompiler;
 import sat.compiler.task.TaskNameInfo;
-import sat.util.TaskInfo;
+import sat.compiler.task.TaskInfo;
 import sat.compiler.java.CompilerException;
 import sat.util.JSONUtils;
 import spark.Spark;
@@ -25,8 +25,10 @@ import static spark.Spark.webSocket;
  * Created by sanjay on 22/05/17.
  */
 public class WebServer {
-    int port = 4567;
-    Logger logger = LoggerFactory.getLogger(WebServer.class);
+    //TODO: should we read this from a config file?
+    private static final int port = 4567;
+    private Logger logger = LoggerFactory.getLogger(WebServer.class);
+
     public void startServer() {
         logger.info(""+ansi().render("@|green Starting Web Server|@"));
         if (checkPortInUse()) return;
@@ -37,6 +39,10 @@ public class WebServer {
         logger.info(""+ansi().render("@|green Starting Socket.IO Server|@"));
     }
 
+    /**
+     * Check if the server is already running / needs to be stopped.
+     * @return true if in use, false if not
+     */
     private boolean checkPortInUse() {
         try {
             new ServerSocket(port).close();
@@ -47,6 +53,11 @@ public class WebServer {
             return true;
         }
     }
+
+    /**
+     * Compile all tasks in the tasks folder and generate a TaskNameInfo for them
+     * @return a list of tasks
+     */
     private List<TaskNameInfo> listTasks() {
         List<TaskNameInfo> navs = new ArrayList<>();
         for (File task : new File("tasks").listFiles()) {

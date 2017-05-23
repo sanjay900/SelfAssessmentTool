@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by sanjay on 22/05/17.
+ * A class that collects all the information about a junit test and packages it as a list of TestResults.
  */
 @Getter
 public class JUnitTestCollector extends RunListener {

@@ -10,7 +10,7 @@ import sat.util.JSONUtils;
 import java.io.*;
 
 /**
- * Created by sanjay on 22/05/17.
+ * A web socket server that handles incoming task requests.
  */
 @WebSocket
 public class WebSocketServer {

@@ -7,6 +7,7 @@ import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.junit.Test;
+import sat.compiler.task.TaskInfo;
 import sat.util.*;
 
 import javax.annotation.processing.*;
@@ -24,7 +25,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Created by sanjay on 21/05/17.
+ * An annotation processor that processes the source java files and prepares for them to be injected
+ * by user code, and pulls information to display on the site.
  */
 @AutoService(Processor.class)
 @SupportedAnnotationTypes("sat.util.Task")
@@ -36,7 +38,8 @@ public class AnnotationProcessor extends AbstractProcessor {
     private StringBuilder toFill;
     //Keep a list of code we want to filter out of processed code
     private List<String> codeToRemove = new ArrayList<>();
-    private List<String> tested = new ArrayList<>();
+    //Keep a list of methods that are going to be tested
+    private List<String> testedMethods = new ArrayList<>();
     private Task task;
 
     @Override
@@ -45,12 +48,13 @@ public class AnnotationProcessor extends AbstractProcessor {
         elementUtils = processingEnv.getElementUtils();
         trees = Trees.instance(processingEnv);
     }
+
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element taskElement : roundEnv.getElementsAnnotatedWith(Task.class)) {
             shown = new StringBuilder();
             toFill = new StringBuilder();
-            tested.clear();
+            testedMethods.clear();
             String taskComment = getComment(taskElement);
             shown.append(taskComment);
             task = taskElement.getAnnotation(Task.class);
@@ -112,9 +116,15 @@ public class AnnotationProcessor extends AbstractProcessor {
         //This code has been fully processed.
         return true;
     }
+
+    /**
+     * Filter a method, grabbing code that needs to be edited and dealing with the @hidden annotation
+     * @param element the method element
+     * @param hidden the hidden annotation
+     */
     private void filterMethod(Element element, Hidden hidden) {
         if (element.getAnnotation(Test.class) != null) {
-            tested.add(element.getSimpleName()+"");
+            testedMethods.add(element.getSimpleName()+"");
         }
         MethodTree methodTree = new TypeScanner(element,trees).getFirstMethod();
         Set<Modifier> modifiers = methodTree.getModifiers().getFlags();
@@ -149,6 +159,11 @@ public class AnnotationProcessor extends AbstractProcessor {
         code = code.replaceAll(" /\\* = new \\w*\\(\\) \\*/","");
         return code;
     }
+
+    /**
+     * Generate the source code
+     * @param taskEle the source files class element
+     */
     private void generateClasses(TypeElement taskEle) {
         try {
             JavaFileObject jfo;
@@ -160,6 +175,12 @@ public class AnnotationProcessor extends AbstractProcessor {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Generate the processed source code from the source file (removing classes/methods to be described by the user code)
+     * @param taskEle the source file's class element
+     * @return the processed source code
+     */
     private String generateProcessedSource(TypeElement taskEle) {
         TreePath path = trees.getPath(taskEle);
         String endClass = flatten(path.getCompilationUnit().getImports()) +
@@ -187,13 +208,19 @@ public class AnnotationProcessor extends AbstractProcessor {
         endClass = endClass.replace(" "+ taskEle.getQualifiedName()+"() {"," "+ taskEle.getQualifiedName()+ OUTPUT_CLASS_SUFFIX +"() {");
         return fixWeirdCompilationIssues(endClass);
     }
+
+    /**
+     * Turn all the generated lists and buffers into a TaskInfo class
+     * @param taskEle the class element for the current task
+     * @return the code for a TaskInfo class describing the class
+     */
     private String generateTaskInfo(TypeElement taskEle) {
         TreePath path = trees.getPath(taskEle);
         //Generate code for all methods in TaskInfo
         String source = StringEscapeUtils.escapeJava(generateProcessedSource(taskEle));
         String toDisplay = StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(shown.toString()));
         String toFill = StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(this.toFill.toString()));
-        String testedMethods = escapeStringArray(tested.toArray(new String[tested.size()]));
+        String testedMethods = escapeStringArray(this.testedMethods.toArray(new String[this.testedMethods.size()]));
         String restricted = escapeStringArray(task.restricted());
         //Generate a TaskInfo for the class
         return flatten(path.getCompilationUnit().getImports()) +
@@ -207,12 +234,32 @@ public class AnnotationProcessor extends AbstractProcessor {
                 generateMethodSource(String.class,"getProcessedSource",source)+
                 "}";
     }
+
+    /**
+     * Escape a string to put into another generated source code (surround with ")
+     * @param str the string
+     * @return the string wrapped in quotes
+     */
     private String escapeString(String str) {
         return "\""+str+"\"";
     }
+
+    /**
+     * Escape all the contents of an array, and then build source code for that array
+     * @param str the array
+     * @return the array in source code form {"ele1","ele2"...}
+     */
     private String escapeStringArray(String... str) {
         return Arrays.stream(str).map(this::escapeString).collect(Collectors.joining(","));
     }
+
+    /**
+     * Generate the source code for a method
+     * @param ret the return type
+     * @param name the method name
+     * @param body the method body
+     * @return the source code for a method
+     */
     private String generateMethodSource(Class<?> ret, String name, String body) {
         if (ret.isArray()) {
             body ="new "+ret.getSimpleName()+"{"+body+"}";
@@ -226,8 +273,13 @@ public class AnnotationProcessor extends AbstractProcessor {
                 "}";
     }
 
-    private String flatten(Collection<?> mods) {
-        return mods.stream().map(Object::toString).collect(Collectors.joining(" "));
+    /**
+     * Flatten a collection into a single string, calling toString on all elements
+     * @param collection the collection
+     * @return a string describing the collection
+     */
+    private String flatten(Collection<?> collection) {
+        return collection.stream().map(Object::toString).collect(Collectors.joining(" "));
     }
 
     /**
@@ -242,22 +294,29 @@ public class AnnotationProcessor extends AbstractProcessor {
         }
         return "";
     }
+
+    /**
+     * Strip the annotation (first line) from a st ring
+     * @param str the string to strip the annotation from
+     * @return str without annotations.
+     */
     private String stripAnnotation(String str) {
-        if (str.contains("@"))
+        if(str.startsWith("\n")) str = str.substring(1);
+        if (str.startsWith("@"))
             return str.substring(str.indexOf("\n")+1);
         return str;
     }
 
     /**
-     * Get the first line of str
-     * @param str
-     * @return the first line of str
+     * Get the first line of a string
+     * @param str the string
+     * @return the first line of the string
      */
     private String getHeader(String str) {
         return str.substring(0,str.indexOf('\n'));
     }
-    //Text to show in an ommitted block of code
-    private static final String OMITTED_BLOCK = "\n\t//ommitted\n}\n";
+    //Text to show in an omitted block of code
+    private static final String OMITTED_BLOCK = "\n\t//omitted\n}\n";
     private static final String FULL_OMITTED_BLOCK = "{"+OMITTED_BLOCK;
     //The generated class that only contains methods for rendering this class to the browser
     public static final String TASK_INFO_SUFFIX = "Info";

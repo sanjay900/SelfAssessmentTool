@@ -1,18 +1,17 @@
 package sat.compiler;
 
-import jdk.nashorn.internal.codegen.CompilationException;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.io.WriterOutputStream;
 import org.junit.runner.JUnitCore;
 import sat.compiler.java.ClassFileManager;
+import sat.compiler.java.CompilationError;
 import sat.compiler.java.CompilerException;
 import sat.compiler.java.MemorySourceFile;
+import sat.compiler.processor.AnnotationProcessor;
 import sat.compiler.task.TaskRequest;
 import sat.compiler.task.TaskResponse;
 import sat.compiler.task.TestResult;
-import sat.util.TaskInfo;
-import sat.compiler.processor.AnnotationProcessor;
-import sat.compiler.java.CompilationError;
+import sat.compiler.task.TaskInfo;
 
 import javax.tools.*;
 import java.io.*;
@@ -21,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TaskCompiler {
+    private static PrintStream normal = System.out;
     /**
      * Compile a class, and then return classToGet
      * @param classToGet the class to get from the classpath
@@ -54,14 +54,21 @@ public class TaskCompiler {
         return clazz;
     }
 
+    /**
+     * Compile a task
+     * @param name the name of the task class
+     * @param code the user code
+     * @param is the input stream containing the task source
+     * @return the compiled task
+     * @throws CompilerException there was an error compiling the files
+     */
     private static Class<?> compileTask(String name, String code, InputStream is) throws CompilerException {
         try {
-            String task = IOUtils.toString(is);
-            TaskInfo atask = (TaskInfo) compile(name, task, name +
-                    AnnotationProcessor.TASK_INFO_SUFFIX).newInstance();
-            String usercode = atask.getProcessedSource();
-            usercode+=code;
-            usercode+="}";
+            TaskInfo atask = getTaskInfo(name,is);
+            //Combine the processed source code with the user code
+            String usercode = atask.getProcessedSource()+
+                    code+
+                    "}";
             return compile(name+ AnnotationProcessor.OUTPUT_CLASS_SUFFIX,usercode, name + AnnotationProcessor.OUTPUT_CLASS_SUFFIX);
 
         } catch (IOException | IllegalAccessException | InstantiationException e) {
@@ -73,17 +80,34 @@ public class TaskCompiler {
         return null;
     }
 
+    /**
+     * Get information about a task
+     * @param name the task name
+     * @param is the source code of the task
+     * @return a TaskInfo describing the task
+     * @throws ClassNotFoundException There was an issue creating the class
+     * @throws IllegalAccessException There was an issue accessing the class
+     * @throws InstantiationException There was an issue instantiating the class
+     * @throws IOException there as an io exception
+     * @throws CompilerException there was an issue compiling
+     */
     public static TaskInfo getTaskInfo(String name, InputStream is) throws ClassNotFoundException, IllegalAccessException, InstantiationException, IOException, CompilerException{
         String task = IOUtils.toString(is);
         return (TaskInfo) compile(name, task, name + AnnotationProcessor.TASK_INFO_SUFFIX).newInstance();
     }
 
-    private static PrintStream normal = System.out;
+    /**
+     * Compile a task from the web server
+     * @param request the request from the web server
+     * @return the response to send to the client.
+     */
     public static TaskResponse compile(TaskRequest request) {
         TaskInfo task;
         StringBuilder output = new StringBuilder();
         List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
+        //First, compile the source class into a task.
+        //TODO: It might be a good idea to cache these once we have valid TaskInfos.
         try {
             task = TaskCompiler.getTaskInfo(request.getFile(), new FileInputStream("tasks/" + request.getFile() + ".java"));
         } catch (CompilerException e) {
@@ -102,6 +126,7 @@ public class TaskCompiler {
             junitOut.add(new TestResult(method,"Failed"));
         }
         if (request.getCode() != null && !request.getCode().isEmpty()) {
+            //Look for restricted keywords
             for (String str: task.getRestricted()) {
                 if (request.getCode().contains(str)) {
                     String[] split = request.getCode().split("\n");
@@ -117,6 +142,7 @@ public class TaskCompiler {
                     return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics);
                 }
             }
+            //Save system.out to a writer
             StringWriter writer = new StringWriter();
             System.setOut(new PrintStream(new WriterOutputStream(writer)));
             try {
@@ -141,6 +167,7 @@ public class TaskCompiler {
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } finally {
+                //Set system.out to the normal system.out
                 System.setOut(normal);
                 output = new StringBuilder(writer.toString());
             }

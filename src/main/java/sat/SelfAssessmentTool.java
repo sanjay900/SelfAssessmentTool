@@ -2,11 +2,11 @@ package sat;
 
 import sat.webserver.WebServer;
 
-public class TestApp {
+public class SelfAssessmentTool {
     public static void main(String[] args) {
-        new TestApp();
+        new SelfAssessmentTool();
     }
-    public TestApp() {
+    private SelfAssessmentTool() {
         new WebServer().startServer();
     }
 }

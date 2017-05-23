@@ -1,5 +1,8 @@
-package sat.util;
+package sat.compiler.task;
 
+/**
+ * A class that is generated to describe a task
+ */
 public abstract class TaskInfo {
     public abstract String getCodeToDisplay();
     public abstract String getMethodsToFill();
