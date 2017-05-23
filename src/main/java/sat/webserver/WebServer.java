@@ -65,6 +65,7 @@ public class WebServer {
         for (File task : new File("tasks").listFiles()) {
             try {
                 String name = FilenameUtils.getBaseName(task.getName());
+                if (!task.getName().endsWith(".java")) continue;;
                 TaskInfo taskInfo = TaskCompiler.getTaskInfo(name,new FileInputStream(task));
                 navs.add(new TaskNameInfo(name, taskInfo.getName()));
             } catch (IllegalAccessException | InstantiationException | IOException | ClassNotFoundException e) {

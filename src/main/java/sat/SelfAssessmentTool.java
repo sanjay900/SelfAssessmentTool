@@ -30,8 +30,6 @@ public class SelfAssessmentTool {
                     WatchKey key;
                     try {
                         key = watcher.take();
-                        //Wait a bit for all files to save.
-                        Thread.sleep(10);
                     } catch (InterruptedException x) {
                         return;
                     }
