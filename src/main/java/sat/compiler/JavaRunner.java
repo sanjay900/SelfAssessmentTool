@@ -2,7 +2,7 @@ package sat.compiler;
 
 import org.apache.commons.io.IOUtils;
 import sat.util.TaskInfo;
-import sat.util.AnnotationProcessor;
+import sat.compiler.processor.AnnotationProcessor;
 import sat.webserver.WebSocketServer;
 
 import javax.tools.*;
@@ -19,7 +19,7 @@ public class JavaRunner {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager stdFileManager = compiler.getStandardFileManager(null, null, null);
         ClassFileManager manager =  new ClassFileManager(stdFileManager);
-        Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(new DynamicJavaSourceCodeObject(name,code));
+        Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(new DynamicJavaSourceCodeObject(name, code));
         List<String> compileOptions = new ArrayList<>();
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
         JavaCompiler.CompilationTask compilerTask = compiler.getTask(null, manager, diagnostics, compileOptions, null, compilationUnits);
@@ -35,8 +35,6 @@ public class JavaRunner {
         Class<?> clazz;
         try {
             clazz = manager.getClassLoader(null).loadClass(classToGet);
-        } catch (ClassNotFoundException e) {
-            throw e;
         } finally {
             for (JavaFileObject fileObject : compilationUnits) {
                 fileObject.delete();
@@ -49,11 +47,11 @@ public class JavaRunner {
         try {
             String task = IOUtils.toString(is);
             TaskInfo atask = (TaskInfo) compile(name, task, name +
-                    AnnotationProcessor.TEXT_ONLY_CLASS_SUFFIX).newInstance();
+                    AnnotationProcessor.TASK_INFO_SUFFIX).newInstance();
             String usercode = atask.getProcessedSource();
             usercode+=code;
             usercode+="}";
-            return compile(name+ AnnotationProcessor.GENERATED_CLASS_SUFFIX,usercode, name + AnnotationProcessor.GENERATED_CLASS_SUFFIX);
+            return compile(name+ AnnotationProcessor.OUTPUT_CLASS_SUFFIX,usercode, name + AnnotationProcessor.OUTPUT_CLASS_SUFFIX);
 
         } catch (IOException | IllegalAccessException | InstantiationException e) {
             e.printStackTrace();
@@ -66,6 +64,6 @@ public class JavaRunner {
 
     public static TaskInfo getTaskInfo(String name, InputStream is) throws ClassNotFoundException, IllegalAccessException, InstantiationException, IOException {
         String task = IOUtils.toString(is);
-        return (TaskInfo) compile(name, task, name + AnnotationProcessor.TEXT_ONLY_CLASS_SUFFIX).newInstance();
+        return (TaskInfo) compile(name, task, name + AnnotationProcessor.TASK_INFO_SUFFIX).newInstance();
     }
 }
