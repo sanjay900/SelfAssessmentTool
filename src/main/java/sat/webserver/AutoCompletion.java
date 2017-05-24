@@ -12,4 +12,8 @@ public class AutoCompletion {
     String name;
     String value;
     String meta;
+    String caption;
+    public AutoCompletion(String name, String value, String meta) {
+        this(name,value,meta,value);
+    }
 }

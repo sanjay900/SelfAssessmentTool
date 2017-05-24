@@ -148,7 +148,11 @@ public class TaskCompiler {
                     }
                 }
                 String ffunc = func;
-                Matcher search = Pattern.compile(VAR_DECL+word+"[ ;)]").matcher(usercode);
+                Matcher search = Pattern.compile(VAR_DECL+word+"[ ;),]").matcher(request.getCode());
+                if (!search.find()) {
+                    search = Pattern.compile(VAR_DECL + word + "[ ;),]").matcher(usercode);
+                }
+                search.reset();
                 if (search.find()) {
                     matched= true;
                     String name = search.group(1);
@@ -172,8 +176,8 @@ public class TaskCompiler {
                                                     if (param.length() > 0)
                                                         param = new StringBuilder(param.substring(0,param.length() - 1));
                                                     completions.add(new AutoCompletion(info.getSimpleName(),
-                                                            m.getName()+"("+param+")",
-                                                            m.getReturnType().getSimpleName()));
+                                                            m.getName()+"(",
+                                                            m.getReturnType().getSimpleName(),m.getName()+"("+param+")"));
                                                 }
                                             } catch (ClassNotFoundException e) {
                                                 e.printStackTrace();
@@ -272,7 +276,7 @@ public class TaskCompiler {
         compiledTasks.clear();
     }
     private static final String VAR_DECL = "(([a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*) ";
-    private static final Pattern VAR_DECL_FULL = Pattern.compile("^(?!import|private|public|abstract|interface|class|enum)(\\w.+) (\\w[A-z_]+)[ );]");
+    private static final Pattern VAR_DECL_FULL = Pattern.compile("^(?!import|private|public|abstract|interface|class|enum)(\\w.+) (\\w[A-z_]+)[ ),;]");
     private static final Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(.+\\).+");
     private static final String METHOD_ERROR = "You are missing the method %s!";
     private static final String ERROR = "An error occurred with the source for this file.\n"+
