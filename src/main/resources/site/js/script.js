@@ -13,6 +13,10 @@ var COLOR_MAPPING = {
 };
 
 var userInput = ace.edit("user-input-box");
+ace.require("ace/ext/language_tools");
+userInput.setOptions({
+    enableBasicAutocompletion: true
+});
 userInput.setWrapBehavioursEnabled(false);
 codeDisplay.setWrapBehavioursEnabled(false);
 //          userInput.setTheme("ace/theme/monokai");
