@@ -133,6 +133,7 @@ public class TaskCompiler {
         if (request.getCode() != null && request.getCol() != 0) {
             String curLine = request.getCode().split("\n")[request.getLine()];
             if (request.getCol() == curLine.length()) {
+                //Work out what word the user was typing
                 StringBuilder curWord = new StringBuilder();
                 int idx = 0;
                 for (char c : curLine.toCharArray()) {
@@ -143,56 +144,58 @@ public class TaskCompiler {
                     }
                     idx++;
                 }
-                String word = curWord.toString();
-                String func = "";
-                if (word.contains(".")) {
-                    word = word.substring(0, curWord.indexOf("."));
+                String beforeDot = curWord.toString();
+                String afterDot = "";
+                //They were part way through auto completing a method from a variable.
+                if (beforeDot.contains(".")) {
+                    beforeDot = beforeDot.substring(0, curWord.indexOf("."));
                     if (curWord.indexOf(".") < curWord.length()) {
-                        func = curWord.substring(curWord.indexOf(".") + 1);
+                        afterDot = curWord.substring(curWord.indexOf(".") + 1);
                     }
                 }
-                String ffunc = func;
-                Matcher search = Pattern.compile(VAR_DECL+word.replace("[({})]","")+"[ ;),]").matcher(request.getCode());
+                final String afterDotFinal = afterDot;
+                //Search for something looking like the declaration for that variable
+                Matcher search = Pattern.compile(VAR_DECL+beforeDot.replace("[({})]","")+"[ ;),]").matcher(request.getCode());
                 if (!search.find()) {
-                    search = Pattern.compile(VAR_DECL + word + "[ ;),]").matcher(usercode);
+                    search = Pattern.compile(VAR_DECL + beforeDot + "[ ;),]").matcher(usercode);
                 }
+                //Reset the search since we called find once.
                 search.reset();
                 if (search.find()) {
                     matched= true;
                     String name = search.group(1);
+                    //Strip away generics, we cant search for them.
                     if (name.contains("<")) {
                         name = name.substring(0,name.indexOf("<"));
                     }
-                    findClasses(name,true).forEach(info -> {
-                                try {
-                                    Class<?> clazz = Class.forName(info.getName());
-                                    for(Method m: clazz.getDeclaredMethods()) {
-                                        if (!m.getName().startsWith(ffunc)) continue;
-                                        StringBuilder param = new StringBuilder();
-                                        for (Parameter parameter: m.getParameters()) {
-                                            param.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
-                                        }
-                                        if (param.length() > 0)
-                                            param = new StringBuilder(param.substring(0,param.length() - 1));
-                                        completions.add(new AutoCompletion(info.getSimpleName(),
-                                                m.getName()+"(",
-                                                m.getReturnType().getSimpleName(),m.getName()+"("+param+")"));
-                                    }
-                                    for(Field f: clazz.getDeclaredFields()) {
-                                        if (!f.getName().startsWith(ffunc)) continue;
-                                        completions.add(new AutoCompletion(info.getSimpleName(),
-                                                f.getName(),
-                                                f.getType().getSimpleName()));
-                                    }
-                                } catch (ClassNotFoundException e) {
-                                    e.printStackTrace();
-                                }
+                    for (Class<?> clazz : findClasses(name,true)) {
+                        //Autocomplete methods from found classes
+                        for(Method m: clazz.getMethods()) {
+                            if (!m.getName().startsWith(afterDotFinal)) continue;
+                            StringBuilder param = new StringBuilder();
+                            for (Parameter parameter: m.getParameters()) {
+                                param.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
                             }
-                    );
+                            if (param.length() > 0)
+                                param = new StringBuilder(param.substring(0,param.length() - 1));
+                            completions.add(new AutoCompletion(clazz.getSimpleName(),
+                                    m.getName()+"(",
+                                    m.getReturnType().getSimpleName(),m.getName()+"("+param+")"));
+                        }
+                        //Autocomplete fields from found classes
+                        for(Field f: clazz.getFields()) {
+                            if (!f.getName().startsWith(afterDotFinal)) continue;
+                            completions.add(new AutoCompletion(clazz.getSimpleName(),
+                                    f.getName(),
+                                    f.getType().getSimpleName()));
+                        }
+                    }
+
 
                 }
+                //If nothing was matched above, attempt to match the word as if it was a class.
                 if (!matched) {
-                    for (Class<?> clazz: findClasses(word,false)) {
+                    for (Class<?> clazz: findClasses(beforeDot,false)) {
                         completions.add(new AutoCompletion(clazz.getSimpleName(),clazz.getSimpleName(),"class"));
                     }
                 }
@@ -271,6 +274,7 @@ public class TaskCompiler {
             StringWriter writer = new StringWriter();
             System.setOut(new PrintStream(new WriterOutputStream(writer)));
             try {
+                //compile and run with junit
                 Class<?> clazz = compileTask(request.getFile(), usercode);
                 JUnitCore junit = new JUnitCore();
                 JUnitTestCollector listener = new JUnitTestCollector();
@@ -302,6 +306,13 @@ public class TaskCompiler {
         }
         return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics, completions);
     }
+
+    /**
+     * Find a class by name using guava
+     * @param name the name
+     * @param exact true if you have the entire class name, false if you only have part of it
+     * @return
+     */
     private static List<Class<?>> findClasses(String name, boolean exact) {
         try {
             return ClassPath.from(
@@ -318,7 +329,13 @@ public class TaskCompiler {
         return Collections.emptyList();
     }
 
+    /**
+     * Return true if we should complete, false otherwise
+     * @param name the package to check against
+     * @return true if we should autocomplete entries from this class, false otherwise
+     */
     private static boolean shouldComplete(String name) {
+        //Note that we exclude inner classes as they are not useful to autocomplete.
         return !name.contains("$") && (name.startsWith("java.util") || name.startsWith("java.lang"));
     }
 
