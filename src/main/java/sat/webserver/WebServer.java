@@ -4,9 +4,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sat.compiler.TaskCompiler;
-import sat.compiler.task.TaskNameInfo;
-import sat.compiler.task.TaskInfo;
 import sat.compiler.java.CompilerException;
+import sat.compiler.task.TaskInfo;
+import sat.compiler.task.TaskNameInfo;
 import sat.util.JSONUtils;
 import spark.Spark;
 
@@ -21,7 +21,6 @@ import java.util.List;
 import static org.fusesource.jansi.Ansi.ansi;
 import static spark.Spark.get;
 import static spark.Spark.post;
-import static spark.Spark.webSocket;
 
 
 public class WebServer {

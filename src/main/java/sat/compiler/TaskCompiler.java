@@ -204,6 +204,9 @@ public class TaskCompiler {
                 Matcher varMatcher = VAR_DECL_FULL.matcher(request.getCode());
                 while (varMatcher.find()) {
                     String variable = varMatcher.group(2);
+                    if (Arrays.toString(javax.lang.model.element.Modifier.values()).contains(varMatcher.group(1).toLowerCase())) {
+                        continue;
+                    }
                     completions.add(new AutoCompletion(variable,variable,"variable"));
                 }
             }
@@ -319,11 +322,8 @@ public class TaskCompiler {
         return !name.contains("$") && (name.startsWith("java.util") || name.startsWith("java.lang"));
     }
 
-    public static void clearCache() {
-        compiledTasks.clear();
-    }
-    private static final String VAR_DECL = "(([a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*) ";
-    private static final Pattern VAR_DECL_FULL = Pattern.compile("^(?!import|private|public|abstract|interface|class|enum)(\\w.+) (\\w[A-z_]+)[ ),;]");
+    private static final String VAR_DECL = "((?:[a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*) ";
+    private static final Pattern VAR_DECL_FULL = Pattern.compile(VAR_DECL+"(\\w[A-z\\d_]+)[ ),;]");
     private static final Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(.+\\).+");
     private static final String METHOD_ERROR = "You are missing the method %s!";
     private static final String ERROR = "An error occurred with the source for this file.\n"+
