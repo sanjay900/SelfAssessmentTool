@@ -6,12 +6,10 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import sat.compiler.TaskCompiler;
-import sat.compiler.task.TaskRequest;
 import sat.util.JSONUtils;
 
 import java.io.*;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -23,16 +21,6 @@ public class WebSocketServer {
     @OnWebSocketConnect
     public void connect(Session user) {
         users.add(user);
-    }
-    @OnWebSocketMessage
-    public void onMessage(Session user, String message) {
-        TaskRequest request = JSONUtils.fromJSON(message,TaskRequest.class);
-        try {
-            user.getRemote().sendString(JSONUtils.toJSON(TaskCompiler.compile(request)));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
     }
     @OnWebSocketClose
     public void onClose(Session user, int statusCode, String reason) {

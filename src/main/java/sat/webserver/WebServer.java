@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.fusesource.jansi.Ansi.ansi;
 import static spark.Spark.get;
+import static spark.Spark.post;
 import static spark.Spark.webSocket;
 
 /**
@@ -37,6 +38,10 @@ public class WebServer {
         Spark.port(port);
         webSocket("/socket",WebSocketServer.class);
         get("/listTasks", (req, res) -> JSONUtils.toJSON(listTasks()));
+        post("/testCode", (req, res) -> {
+            TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);
+            return JSONUtils.toJSON(TaskCompiler.compile(request));
+        });
         logger.info(""+ansi().render("@|green Starting Socket.IO Server|@"));
         //Compile all the current tasks so that we don't have to do it on the first connection.
         listTasks();

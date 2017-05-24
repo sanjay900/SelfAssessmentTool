@@ -10,7 +10,7 @@ import java.util.*;
  */
 public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
     //A map of strings to class objects, so that we can handle multiple files.
-    private Map<String,JavaClassObject> classMap = new HashMap<>();
+    private Map<String,CompiledMemoryFile> classMap = new HashMap<>();
     /**
      * Instance of ClassLoader
      */
@@ -28,7 +28,7 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
             @Override
             protected Class<?> findClass(String name)
                     throws ClassNotFoundException {
-                JavaClassObject jclassObject = classMap.get(name);
+                CompiledMemoryFile jclassObject = classMap.get(name);
                 if (!classMap.containsKey(name)) {
                     return super.findClass(name);
                 }
@@ -52,10 +52,9 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
      */
     private void compileSource(JavaFileObject obj) {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(obj);
-        List<String> compileOptions = new ArrayList<>();
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-        JavaCompiler.CompilationTask compilerTask = compiler.getTask(null, this, diagnostics, compileOptions, null, compilationUnits);
+        JavaCompiler.CompilationTask compilerTask = compiler.getTask(null, this, diagnostics,
+                Collections.emptyList(), null, Collections.singletonList(obj));
         compilerTask.call();
     }
     /**
@@ -63,7 +62,7 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
      * compiled class. It creates an anonymous class
      * extending the SecureClassLoader which uses the
      * byte code created by the sat.compiler and stored in
-     * the JavaClassObject, and returns the Class for it
+     * the CompiledMemoryFile, and returns the Class for it
      */
     @Override
     public ClassLoader getClassLoader(Location location) {
@@ -72,16 +71,16 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
 
 
     /**
-     * Gives the compiler an instance of the JavaClassObject
+     * Gives the compiler an instance of the CompiledMemoryFile
      * so that the compiler can write the byte code into it.
      */
     @Override
     public JavaFileObject getJavaFileForOutput(Location location,
                                                String className, JavaFileObject.Kind kind, FileObject sibling)
             throws IOException {
-        JavaClassObject jclassObject = new JavaClassObject(className, kind);
-        classMap.put(className,jclassObject);
-        return jclassObject;
+        CompiledMemoryFile compiledCode = new CompiledMemoryFile(className, kind);
+        classMap.put(className, compiledCode);
+        return compiledCode;
     }
     @Override
     public boolean isSameFile(FileObject a, FileObject b) {

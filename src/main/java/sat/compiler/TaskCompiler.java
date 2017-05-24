@@ -1,5 +1,6 @@
 package sat.compiler;
 
+import com.google.common.reflect.ClassPath;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.io.WriterOutputStream;
 import org.junit.runner.JUnitCore;
@@ -8,13 +9,16 @@ import sat.compiler.java.CompilationError;
 import sat.compiler.java.CompilerException;
 import sat.compiler.java.MemorySourceFile;
 import sat.compiler.processor.AnnotationProcessor;
-import sat.compiler.task.TaskRequest;
-import sat.compiler.task.TaskResponse;
-import sat.compiler.task.TestResult;
 import sat.compiler.task.TaskInfo;
+import sat.compiler.task.TestResult;
+import sat.webserver.AutoCompletion;
+import sat.webserver.TaskRequest;
+import sat.webserver.TaskResponse;
 
 import javax.tools.*;
 import java.io.*;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,26 +63,17 @@ public class TaskCompiler {
      * Compile a task
      * @param name the name of the task class
      * @param code the user code
-     * @param is the input stream containing the task source
      * @return the compiled task
      * @throws CompilerException there was an error compiling the files
      */
-    private static Class<?> compileTask(String name, String code, InputStream is) throws CompilerException {
+    private static Class<?> compileTask(String name, String code) throws CompilerException {
         try {
-            TaskInfo atask = getTaskInfo(name,is);
-            //Combine the processed source code with the user code
-            String usercode = atask.getProcessedSource()+
-                    code+
-                    "}";
-            return compile(name+ AnnotationProcessor.OUTPUT_CLASS_SUFFIX,usercode, name + AnnotationProcessor.OUTPUT_CLASS_SUFFIX);
+            return compile(name+ AnnotationProcessor.OUTPUT_CLASS_SUFFIX,code, name + AnnotationProcessor.OUTPUT_CLASS_SUFFIX);
 
-        } catch (IOException | IllegalAccessException | InstantiationException e) {
-            e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        return null;
     }
 
     /**
@@ -111,24 +106,115 @@ public class TaskCompiler {
         StringBuilder output = new StringBuilder();
         List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
-        if (request.getFile() == null) return new TaskResponse("","","",new String[]{}, junitOut,diagnostics);
+        if (request.getFile() == null) return new TaskResponse("","","",new String[]{}, junitOut,diagnostics, Collections.emptyList());
         //First, compile the source class into a task.
         try {
             task = TaskCompiler.getTaskInfo(request.getFile(), new FileInputStream("tasks/" + request.getFile() + ".java"));
         } catch (CompilerException e) {
             for (Diagnostic<? extends JavaFileObject> diagnostic : e.getErrors()) {
                 String msg = diagnostic.getMessage(Locale.getDefault());
-                System.out.println(msg);
                 output.append(msg).append("\n");
             }
-            return new TaskResponse(ERROR,"",output.toString(),new String[]{}, junitOut,diagnostics);
+            return new TaskResponse(ERROR,"",output.toString(),new String[]{}, junitOut,diagnostics, Collections.emptyList());
         } catch (Exception ex) {
             ex.printStackTrace();
-            return new TaskResponse(ERROR,"",ex.toString(),new String[]{}, junitOut,diagnostics);
+            return new TaskResponse(ERROR,"",ex.toString(),new String[]{}, junitOut,diagnostics, Collections.emptyList());
         }
-        //There was a compile error. Fail all methods so they show on the web gui
+        //Combine the processed source code with the user code
+        String usercode = task.getProcessedSource()+
+                request.getCode()+
+                "}";
+        List<AutoCompletion> completions = new ArrayList<>();
+        boolean matched = false;
+        if (request.getCode() != null && request.getCol() != 0) {
+            String curLine = request.getCode().split("\n")[request.getLine()];
+            if (request.getCol() == curLine.length()) {
+                StringBuilder curWord = new StringBuilder();
+                int idx = 0;
+                for (char c : curLine.toCharArray()) {
+                    curWord.append(c);
+                    if (Character.isSpaceChar(c)) {
+                        curWord = new StringBuilder();
+                        if (idx >= request.getCol()) break;
+                    }
+                    idx++;
+                }
+                String word = curWord.toString();
+                String func = "";
+                if (word.contains(".")) {
+                    word = word.substring(0, curWord.indexOf("."));
+                    if (curWord.indexOf(".") < curWord.length()) {
+                        func = curWord.substring(curWord.indexOf(".") + 1);
+                    }
+                }
+                String ffunc = func;
+                Matcher search = Pattern.compile(VAR_DECL+word+"[ ;)]").matcher(usercode);
+                if (search.find()) {
+                    matched= true;
+                    String name = search.group(1);
+                    if (name.contains("<")) {
+                        name = name.substring(0,name.indexOf("<"));
+                    }
+                    String var = name;
+                    try {
+                        ClassPath.from(Thread.currentThread().getContextClassLoader()).getAllClasses().stream()
+                                .filter(s -> s.getSimpleName().equals(var))
+                                .forEach(info -> {
+                                            if (info.getPackageName().startsWith("com.sun")) return;
+                                            try {
+                                                Class<?> clazz = Class.forName(info.getName());
+                                                for(Method m: clazz.getDeclaredMethods()) {
+                                                    if (!m.getName().startsWith(ffunc)) continue;
+                                                    StringBuilder param = new StringBuilder();
+                                                    for (Parameter parameter: m.getParameters()) {
+                                                        param.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
+                                                    }
+                                                    if (param.length() > 0)
+                                                        param = new StringBuilder(param.substring(0,param.length() - 1));
+                                                    completions.add(new AutoCompletion(info.getSimpleName(),
+                                                            m.getName()+"("+param+")",
+                                                            m.getReturnType().getSimpleName()));
+                                                }
+                                            } catch (ClassNotFoundException e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
+                                );
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+        }
+        if (!matched) {
+            if (request.getCode() != null) {
+                Matcher varMatcher = VAR_DECL_FULL.matcher(request.getCode());
+                while (varMatcher.find()) {
+                    String variable = varMatcher.group(2);
+                    completions.add(new AutoCompletion(variable,variable,"variable"));
+                }
+            }
+            for (String variable : task.getVariables()) {
+                completions.add(new AutoCompletion(variable, variable, "field"));
+            }
+            for (String method : task.getMethods()) {
+                completions.add(new AutoCompletion(method, method, "method"));
+            }
+            for (String clazz : task.getClasses()) {
+                completions.add(new AutoCompletion(clazz, clazz, "class"));
+            }
+            for (String iface : task.getInterfaces()) {
+                completions.add(new AutoCompletion(iface, iface, "interface"));
+            }
+            for (String enu : task.getEnums()) {
+                completions.add(new AutoCompletion(enu, enu, "enum"));
+            }
+        }
+        //Start all methods as failed, and correct if we compile successfully
         for (String method : task.getTestableMethods()) {
-            junitOut.add(new TestResult(method,"Failed"));
+            junitOut.add(new TestResult(method, "Failed"));
         }
         if (request.getCode() != null && !request.getCode().isEmpty()) {
             //Look for restricted keywords
@@ -144,14 +230,14 @@ public class TaskCompiler {
                         }
                     }
 
-                    return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics);
+                    return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics, completions);
                 }
             }
             //Save system.out to a writer
             StringWriter writer = new StringWriter();
             System.setOut(new PrintStream(new WriterOutputStream(writer)));
             try {
-                Class<?> clazz = TaskCompiler.compileTask(request.getFile(), request.getCode(), new FileInputStream("tasks/"+request.getFile()+".java"));
+                Class<?> clazz = compileTask(request.getFile(), usercode);
                 JUnitCore junit = new JUnitCore();
                 JUnitTestCollector listener = new JUnitTestCollector();
                 junit.addListener(listener);
@@ -169,8 +255,6 @@ public class TaskCompiler {
                     diagnostics.add(new CompilationError(diagnostic.getLineNumber()-task.getProcessedSource().split("\n").length,diagnostic.getColumnNumber(),msg));
 
                 }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } finally {
                 //Set system.out to the normal system.out
                 System.setOut(normal);
@@ -182,11 +266,13 @@ public class TaskCompiler {
                 junitOut.add(new TestResult(method,"Not Tested"));
             }
         }
-        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics);
+        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics, completions);
     }
     public static void clearCache() {
         compiledTasks.clear();
     }
+    private static final String VAR_DECL = "(([a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*) ";
+    private static final Pattern VAR_DECL_FULL = Pattern.compile("^(?!import|private|public|abstract|interface|class|enum)(\\w.+) (\\w[A-z_]+)[ );]");
     private static final Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(.+\\).+");
     private static final String METHOD_ERROR = "You are missing the method %s!";
     private static final String ERROR = "An error occurred with the source for this file.\n"+

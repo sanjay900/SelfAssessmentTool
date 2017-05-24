@@ -7,6 +7,9 @@ import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.junit.Test;
+import sat.compiler.annotations.ClassToComplete;
+import sat.compiler.annotations.Hidden;
+import sat.compiler.annotations.Task;
 import sat.compiler.task.TaskInfo;
 import sat.util.*;
 
@@ -29,7 +32,7 @@ import java.util.stream.Collectors;
  * by user code, and pulls information to display on the site.
  */
 @AutoService(Processor.class)
-@SupportedAnnotationTypes("sat.util.Task")
+@SupportedAnnotationTypes("sat.compiler.annotations.Task")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class AnnotationProcessor extends AbstractProcessor {
     private Elements elementUtils;
@@ -39,7 +42,12 @@ public class AnnotationProcessor extends AbstractProcessor {
     //Keep a list of code we want to filter out of processed code
     private List<String> codeToRemove = new ArrayList<>();
     //Keep a list of methods that are going to be tested
-    private List<String> testedMethods = new ArrayList<>();
+    private Set<String> testedMethods = new HashSet<>();
+    private Set<String> methods = new HashSet<>();
+    private Set<String> variables = new HashSet<>();
+    private Set<String> classes = new HashSet<>();
+    private Set<String> enums = new HashSet<>();
+    private Set<String> interfaces = new HashSet<>();
     private Task task;
 
     @Override
@@ -54,11 +62,27 @@ public class AnnotationProcessor extends AbstractProcessor {
         for (Element taskElement : roundEnv.getElementsAnnotatedWith(Task.class)) {
             shown = new StringBuilder();
             toFill = new StringBuilder();
+            methods.clear();
+            variables.clear();
             testedMethods.clear();
+            classes.clear();
+            enums.clear();
+            interfaces.clear();
             String taskComment = getComment(taskElement);
             shown.append(taskComment);
             task = taskElement.getAnnotation(Task.class);
             for (Element element : taskElement.getEnclosedElements()) {
+                switch (element.getKind()) {
+                    case CLASS:
+                        classes.add(element.getSimpleName()+"");
+                        break;
+                    case ENUM:
+                        enums.add(element.getSimpleName()+"");
+                        break;
+                    case INTERFACE:
+                        interfaces.add(element.getSimpleName()+"");
+                        break;
+                }
                 Hidden hidden = element.getAnnotation(Hidden.class);
                 if (hidden != null) {
                     if (!hidden.showFunctionSignature() && !hidden.shouldWriteComment()) {
@@ -67,6 +91,7 @@ public class AnnotationProcessor extends AbstractProcessor {
                 }
                 if (element.getKind() == ElementKind.FIELD) {
                     VariableTree var = new TypeScanner(element,trees).getFirstVar();
+                    variables.add(element.getSimpleName()+"");
                     if (hidden != null && hidden.shouldWriteComment()) {
                         String f = stripAnnotation(var+"");
                         f = f.substring(0, f.indexOf("="));
@@ -126,6 +151,7 @@ public class AnnotationProcessor extends AbstractProcessor {
         if (element.getAnnotation(Test.class) != null) {
             testedMethods.add(element.getSimpleName()+"");
         }
+        methods.add(element.getSimpleName()+"");
         MethodTree methodTree = new TypeScanner(element,trees).getFirstMethod();
         Set<Modifier> modifiers = methodTree.getModifiers().getFlags();
         if (modifiers.contains(Modifier.ABSTRACT)) {
@@ -220,8 +246,13 @@ public class AnnotationProcessor extends AbstractProcessor {
         String source = StringEscapeUtils.escapeJava(generateProcessedSource(taskEle));
         String toDisplay = StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(shown.toString()));
         String toFill = StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(this.toFill.toString()));
-        String testedMethods = escapeStringArray(this.testedMethods.toArray(new String[this.testedMethods.size()]));
+        String testedMethods = escapeStringArray(this.testedMethods);
         String restricted = escapeStringArray(task.restricted());
+        String methods = escapeStringArray(this.methods);
+        String variables = escapeStringArray(this.variables);
+        String classes = escapeStringArray(this.classes);
+        String enums = escapeStringArray(this.enums);
+        String interfaces = escapeStringArray(this.interfaces);
         //Generate a TaskInfo for the class
         return flatten(path.getCompilationUnit().getImports()) +
                 "import " + TaskInfo.class.getName() + ";" +
@@ -230,6 +261,11 @@ public class AnnotationProcessor extends AbstractProcessor {
                 generateMethodSource(String.class,"getMethodsToFill",toFill)+
                 generateMethodSource(String[].class,"getTestableMethods",testedMethods)+
                 generateMethodSource(String[].class,"getRestricted", restricted)+
+                generateMethodSource(String[].class,"getVariables",variables)+
+                generateMethodSource(String[].class,"getMethods", methods)+
+                generateMethodSource(String[].class,"getClasses",classes)+
+                generateMethodSource(String[].class,"getEnums", enums)+
+                generateMethodSource(String[].class,"getInterfaces", interfaces)+
                 generateMethodSource(String.class,"getName",task.name())+
                 generateMethodSource(String.class,"getProcessedSource",source)+
                 "}";
@@ -252,7 +288,9 @@ public class AnnotationProcessor extends AbstractProcessor {
     private String escapeStringArray(String... str) {
         return Arrays.stream(str).map(this::escapeString).collect(Collectors.joining(","));
     }
-
+    private String escapeStringArray(Set<String> str) {
+        return str.stream().map(this::escapeString).collect(Collectors.joining(","));
+    }
     /**
      * Generate the source code for a method
      * @param ret the return type

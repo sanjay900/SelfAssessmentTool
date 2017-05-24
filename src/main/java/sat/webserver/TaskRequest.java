@@ -1,4 +1,4 @@
-package sat.compiler.task;
+package sat.webserver;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,4 +11,6 @@ import lombok.NoArgsConstructor;
 public class TaskRequest {
     String code;
     String file;
+    int line;
+    int col;
 }

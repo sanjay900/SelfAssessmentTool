@@ -10,4 +10,9 @@ public abstract class TaskInfo {
     public abstract String getName();
     public abstract String getProcessedSource();
     public abstract String[] getRestricted();
+    public abstract String[] getMethods();
+    public abstract String[] getVariables();
+    public abstract String[] getClasses();
+    public abstract String[] getEnums();
+    public abstract String[] getInterfaces();
 }

@@ -1,6 +1,7 @@
 import org.junit.Test;
 import sat.util.*;
 import static org.junit.Assert.*;
+import sat.compiler.annotations.*;
 
 @Task(name="6. Test activity 1: Add 10 to value")
 public abstract class SampleTask2 {

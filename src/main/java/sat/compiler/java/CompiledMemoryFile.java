@@ -4,7 +4,7 @@ import javax.tools.SimpleJavaFileObject;
 import java.io.*;
 import java.net.URI;
 
-class JavaClassObject extends SimpleJavaFileObject {
+class CompiledMemoryFile extends SimpleJavaFileObject {
 
     /**
      * Byte code created by the compiler will be stored in this
@@ -24,7 +24,7 @@ class JavaClassObject extends SimpleJavaFileObject {
      * @param kind
      *            Kind of the data. It will be CLASS in our case
      */
-    public JavaClassObject(String name, Kind kind) {
+    public CompiledMemoryFile(String name, Kind kind) {
         super(URI.create("string:///" + name.replace('.', '/')
                 + kind.extension), kind);
     }

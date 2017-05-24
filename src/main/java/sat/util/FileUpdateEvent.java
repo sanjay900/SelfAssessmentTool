@@ -3,7 +3,7 @@ package sat.util;
 import lombok.Data;
 
 /**
- * Created by sanjay on 23/05/17.
+ * Sent to the web
  */
 @Data
 public class FileUpdateEvent {
