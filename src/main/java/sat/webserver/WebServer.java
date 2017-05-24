@@ -23,9 +23,7 @@ import static spark.Spark.get;
 import static spark.Spark.post;
 import static spark.Spark.webSocket;
 
-/**
- * Created by sanjay on 22/05/17.
- */
+
 public class WebServer {
     //TODO: should we read this from a config file?
     private static final int port = 4567;
@@ -36,7 +34,6 @@ public class WebServer {
         if (checkPortInUse()) return;
         Spark.staticFileLocation("site");
         Spark.port(port);
-        webSocket("/socket",WebSocketServer.class);
         get("/listTasks", (req, res) -> JSONUtils.toJSON(listTasks()));
         post("/testCode", (req, res) -> {
             TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);

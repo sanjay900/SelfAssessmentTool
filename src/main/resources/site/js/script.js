@@ -23,8 +23,6 @@ userInput.setWrapBehavioursEnabled(false);
 codeDisplay.setWrapBehavioursEnabled(false);
 //          userInput.setTheme("ace/theme/monokai");
 userInput.getSession().setMode("ace/mode/java");
-const proto = window.location.protocol.replace("http","").replace(":","");
-const socket = new ReconnectingWebSocket("ws" + proto + "://" + location.hostname + ":" + location.port + "/socket/");
 let reload = false;
 $("#compileBt").click(function() {
     send();
