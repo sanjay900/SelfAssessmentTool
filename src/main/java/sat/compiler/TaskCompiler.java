@@ -11,17 +11,21 @@ import sat.compiler.java.MemorySourceFile;
 import sat.compiler.processor.AnnotationProcessor;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TestResult;
+import sat.util.PrintUtils;
 import sat.webserver.AutoCompletion;
 import sat.webserver.TaskRequest;
 import sat.webserver.TaskResponse;
 
 import javax.tools.*;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class TaskCompiler {
     private static PrintStream normal = System.out;
@@ -159,34 +163,37 @@ public class TaskCompiler {
                     if (name.contains("<")) {
                         name = name.substring(0,name.indexOf("<"));
                     }
-                    String var = name;
-                    try {
-                        ClassPath.from(Thread.currentThread().getContextClassLoader()).getAllClasses().stream()
-                                .filter(s -> s.getSimpleName().equals(var))
-                                .forEach(info -> {
-                                            if (info.getPackageName().startsWith("com.sun")) return;
-                                            try {
-                                                Class<?> clazz = Class.forName(info.getName());
-                                                for(Method m: clazz.getDeclaredMethods()) {
-                                                    if (!m.getName().startsWith(ffunc)) continue;
-                                                    StringBuilder param = new StringBuilder();
-                                                    for (Parameter parameter: m.getParameters()) {
-                                                        param.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
-                                                    }
-                                                    if (param.length() > 0)
-                                                        param = new StringBuilder(param.substring(0,param.length() - 1));
-                                                    completions.add(new AutoCompletion(info.getSimpleName(),
-                                                            m.getName()+"(",
-                                                            m.getReturnType().getSimpleName(),m.getName()+"("+param+")"));
-                                                }
-                                            } catch (ClassNotFoundException e) {
-                                                e.printStackTrace();
-                                            }
+                    findClasses(name,true).forEach(info -> {
+                                try {
+                                    Class<?> clazz = Class.forName(info.getName());
+                                    for(Method m: clazz.getDeclaredMethods()) {
+                                        if (!m.getName().startsWith(ffunc)) continue;
+                                        StringBuilder param = new StringBuilder();
+                                        for (Parameter parameter: m.getParameters()) {
+                                            param.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
                                         }
-                                );
+                                        if (param.length() > 0)
+                                            param = new StringBuilder(param.substring(0,param.length() - 1));
+                                        completions.add(new AutoCompletion(info.getSimpleName(),
+                                                m.getName()+"(",
+                                                m.getReturnType().getSimpleName(),m.getName()+"("+param+")"));
+                                    }
+                                    for(Field f: clazz.getDeclaredFields()) {
+                                        if (!f.getName().startsWith(ffunc)) continue;
+                                        completions.add(new AutoCompletion(info.getSimpleName(),
+                                                f.getName(),
+                                                f.getType().getSimpleName()));
+                                    }
+                                } catch (ClassNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                    );
 
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                }
+                if (!matched) {
+                    for (Class<?> clazz: findClasses(word,false)) {
+                        completions.add(new AutoCompletion(clazz.getSimpleName(),clazz.getSimpleName(),"class"));
                     }
                 }
 
@@ -205,6 +212,20 @@ public class TaskCompiler {
             }
             for (String method : task.getMethods()) {
                 completions.add(new AutoCompletion(method, method.substring(0,method.indexOf("(")+1), "method",method));
+            }
+            for (Method method: PrintUtils.class.getMethods()) {
+                if (Modifier.isStatic(method.getModifiers())) {
+                    StringBuilder params = new StringBuilder();
+                    for (Parameter parameter : method.getParameters()) {
+                        params.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
+                    }
+                    String param = params.toString();
+                    if (params.length() > 0) {
+                        param = params.substring(0,param.length()-1);
+                    }
+                    String m = method.getName()+"("+param+")";
+                    completions.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",m));
+                }
             }
             for (String clazz : task.getClasses()) {
                 completions.add(new AutoCompletion(clazz, clazz, "class"));
@@ -272,6 +293,26 @@ public class TaskCompiler {
         }
         return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics, completions);
     }
+    private static List<Class<?>> findClasses(String name, boolean exact) {
+        try {
+            return ClassPath.from(
+                    Thread.currentThread().getContextClassLoader()).getAllClasses().stream()
+                    .filter(info -> exact?info.getSimpleName().equals(name):info.getSimpleName().startsWith(name))
+                    .filter(info -> shouldComplete(info.getName()))
+                    .map(ClassPath.ClassInfo::load)
+                    .sorted(Comparator.comparing(Class::getSimpleName))
+                    .collect(Collectors.toList()
+                    );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Collections.emptyList();
+    }
+
+    private static boolean shouldComplete(String name) {
+        return !name.contains("$") && (name.startsWith("java.util") || name.startsWith("java.lang"));
+    }
+
     public static void clearCache() {
         compiledTasks.clear();
     }
@@ -281,4 +322,7 @@ public class TaskCompiler {
     private static final String METHOD_ERROR = "You are missing the method %s!";
     private static final String ERROR = "An error occurred with the source for this file.\n"+
             "contact a lecturer as this is a problem with the tool not your code.";
+    private static final List<String> keywords = Arrays.asList("while","new","do","for","return","super","static",
+            "synchronized","transient","this", "throws","try","catch","volatile","case","default",
+            "instanceof","implements","if","else","extends");
 }
