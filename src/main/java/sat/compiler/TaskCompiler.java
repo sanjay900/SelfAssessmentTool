@@ -236,6 +236,12 @@ public class TaskCompiler {
             for (String enu : task.getEnums()) {
                 completions.add(new AutoCompletion(enu, enu, "enum"));
             }
+            for (String keyword : keywords) {
+                completions.add(new AutoCompletion(keyword, keyword, "keyword"));
+            }
+            for (String primitive : primitives) {
+                completions.add(new AutoCompletion(primitive, primitive, "primitive"));
+            }
         }
         //Start all methods as failed, and correct if we compile successfully
         for (String method : task.getTestableMethods()) {
@@ -325,4 +331,6 @@ public class TaskCompiler {
     private static final List<String> keywords = Arrays.asList("while","new","do","for","return","super","static",
             "synchronized","transient","this", "throws","try","catch","volatile","case","default",
             "instanceof","implements","if","else","extends");
+    private static final List<String> primitives = Arrays.asList("byte","short","int","long","float","double","char","boolean");
+
 }
