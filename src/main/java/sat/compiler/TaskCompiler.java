@@ -204,7 +204,7 @@ public class TaskCompiler {
                 completions.add(new AutoCompletion(variable, variable, "field"));
             }
             for (String method : task.getMethods()) {
-                completions.add(new AutoCompletion(method, method, "method"));
+                completions.add(new AutoCompletion(method, method.substring(0,method.indexOf("(")+1), "method",method));
             }
             for (String clazz : task.getClasses()) {
                 completions.add(new AutoCompletion(clazz, clazz, "class"));

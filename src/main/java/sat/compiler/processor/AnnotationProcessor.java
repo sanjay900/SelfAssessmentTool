@@ -11,7 +11,7 @@ import sat.compiler.annotations.ClassToComplete;
 import sat.compiler.annotations.Hidden;
 import sat.compiler.annotations.Task;
 import sat.compiler.task.TaskInfo;
-import sat.util.*;
+import sat.util.PrintUtils;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
@@ -151,8 +151,8 @@ public class AnnotationProcessor extends AbstractProcessor {
         if (element.getAnnotation(Test.class) != null) {
             testedMethods.add(element.getSimpleName()+"");
         }
-        methods.add(element.getSimpleName()+"");
         MethodTree methodTree = new TypeScanner(element,trees).getFirstMethod();
+        methods.add(methodTree.getName()+"("+methodTree.getParameters()+")");
         Set<Modifier> modifiers = methodTree.getModifiers().getFlags();
         if (modifiers.contains(Modifier.ABSTRACT)) {
             codeToRemove.add(methodTree.toString());

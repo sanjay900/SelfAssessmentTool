@@ -13,7 +13,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * A web socket server that handles incoming task requests.
+ * A web socket server
+ * //TODO: we should only really enable this in a debug mode, as thats all its used for now.
  */
 @WebSocket
 public class WebSocketServer {
