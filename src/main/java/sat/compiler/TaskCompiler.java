@@ -152,7 +152,7 @@ public class TaskCompiler {
                     }
                 }
                 String ffunc = func;
-                Matcher search = Pattern.compile(VAR_DECL+word+"[ ;),]").matcher(request.getCode());
+                Matcher search = Pattern.compile(VAR_DECL+word.replace("[({})]","")+"[ ;),]").matcher(request.getCode());
                 if (!search.find()) {
                     search = Pattern.compile(VAR_DECL + word + "[ ;),]").matcher(usercode);
                 }
@@ -207,11 +207,11 @@ public class TaskCompiler {
                     if (Arrays.toString(javax.lang.model.element.Modifier.values()).contains(varMatcher.group(1).toLowerCase())) {
                         continue;
                     }
-                    completions.add(new AutoCompletion(variable,variable,"variable"));
+                    completions.add(new AutoCompletion(variable,variable+" ","variable",variable));
                 }
             }
             for (String variable : task.getVariables()) {
-                completions.add(new AutoCompletion(variable, variable, "field"));
+                completions.add(new AutoCompletion(variable, variable+" ", "field",variable));
             }
             for (String method : task.getMethods()) {
                 completions.add(new AutoCompletion(method, method.substring(0,method.indexOf("(")+1), "method",method));
@@ -240,10 +240,10 @@ public class TaskCompiler {
                 completions.add(new AutoCompletion(enu, enu, "enum"));
             }
             for (String keyword : keywords) {
-                completions.add(new AutoCompletion(keyword, keyword, "keyword"));
+                completions.add(new AutoCompletion(keyword, keyword+" ", "keyword",keyword));
             }
             for (String primitive : primitives) {
-                completions.add(new AutoCompletion(primitive, primitive, "primitive"));
+                completions.add(new AutoCompletion(primitive, primitive+" ", "primitive",primitive));
             }
         }
         //Start all methods as failed, and correct if we compile successfully
