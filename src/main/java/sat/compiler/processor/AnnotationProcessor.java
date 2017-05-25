@@ -214,6 +214,8 @@ public class AnnotationProcessor extends AbstractProcessor {
                 "import java.util.*;" +
                 "import java.util.stream.*;" +
                 "import java.util.function.*;" +
+                "import org.junit.Rule;"+
+                "import org.junit.rules.Timeout;"+
                 new TypeScanner(taskEle,trees).getFirstClass();
         endClass = endClass.substring(0,endClass.length()-1);
         for (String str: codeToRemove) {

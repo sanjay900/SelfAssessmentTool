@@ -114,23 +114,14 @@ public class TaskCompiler {
         //First, compile the source class into a task.
         try {
             task = TaskCompiler.getTaskInfo(request.getFile(), new FileInputStream("tasks/" + request.getFile() + ".java"));
-        } catch (CompilerException e) {
-            for (Diagnostic<? extends JavaFileObject> diagnostic : e.getErrors()) {
-                String msg = diagnostic.getMessage(Locale.getDefault());
-                output.append(msg).append("\n");
-            }
-            return new TaskResponse(ERROR,"",output.toString(),new String[]{}, junitOut,diagnostics, Collections.emptyList());
         } catch (Exception ex) {
             ex.printStackTrace();
             return new TaskResponse(ERROR,"",ex.toString(),new String[]{}, junitOut,diagnostics, Collections.emptyList());
         }
-        //Combine the processed source code with the user code
-        String usercode = task.getProcessedSource()+
-                request.getCode()+
-                "}";
+        //Combine the processed source code with the user code (adding a timeout rule in the process)
+        String userCode = task.getProcessedSource() + request.getCode() + "@Rule public Timeout globalTimeout = Timeout.seconds("+timeout+"); }";
         List<AutoCompletion> completions = new ArrayList<>();
         boolean matched = false;
-        String word = "";
         if (request.getCode() != null && request.getCol() != 0) {
             String curLine = request.getCode().split("\n")[request.getLine()];
             if (request.getCol() == curLine.length()) {
@@ -145,7 +136,6 @@ public class TaskCompiler {
                     }
                     idx++;
                 }
-                word = curWord.toString();
                 String beforeDot = curWord.toString();
                 String afterDot = "";
                 //They were part way through auto completing a method from a variable.
@@ -160,7 +150,7 @@ public class TaskCompiler {
                 //Search for something looking like the declaration for that variable
                 Matcher search = Pattern.compile(VAR_DECL+beforeDot+"[ ;),]").matcher(request.getCode());
                 if (!search.find()) {
-                    search = Pattern.compile(VAR_DECL + beforeDot + "[ ;),]").matcher(usercode);
+                    search = Pattern.compile(VAR_DECL + beforeDot + "[ ;),]").matcher(userCode);
                 }
                 //Reset the search since we called find once.
                 search.reset();
@@ -280,7 +270,7 @@ public class TaskCompiler {
             System.setOut(new PrintStream(new WriterOutputStream(writer)));
             try {
                 //compile and run with junit
-                Class<?> clazz = compileTask(request.getFile(), usercode);
+                Class<?> clazz = compileTask(request.getFile(), userCode);
                 JUnitCore junit = new JUnitCore();
                 JUnitTestCollector listener = new JUnitTestCollector();
                 junit.addListener(listener);
@@ -355,5 +345,6 @@ public class TaskCompiler {
             "synchronized","transient","this", "throws","try","catch","volatile","case","default",
             "instanceof","implements","if","else","extends");
     private static final List<String> primitives = Arrays.asList("byte","short","int","long","float","double","char","boolean");
+    private static final int timeout = 2;
 
 }
