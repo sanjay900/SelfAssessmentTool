@@ -8,7 +8,7 @@ import sat.compiler.annotations.*;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Created by sanjay on 22/05/17.
+ * A task based on a swen221 self assessment
  */
 @Task(name="2. Template Method 1")
 public abstract class TemplateMethod1 {
