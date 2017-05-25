@@ -12,7 +12,11 @@ sourceCompatibility = 1.8
 repositories {
     mavenCentral()
 }
-
+shadowJar {
+    baseName = 'SelfAssessmentTool'
+    classifier = null
+    version = null
+}
 dependencies {
     compileOnly "org.projectlombok:lombok:1.16.16"
 
@@ -27,3 +31,20 @@ dependencies {
     compile group: 'org.fusesource.jansi', name: 'jansi', version: '1.14'
     compile group: 'com.google.code.gson', name: 'gson', version: '2.8.0'
 }
+task zip() {
+    doLast {
+        zip2.execute()
+    }
+}
+task zip2(type: Zip) {
+
+    from('build/libs/')
+    include 'SelfAssessmentTool.jar'
+    from('.')
+    include 'tasks/*'
+    into('tasks')
+    archiveName 'dist.zip'
+    destinationDir(file('.'))
+
+}
+build.dependsOn zip
