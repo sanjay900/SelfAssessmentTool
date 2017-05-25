@@ -1,5 +1,6 @@
 package sat;
 
+import sat.gui.TrayManager;
 import sat.webserver.WebServer;
 
 public class SelfAssessmentTool {
@@ -8,5 +9,6 @@ public class SelfAssessmentTool {
     }
     private SelfAssessmentTool() {
         new WebServer().startServer();
+        new TrayManager().showTray();
     }
 }

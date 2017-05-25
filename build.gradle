@@ -1,8 +1,9 @@
 plugins {
     id 'com.github.johnrengelman.shadow' version '2.0.0'
     id 'java'
+    id 'application'
 }
-
+mainClassName = "sat.SelfAssessmentTool"
 group 'nz.ac.vuw'
 version '1.0-SNAPSHOT'
 

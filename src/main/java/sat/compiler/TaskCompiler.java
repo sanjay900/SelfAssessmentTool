@@ -130,6 +130,7 @@ public class TaskCompiler {
                 "}";
         List<AutoCompletion> completions = new ArrayList<>();
         boolean matched = false;
+        String word = "";
         if (request.getCode() != null && request.getCol() != 0) {
             String curLine = request.getCode().split("\n")[request.getLine()];
             if (request.getCol() == curLine.length()) {
@@ -144,6 +145,7 @@ public class TaskCompiler {
                     }
                     idx++;
                 }
+                word = curWord.toString();
                 String beforeDot = curWord.toString();
                 String afterDot = "";
                 //They were part way through auto completing a method from a variable.
