@@ -15,4 +15,5 @@ public abstract class Demo0 {
         assertTrue("Should be 42",getAnswer()==42);
     }
     abstract int getAnswer();
+    abstract int getAnswer2();
 }

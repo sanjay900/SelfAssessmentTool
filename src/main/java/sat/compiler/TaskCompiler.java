@@ -138,7 +138,7 @@ public class TaskCompiler {
                 int idx = 0;
                 for (char c : curLine.toCharArray()) {
                     curWord.append(c);
-                    if (Character.isSpaceChar(c)) {
+                    if (Character.isSpaceChar(c) || c == '(') {
                         curWord = new StringBuilder();
                         if (idx >= request.getCol()) break;
                     }
@@ -153,9 +153,10 @@ public class TaskCompiler {
                         afterDot = curWord.substring(curWord.indexOf(".") + 1);
                     }
                 }
-                final String afterDotFinal = afterDot;
+                //Remove brackets as they break the pattern
+                beforeDot = beforeDot.replace("[({})]","");
                 //Search for something looking like the declaration for that variable
-                Matcher search = Pattern.compile(VAR_DECL+beforeDot.replace("[({})]","")+"[ ;),]").matcher(request.getCode());
+                Matcher search = Pattern.compile(VAR_DECL+beforeDot+"[ ;),]").matcher(request.getCode());
                 if (!search.find()) {
                     search = Pattern.compile(VAR_DECL + beforeDot + "[ ;),]").matcher(usercode);
                 }
@@ -171,20 +172,21 @@ public class TaskCompiler {
                     for (Class<?> clazz : findClasses(name,true)) {
                         //Autocomplete methods from found classes
                         for(Method m: clazz.getMethods()) {
-                            if (!m.getName().startsWith(afterDotFinal)) continue;
+                            if (!m.getName().startsWith(afterDot)) continue;
                             StringBuilder param = new StringBuilder();
                             for (Parameter parameter: m.getParameters()) {
-                                param.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
+                                param.append(parameter.getType().getSimpleName()).append(" ")
+                                        .append(parameter.getName()).append(",");
                             }
                             if (param.length() > 0)
                                 param = new StringBuilder(param.substring(0,param.length() - 1));
+
                             completions.add(new AutoCompletion(clazz.getSimpleName(),
-                                    m.getName()+"(",
-                                    m.getReturnType().getSimpleName(),m.getName()+"("+param+")"));
+                                    m.getName()+"(", m.getReturnType().getSimpleName(),m.getName()+"("+param+")"));
                         }
                         //Autocomplete fields from found classes
                         for(Field f: clazz.getFields()) {
-                            if (!f.getName().startsWith(afterDotFinal)) continue;
+                            if (!f.getName().startsWith(afterDot)) continue;
                             completions.add(new AutoCompletion(clazz.getSimpleName(),
                                     f.getName(),
                                     f.getType().getSimpleName()));
@@ -207,14 +209,15 @@ public class TaskCompiler {
                 Matcher varMatcher = VAR_DECL_FULL.matcher(request.getCode());
                 while (varMatcher.find()) {
                     String variable = varMatcher.group(2);
+                    //don't match modifiers (public, private..)
                     if (Arrays.toString(javax.lang.model.element.Modifier.values()).contains(varMatcher.group(1).toLowerCase())) {
                         continue;
                     }
-                    completions.add(new AutoCompletion(variable,variable+" ","variable",variable));
+                    completions.add(new AutoCompletion(variable,variable,"variable"));
                 }
             }
             for (String variable : task.getVariables()) {
-                completions.add(new AutoCompletion(variable, variable+" ", "field",variable));
+                completions.add(new AutoCompletion(variable, variable, "field"));
             }
             for (String method : task.getMethods()) {
                 completions.add(new AutoCompletion(method, method.substring(0,method.indexOf("(")+1), "method",method));
@@ -304,6 +307,7 @@ public class TaskCompiler {
                 junitOut.add(new TestResult(method,"Not Tested"));
             }
         }
+        completions.sort(Comparator.comparing(AutoCompletion::getCaption));
         return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics, completions);
     }
 
