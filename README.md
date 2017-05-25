@@ -69,7 +69,8 @@ public abstract class TemplateMethod1 {
     }
 }
 ```
-
+A note about `@ClassToComplete` is that the class itself does not need to compile correctly, and as a result you can
+have a abstract method inside a non abstract class. We opted for this route to keep methods consistent.
 ##How does it work?
 An annotation processor pre-processes the assignment code and generates a task from it, by parsing the elements from the source. 
 This task is then cached, and when the user picks a task, it is rendered and the user can enter code. At this point, when they
