@@ -11,4 +11,11 @@ import java.util.List;
 @Getter
 public class CompilerException extends Exception {
     private List<Diagnostic<? extends JavaFileObject>> errors;
+
+    @Override
+    public String toString() {
+        return "CompilerException{" +
+                "errors=" + errors +
+                '}';
+    }
 }

@@ -4,9 +4,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sat.compiler.TaskCompiler;
-import sat.compiler.task.TaskNameInfo;
-import sat.compiler.task.TaskInfo;
 import sat.compiler.java.CompilerException;
+import sat.compiler.task.TaskInfo;
+import sat.compiler.task.TaskNameInfo;
 import sat.util.JSONUtils;
 import spark.Spark;
 
@@ -21,12 +21,10 @@ import java.util.List;
 import static org.fusesource.jansi.Ansi.ansi;
 import static spark.Spark.get;
 import static spark.Spark.post;
-import static spark.Spark.webSocket;
 
-/**
- * Created by sanjay on 22/05/17.
- */
+
 public class WebServer {
+    //TODO: We should add a button for copying the ace editor
     //TODO: should we read this from a config file?
     private static final int port = 4567;
     private Logger logger = LoggerFactory.getLogger(WebServer.class);
@@ -36,7 +34,6 @@ public class WebServer {
         if (checkPortInUse()) return;
         Spark.staticFileLocation("site");
         Spark.port(port);
-        webSocket("/socket",WebSocketServer.class);
         get("/listTasks", (req, res) -> JSONUtils.toJSON(listTasks()));
         post("/testCode", (req, res) -> {
             TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);

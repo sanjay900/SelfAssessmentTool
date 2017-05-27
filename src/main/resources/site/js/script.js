@@ -2,17 +2,16 @@
  * Made by Kristian Hansen and Sanjay Govind
  */
 const codeDisplay = ace.edit("code-output-display");
-//          codeDisplay.setTheme("ace/theme/monokai");
 codeDisplay.getSession().setMode("ace/mode/java");
 codeDisplay.setReadOnly(true);
 
-var COLOR_MAPPING = {
-    SUCCESS : {color: "#5cb85c", status: "Passed"}, // everything normal
-    NOT_EXECUTED : {color: "#31b0d5", status: "Not Tested"}, // assertions failed, but no error thrown
-    ERROR : {color: "#d9534f", status: "Failed"} // error thrown
+const COLOR_MAPPING = {
+    "Passed" : "#5cb85c", // everything normal
+    "Not Tested" : "#31b0d5", // nothing has actually been compiled yet
+    "Failed" : "#d9534f" // error thrown or assertions failed
 };
 
-var userInput = ace.edit("user-input-box");
+const userInput = ace.edit("user-input-box");
 ace.require("ace/ext/language_tools");
 userInput.setOptions({
     enableBasicAutocompletion: true,
@@ -21,10 +20,7 @@ userInput.setOptions({
 });
 userInput.setWrapBehavioursEnabled(false);
 codeDisplay.setWrapBehavioursEnabled(false);
-//          userInput.setTheme("ace/theme/monokai");
 userInput.getSession().setMode("ace/mode/java");
-const proto = window.location.protocol.replace("http","").replace(":","");
-const socket = new ReconnectingWebSocket("ws" + proto + "://" + location.hostname + ":" + location.port + "/socket/");
 let reload = false;
 $("#compileBt").click(function() {
     send();
@@ -39,14 +35,9 @@ userInput.completers = [autocompleter];
 userInput.getSession().on('change', function() {
     send();
 });
-function send(callback, pos) {
-    if (!pos) pos = userInput.getCursorPosition();
+function send(callback, pos = userInput.getCursorPosition()) {
     $.post("/testCode",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
         let results = JSON.parse(data);
-        if (results.updated) {
-            updateTasks();
-            return;
-        }
         if (userInput.getValue().length === 0 || reload) {
             userInput.setValue(results.startingCode,-1);
             reload = false;
@@ -74,38 +65,28 @@ function send(callback, pos) {
         let jhtml = "";
         for (const i in results.junitResults) {
             const res = results.junitResults[i];
-            var colorValue = "none";
-            for (var o in COLOR_MAPPING) { // find color that is mapped to status
-                var map = COLOR_MAPPING[o];
-                if (map.status === res.status) {
-                    colorValue = map.color;
-                }
-            }
-            jhtml += "<tr style=\"background: " + colorValue + ";\"><td class=\"l-col\">" +
-                res.name+"</td><td class=\"r-col\">"+res.status+"</td></tr>"; // add row to table
+            jhtml += `<tr style="background: ${COLOR_MAPPING[res.status]}">
+                      <td class="l-col">${res.name}</td>
+                      <td class="r-col">${res.status}</td>
+                      </tr>`;
         }
         $("#junit-test-list").html(jhtml);
-        results.console = results.console.replace(/(?:\r\n|\r|\n)/g, '<br />');
-        $("#console-output-screen").html(results.console);
+        $("#console-output-screen").html(results.console.replace(/(?:\r\n|\r|\n)/g, '<br />'));
         if (callback) {
-            console.log(results.autoCompletions)
             callback(null, results.autoCompletions);
         }
 
     });
 }
-function updateTasks() {
-    $.get( "listTasks", function( data ) {
-        const availTasks = JSON.parse(data);
-        let html = "";
-        for (const i in availTasks) {
-            const task = availTasks[i];
-            html +="<li><a href=\"#"+task.name+"\" onclick=\"loadFile('"+task.name+"','"+task.fullName+"')\">"+task.fullName+"</a></li>"
-        }
-        $("#sidenav").html(html);
-    });
-}
-updateTasks();
+$.get( "listTasks", function( data ) {
+    const availTasks = JSON.parse(data);
+    let html = "";
+    for (const i in availTasks) {
+        const task = availTasks[i];
+        html +=`<li><a href="#${task.name}" onclick="loadFile('${task.name}','${task.fullName}')">${task.fullName}</a></li>`;
+    }
+    $("#sidenav").html(html);
+});
 let file = null;
 function loadFile(name,fullName) {
     file = name;

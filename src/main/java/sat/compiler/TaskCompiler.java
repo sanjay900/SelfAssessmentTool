@@ -114,85 +114,82 @@ public class TaskCompiler {
         //First, compile the source class into a task.
         try {
             task = TaskCompiler.getTaskInfo(request.getFile(), new FileInputStream("tasks/" + request.getFile() + ".java"));
-        } catch (CompilerException e) {
-            for (Diagnostic<? extends JavaFileObject> diagnostic : e.getErrors()) {
-                String msg = diagnostic.getMessage(Locale.getDefault());
-                output.append(msg).append("\n");
-            }
-            return new TaskResponse(ERROR,"",output.toString(),new String[]{}, junitOut,diagnostics, Collections.emptyList());
         } catch (Exception ex) {
             ex.printStackTrace();
             return new TaskResponse(ERROR,"",ex.toString(),new String[]{}, junitOut,diagnostics, Collections.emptyList());
         }
-        //Combine the processed source code with the user code
-        String usercode = task.getProcessedSource()+
-                request.getCode()+
-                "}";
+        //Combine the processed source code with the user code (adding a timeout rule in the process)
+        String userCode = task.getProcessedSource() + request.getCode() + "@Rule public Timeout globalTimeout = Timeout.seconds("+timeout+"); }";
         List<AutoCompletion> completions = new ArrayList<>();
         boolean matched = false;
         if (request.getCode() != null && request.getCol() != 0) {
             String curLine = request.getCode().split("\n")[request.getLine()];
             if (request.getCol() == curLine.length()) {
+                //Work out what word the user was typing
                 StringBuilder curWord = new StringBuilder();
                 int idx = 0;
                 for (char c : curLine.toCharArray()) {
                     curWord.append(c);
-                    if (Character.isSpaceChar(c)) {
+                    if (Character.isSpaceChar(c) || c == '(') {
                         curWord = new StringBuilder();
                         if (idx >= request.getCol()) break;
                     }
                     idx++;
                 }
-                String word = curWord.toString();
-                String func = "";
-                if (word.contains(".")) {
-                    word = word.substring(0, curWord.indexOf("."));
+                String beforeDot = curWord.toString();
+                String afterDot = "";
+                //They were part way through auto completing a method from a variable.
+                if (beforeDot.contains(".")) {
+                    beforeDot = beforeDot.substring(0, curWord.indexOf("."));
                     if (curWord.indexOf(".") < curWord.length()) {
-                        func = curWord.substring(curWord.indexOf(".") + 1);
+                        afterDot = curWord.substring(curWord.indexOf(".") + 1);
                     }
                 }
-                String ffunc = func;
-                Matcher search = Pattern.compile(VAR_DECL+word+"[ ;),]").matcher(request.getCode());
+                //Remove brackets as they break the pattern
+                beforeDot = beforeDot.replace("[({})]","");
+                //Search for something looking like the declaration for that variable
+                Matcher search = Pattern.compile(VAR_DECL+beforeDot+"[ ;),]").matcher(request.getCode());
                 if (!search.find()) {
-                    search = Pattern.compile(VAR_DECL + word + "[ ;),]").matcher(usercode);
+                    search = Pattern.compile(VAR_DECL + beforeDot + "[ ;),]").matcher(userCode);
                 }
+                //Reset the search since we called find once.
                 search.reset();
                 if (search.find()) {
                     matched= true;
                     String name = search.group(1);
+                    //Strip away generics, we cant search for them.
                     if (name.contains("<")) {
                         name = name.substring(0,name.indexOf("<"));
                     }
-                    findClasses(name,true).forEach(info -> {
-                                try {
-                                    Class<?> clazz = Class.forName(info.getName());
-                                    for(Method m: clazz.getDeclaredMethods()) {
-                                        if (!m.getName().startsWith(ffunc)) continue;
-                                        StringBuilder param = new StringBuilder();
-                                        for (Parameter parameter: m.getParameters()) {
-                                            param.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
-                                        }
-                                        if (param.length() > 0)
-                                            param = new StringBuilder(param.substring(0,param.length() - 1));
-                                        completions.add(new AutoCompletion(info.getSimpleName(),
-                                                m.getName()+"(",
-                                                m.getReturnType().getSimpleName(),m.getName()+"("+param+")"));
-                                    }
-                                    for(Field f: clazz.getDeclaredFields()) {
-                                        if (!f.getName().startsWith(ffunc)) continue;
-                                        completions.add(new AutoCompletion(info.getSimpleName(),
-                                                f.getName(),
-                                                f.getType().getSimpleName()));
-                                    }
-                                } catch (ClassNotFoundException e) {
-                                    e.printStackTrace();
-                                }
+                    for (Class<?> clazz : findClasses(name,true)) {
+                        //Autocomplete methods from found classes
+                        for(Method m: clazz.getMethods()) {
+                            if (!m.getName().startsWith(afterDot)) continue;
+                            StringBuilder param = new StringBuilder();
+                            for (Parameter parameter: m.getParameters()) {
+                                param.append(parameter.getType().getSimpleName()).append(" ")
+                                        .append(parameter.getName()).append(",");
                             }
-                    );
+                            if (param.length() > 0)
+                                param = new StringBuilder(param.substring(0,param.length() - 1));
+
+                            completions.add(new AutoCompletion(clazz.getSimpleName(),
+                                    m.getName()+"(", m.getReturnType().getSimpleName(),m.getName()+"("+param+")"));
+                        }
+                        //Autocomplete fields from found classes
+                        for(Field f: clazz.getFields()) {
+                            if (!f.getName().startsWith(afterDot)) continue;
+                            completions.add(new AutoCompletion(clazz.getSimpleName(),
+                                    f.getName(),
+                                    f.getType().getSimpleName()));
+                        }
+                    }
+
 
                 }
+                //If nothing was matched above, attempt to match the word as if it was a class.
                 if (!matched) {
-                    for (Class<?> clazz: findClasses(word,false)) {
+                    for (Class<?> clazz: findClasses(beforeDot,false)) {
                         completions.add(new AutoCompletion(clazz.getSimpleName(),clazz.getSimpleName(),"class"));
                     }
                 }
@@ -204,6 +201,10 @@ public class TaskCompiler {
                 Matcher varMatcher = VAR_DECL_FULL.matcher(request.getCode());
                 while (varMatcher.find()) {
                     String variable = varMatcher.group(2);
+                    //don't match modifiers (public, private..)
+                    if (Arrays.toString(javax.lang.model.element.Modifier.values()).contains(varMatcher.group(1).toLowerCase())) {
+                        continue;
+                    }
                     completions.add(new AutoCompletion(variable,variable,"variable"));
                 }
             }
@@ -236,6 +237,12 @@ public class TaskCompiler {
             for (String enu : task.getEnums()) {
                 completions.add(new AutoCompletion(enu, enu, "enum"));
             }
+            for (String keyword : keywords) {
+                completions.add(new AutoCompletion(keyword, keyword+" ", "keyword",keyword));
+            }
+            for (String primitive : primitives) {
+                completions.add(new AutoCompletion(primitive, primitive+" ", "primitive",primitive));
+            }
         }
         //Start all methods as failed, and correct if we compile successfully
         for (String method : task.getTestableMethods()) {
@@ -262,7 +269,8 @@ public class TaskCompiler {
             StringWriter writer = new StringWriter();
             System.setOut(new PrintStream(new WriterOutputStream(writer)));
             try {
-                Class<?> clazz = compileTask(request.getFile(), usercode);
+                //compile and run with junit
+                Class<?> clazz = compileTask(request.getFile(), userCode);
                 JUnitCore junit = new JUnitCore();
                 JUnitTestCollector listener = new JUnitTestCollector();
                 junit.addListener(listener);
@@ -291,8 +299,16 @@ public class TaskCompiler {
                 junitOut.add(new TestResult(method,"Not Tested"));
             }
         }
+        completions.sort(Comparator.comparing(AutoCompletion::getCaption));
         return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics, completions);
     }
+
+    /**
+     * Find a class by name using guava
+     * @param name the name
+     * @param exact true if you have the entire class name, false if you only have part of it
+     * @return
+     */
     private static List<Class<?>> findClasses(String name, boolean exact) {
         try {
             return ClassPath.from(
@@ -309,15 +325,18 @@ public class TaskCompiler {
         return Collections.emptyList();
     }
 
+    /**
+     * Return true if we should complete, false otherwise
+     * @param name the package to check against
+     * @return true if we should autocomplete entries from this class, false otherwise
+     */
     private static boolean shouldComplete(String name) {
+        //Note that we exclude inner classes as they are not useful to autocomplete.
         return !name.contains("$") && (name.startsWith("java.util") || name.startsWith("java.lang"));
     }
 
-    public static void clearCache() {
-        compiledTasks.clear();
-    }
-    private static final String VAR_DECL = "(([a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*) ";
-    private static final Pattern VAR_DECL_FULL = Pattern.compile("^(?!import|private|public|abstract|interface|class|enum)(\\w.+) (\\w[A-z_]+)[ ),;]");
+    private static final String VAR_DECL = "((?:[a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*) ";
+    private static final Pattern VAR_DECL_FULL = Pattern.compile(VAR_DECL+"(\\w[A-z\\d_]+)[ ),;]");
     private static final Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(.+\\).+");
     private static final String METHOD_ERROR = "You are missing the method %s!";
     private static final String ERROR = "An error occurred with the source for this file.\n"+
@@ -325,4 +344,7 @@ public class TaskCompiler {
     private static final List<String> keywords = Arrays.asList("while","new","do","for","return","super","static",
             "synchronized","transient","this", "throws","try","catch","volatile","case","default",
             "instanceof","implements","if","else","extends");
+    private static final List<String> primitives = Arrays.asList("byte","short","int","long","float","double","char","boolean");
+    private static final int timeout = 2;
+
 }
