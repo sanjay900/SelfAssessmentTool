@@ -1,9 +1,9 @@
 package sat.compiler;
 
-import com.google.common.reflect.ClassPath;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.io.WriterOutputStream;
 import org.junit.runner.JUnitCore;
+import org.junit.runner.notification.RunNotifier;
 import sat.compiler.java.ClassFileManager;
 import sat.compiler.java.CompilationError;
 import sat.compiler.java.CompilerException;
@@ -11,24 +11,18 @@ import sat.compiler.java.MemorySourceFile;
 import sat.compiler.processor.AnnotationProcessor;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TestResult;
-import sat.util.PrintUtils;
-import sat.autocompletion.AutoCompletion;
 import sat.webserver.TaskRequest;
 import sat.webserver.TaskResponse;
+import sat.webserver.WebServer;
 
 import javax.tools.*;
 import java.io.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class TaskCompiler {
-    private static PrintStream normal = System.out;
     private static Map<String,TaskInfo> compiledTasks = new HashMap<>();
     /**
      * Compile a class, and then return classToGet
@@ -152,6 +146,7 @@ public class TaskCompiler {
                 //compile and run with junit
                 Class<?> clazz = compileTask(request.getFile(), userCode);
                 JUnitCore junit = new JUnitCore();
+                JUnitCore jUnitCore = new JUnitCore();
                 JUnitTestCollector listener = new JUnitTestCollector();
                 junit.addListener(listener);
                 junit.run(clazz);
@@ -170,7 +165,7 @@ public class TaskCompiler {
                 }
             } finally {
                 //Set system.out to the normal system.out
-                System.setOut(normal);
+                System.setOut(null);
                 output = new StringBuilder(writer.toString());
             }
         } else {

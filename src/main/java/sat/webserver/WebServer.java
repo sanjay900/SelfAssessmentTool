@@ -1,6 +1,9 @@
 package sat.webserver;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.apache.commons.io.FilenameUtils;
+import org.junit.runner.notification.RunNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sat.autocompletion.AutoCompletion;
@@ -16,9 +19,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.fusesource.jansi.Ansi.ansi;
 import static spark.Spark.get;
@@ -30,7 +33,6 @@ public class WebServer {
     //TODO: should we read this from a config file?
     private static final int port = 4567;
     private Logger logger = LoggerFactory.getLogger(WebServer.class);
-
     public void startServer() {
         logger.info(""+ansi().render("@|green Starting Web Server|@"));
         if (checkPortInUse()) return;

@@ -19,6 +19,7 @@ public class JUnitTestCollector extends RunListener {
 
     @Override
     public void testFailure(Failure failure) throws Exception {
+        if (failure.getException() instanceof InterruptedException) return;
         System.out.println("Assertion Failed: "+failure.getMessage());
         failure.getDescription().addChild(FAILED);
     }

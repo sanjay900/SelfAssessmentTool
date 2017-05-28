@@ -27,17 +27,23 @@ $("#compileBt").click(function() {
 });
 const autocompleter = {
     getCompletions: function(editor, session, pos, prefix, callback) {
-        console.log(prefix);
-        send(callback,pos);
         $.post("/autocomplete",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
             callback(null, JSON.parse(data));
         });
     }
 };
 userInput.completers = [autocompleter];
-
+let lastMillis = new Date().getTime();
+let lastTimeout;
 userInput.getSession().on('change', function() {
-    send();
+
+    clearTimeout(lastTimeout);
+    if (new Date().getTime()-lastMillis < 500) {
+        lastTimeout = setTimeout(send,500);
+    } else {
+        lastMillis = new Date().getTime();
+        send();
+    }
 });
 function send() {
     const pos = userInput.getCursorPosition();
