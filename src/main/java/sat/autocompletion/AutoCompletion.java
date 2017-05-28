@@ -1,4 +1,4 @@
-package sat.webserver;
+package sat.autocompletion;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

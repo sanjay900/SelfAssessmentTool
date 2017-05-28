@@ -27,7 +27,11 @@ $("#compileBt").click(function() {
 });
 const autocompleter = {
     getCompletions: function(editor, session, pos, prefix, callback) {
+        console.log(prefix);
         send(callback,pos);
+        $.post("/autocomplete",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
+            callback(null, JSON.parse(data));
+        });
     }
 };
 userInput.completers = [autocompleter];
@@ -35,7 +39,8 @@ userInput.completers = [autocompleter];
 userInput.getSession().on('change', function() {
     send();
 });
-function send(callback, pos = userInput.getCursorPosition()) {
+function send() {
+    const pos = userInput.getCursorPosition();
     $.post("/testCode",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
         let results = JSON.parse(data);
         if (userInput.getValue().length === 0 || reload) {
@@ -72,9 +77,6 @@ function send(callback, pos = userInput.getCursorPosition()) {
         }
         $("#junit-test-list").html(jhtml);
         $("#console-output-screen").html(results.console.replace(/(?:\r\n|\r|\n)/g, '<br />'));
-        if (callback) {
-            callback(null, results.autoCompletions);
-        }
 
     });
 }

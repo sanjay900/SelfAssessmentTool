@@ -3,6 +3,8 @@ package sat.webserver;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sat.autocompletion.AutoCompletion;
+import sat.autocompletion.Autocompletor;
 import sat.compiler.TaskCompiler;
 import sat.compiler.java.CompilerException;
 import sat.compiler.task.TaskInfo;
@@ -38,6 +40,10 @@ public class WebServer {
         post("/testCode", (req, res) -> {
             TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);
             return JSONUtils.toJSON(TaskCompiler.compile(request));
+        });
+        post("/autocomplete", (req, res) -> {
+            TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);
+            return JSONUtils.toJSON(Autocompletor.getCompletions(request));
         });
         logger.info(""+ansi().render("@|green Starting Socket.IO Server|@"));
         //Compile all the current tasks so that we don't have to do it on the first connection.

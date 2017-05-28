@@ -2,6 +2,7 @@ package sat.webserver;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import sat.autocompletion.AutoCompletion;
 import sat.compiler.java.CompilationError;
 import sat.compiler.task.TestResult;
 
@@ -16,5 +17,4 @@ public class TaskResponse {
     private String[] testedMethods;
     private List<TestResult> junitResults;
     private List<CompilationError> errors;
-    private List<AutoCompletion> autoCompletions;
 }
