@@ -15,22 +15,22 @@ import java.util.*;
 public abstract class Lambda2 {
 
     @ClassToComplete
-    abstract interface Parser {
+    interface Parser {
 
     }
 
     @Test
     public void testLambda() {
-        assertEquals("|something|", parse(s -> "|" + s + "|"), "something");
-        assertEquals("s o m e t h i n g", parse(s -> {
+        assertEquals("|something|", parseString(s -> "|" + s + "|", "something"));
+        assertEquals("s o m e t h i n g", parseString(s -> {
             StringBuilder sb = new StringBuilder();
             for (char c : s.toCharArray()) {
                 sb.append(c);
                 sb.append(' ');
             }
             return sb.toString().substring(0, sb.length() - 2);
-        }), "something");
-        assertEquals("SOMETHING", parse(s -> s.toUpperCase()), "something");
+        }, "something"));
+        assertEquals("SOMETHING", parseString(s -> s.toUpperCase(), "something"));
     }
 
     public String parseString(Parser parser, final String string) {

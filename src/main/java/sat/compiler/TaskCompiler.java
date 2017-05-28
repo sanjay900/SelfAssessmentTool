@@ -46,9 +46,13 @@ public class TaskCompiler {
         boolean status = compilerTask.call();
         if (!status){
             for (Diagnostic<? extends JavaFileObject> diag : diagnostics.getDiagnostics()) {
-                if (!Objects.equals(diag.getSource().getName().substring(1), classToGet+".java")) {
-                    if (MISSING_METHOD.matcher(diag.getMessage(Locale.getDefault())).matches()) continue;
+                if (diag.getSource() == null) {
+                    continue;
                 }
+                if (!Objects.equals(diag.getSource().getName().substring(1), classToGet+".java")) {
+                    continue;
+                }
+                System.out.println(diag);
                 throw new CompilerException(diagnostics.getDiagnostics());
             }
         }
@@ -126,17 +130,8 @@ public class TaskCompiler {
             String curLine = request.getCode().split("\n")[request.getLine()];
             if (request.getCol() == curLine.length()) {
                 //Work out what word the user was typing
-                StringBuilder curWord = new StringBuilder();
-                int idx = 0;
-                for (char c : curLine.toCharArray()) {
-                    curWord.append(c);
-                    if (Character.isSpaceChar(c) || c == '(') {
-                        curWord = new StringBuilder();
-                        if (idx >= request.getCol()) break;
-                    }
-                    idx++;
-                }
-                String beforeDot = curWord.toString();
+                String curWord = getWordAt(curLine, request.getCol());
+                String beforeDot = curWord;
                 String afterDot = "";
                 //They were part way through auto completing a method from a variable.
                 if (beforeDot.contains(".")) {
@@ -146,7 +141,7 @@ public class TaskCompiler {
                     }
                 }
                 //Remove brackets as they break the pattern
-                beforeDot = beforeDot.replace("[({})]","");
+                beforeDot = beforeDot.replaceAll("[({})]","");
                 //Search for something looking like the declaration for that variable
                 Matcher search = Pattern.compile(VAR_DECL+beforeDot+"[ ;),]").matcher(request.getCode());
                 if (!search.find()) {
@@ -302,7 +297,20 @@ public class TaskCompiler {
         completions.sort(Comparator.comparing(AutoCompletion::getCaption));
         return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics, completions);
     }
-
+    public static String getWordAt(String str, int index) {
+        //Work out what word the user was typing
+        StringBuilder curWord = new StringBuilder();
+        int idx = 0;
+        for (char c : str.toCharArray()) {
+            curWord.append(c);
+            if (Character.isSpaceChar(c) || c == '(') {
+                curWord = new StringBuilder();
+                if (idx >= index) break;
+            }
+            idx++;
+        }
+        return curWord.toString();
+    }
     /**
      * Find a class by name using guava
      * @param name the name
