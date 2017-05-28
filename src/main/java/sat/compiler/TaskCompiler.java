@@ -138,8 +138,8 @@ public class TaskCompiler {
                 }
             }
             //Save system.out to a writer
-            StringWriter writer = new StringWriter();
-            System.setOut(new PrintStream(new WriterOutputStream(writer)));
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            System.setOut(new PrintStream(bos));
             try {
                 //compile and run with junit
                 Class<?> clazz = compileTask(request.getFile(), userCode);
@@ -163,7 +163,7 @@ public class TaskCompiler {
             } finally {
                 //Set system.out to the normal system.out
                 System.setOut(normal);
-                output = new StringBuilder(writer.toString());
+                output = new StringBuilder(bos.toString());
             }
         } else {
             junitOut.clear();
