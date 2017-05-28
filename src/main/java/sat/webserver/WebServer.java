@@ -33,6 +33,7 @@ public class WebServer {
     //TODO: should we read this from a config file?
     private static final int port = 4567;
     private Logger logger = LoggerFactory.getLogger(WebServer.class);
+    private static AtomicBoolean isCompiling = new AtomicBoolean();
     public void startServer() {
         logger.info(""+ansi().render("@|green Starting Web Server|@"));
         if (checkPortInUse()) return;
@@ -40,8 +41,12 @@ public class WebServer {
         Spark.port(port);
         get("/listTasks", (req, res) -> JSONUtils.toJSON(listTasks()));
         post("/testCode", (req, res) -> {
+            while (isCompiling.get()) Thread.sleep(500);
+            isCompiling.set(true);
             TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);
-            return JSONUtils.toJSON(TaskCompiler.compile(request));
+            String json = JSONUtils.toJSON(TaskCompiler.compile(request));
+            isCompiling.set(false);
+            return json;
         });
         post("/autocomplete", (req, res) -> {
             TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);
