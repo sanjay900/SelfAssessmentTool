@@ -28,7 +28,7 @@ public abstract class Lambda2 {
                 sb.append(c);
                 sb.append(' ');
             }
-            return sb.toString().substring(0, sb.length() - 2);
+            return sb.toString().substring(0, sb.length() - 1);
         }, "something"));
         assertEquals("SOMETHING", parseString(s -> s.toUpperCase(), "something"));
     }
