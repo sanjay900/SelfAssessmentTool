@@ -1,14 +1,12 @@
 package sat.webserver;
 
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sat.autocompletion.Autocompletor;
 import sat.compiler.remote.CompilerProcess;
 import sat.compiler.remote.JavaProcess;
 import sat.compiler.TaskCompiler;
-import sat.compiler.java.CompilerException;
-import sat.compiler.task.RMIObj;
+import sat.compiler.remote.RMIObj;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TaskNameInfo;
 import sat.util.JSONUtils;
@@ -16,8 +14,6 @@ import spark.Request;
 import spark.Response;
 import spark.Spark;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
