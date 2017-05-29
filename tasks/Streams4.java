@@ -12,7 +12,7 @@ import java.util.*;
  * and so on using streams. You can assume an integer array will not be longer than 26. So array {4, 5, 6} will
  * become {"a4", "b5", "c6"} as stored in the returned list.
  */
-@Task(name="Streams 4: Converting int array to List<String>")
+@Task(name="Streams 4: Converting int array to List<String>", restricted="numbers[")
 public abstract class Streams4 {
 
     @Task
@@ -27,5 +27,5 @@ public abstract class Streams4 {
         assertTrue(result.equals(convert(new int[] {200, 102, 0, 90})));
     }
 
-    public List<String> convert(int[] numbers);
+    public abstract List<String> convert(int[] numbers);
 }
