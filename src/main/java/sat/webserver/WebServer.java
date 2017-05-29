@@ -1,27 +1,31 @@
 package sat.webserver;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import org.apache.commons.io.FilenameUtils;
-import org.junit.runner.notification.RunNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sat.autocompletion.AutoCompletion;
 import sat.autocompletion.Autocompletor;
+import sat.compiler.remote.CompilerProcess;
+import sat.compiler.remote.JavaProcess;
 import sat.compiler.TaskCompiler;
 import sat.compiler.java.CompilerException;
+import sat.compiler.task.RMIObj;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TaskNameInfo;
 import sat.util.JSONUtils;
+import spark.Request;
+import spark.Response;
 import spark.Spark;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.*;
 
 import static org.fusesource.jansi.Ansi.ansi;
 import static spark.Spark.get;
@@ -33,20 +37,40 @@ public class WebServer {
     //TODO: should we read this from a config file?
     private static final int port = 4567;
     private Logger logger = LoggerFactory.getLogger(WebServer.class);
-    private static AtomicBoolean isCompiling = new AtomicBoolean();
+    Map<String,JavaProcess> processMap = new HashMap<>();
     public void startServer() {
+        createRMI();
         logger.info(""+ansi().render("@|green Starting Web Server|@"));
         if (checkPortInUse()) return;
         Spark.staticFileLocation("site");
         Spark.port(port);
         get("/listTasks", (req, res) -> JSONUtils.toJSON(listTasks()));
-        post("/testCode", (req, res) -> {
-            while (isCompiling.get()) Thread.sleep(500);
-            isCompiling.set(true);
-            TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);
-            String json = JSONUtils.toJSON(TaskCompiler.compile(request));
-            isCompiling.set(false);
-            return json;
+        post("/testCode", (Request req, Response res) -> {
+            if (processMap.containsKey(req.ip())) {
+                processMap.get(req.ip()).stop();
+            }
+            int id = new Random().nextInt(50000);
+            rmi.getSent().put(id,req.body());
+            JavaProcess process = new JavaProcess();
+            processMap.put(req.ip(),process);
+            final ExecutorService executor = Executors.newSingleThreadExecutor();
+            final Future future = executor.submit(() -> {
+                try {
+                    process.exec(CompilerProcess.class,id);
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+            executor.shutdown(); // This does not cancel the already-scheduled task.
+            try {
+                future.get(5, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException | ExecutionException | TimeoutException ie) {
+                process.stop();
+                executor.shutdownNow();
+                return JSONUtils.toJSON(new TaskResponse("", "", "Error: timeout reached (2 seconds)", Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+            }
+            return rmi.getReceived().get(id);
         });
         post("/autocomplete", (req, res) -> {
             TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);
@@ -92,5 +116,25 @@ public class WebServer {
         }
         navs.sort(Comparator.comparing(TaskNameInfo::getFullName));
         return navs;
+    }
+    RMIObj rmi;
+    private void createRMI() {
+        try { //special exception handler for registry creation
+            LocateRegistry.createRegistry(1099);
+            System.out.println("java RMI registry created.");
+        } catch (RemoteException e) {
+            //do nothing, error means registry already exists
+            System.out.println("java RMI registry already exists.");
+        }
+
+        //Instantiate RmiServer
+
+        try {
+            rmi = new RMIObj();
+            // Bind this object instance to the name "RmiServer"
+            Naming.rebind("//localhost/AssessRMI", rmi);
+        } catch (RemoteException | MalformedURLException e) {
+            e.printStackTrace();
+        }
     }
 }

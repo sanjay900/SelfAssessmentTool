@@ -2,6 +2,7 @@ package sat.compiler;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.runner.JUnitCore;
+import sat.compiler.annotations.TaskList;
 import sat.compiler.java.ClassFileManager;
 import sat.compiler.java.CompilationError;
 import sat.compiler.java.CompilerException;
@@ -20,7 +21,7 @@ import java.util.regex.Pattern;
 
 public class TaskCompiler {
     private static PrintStream normal = System.out;
-    private static Map<String,TaskInfo> compiledTasks = new HashMap<>();
+    public static TaskList compiledTasks = new TaskList();
     /**
      * Compile a class, and then return classToGet
      * @param classToGet the class to get from the classpath
@@ -40,13 +41,17 @@ public class TaskCompiler {
                 if (diag.getSource() == null) {
                     continue;
                 }
-                if (!Objects.equals(diag.getSource().getName().substring(1), classToGet+".java")) {
+                if (classToGet == null) {
+                    System.out.println("Compilation error (This may not be an issue.):\n"+diag.getMessage(Locale.getDefault()).replace(name+".","").replace("Generated",""));
+                }
+                if (classToGet == null || !Objects.equals(diag.getSource().getName().substring(1), classToGet+".java")) {
                     continue;
                 }
                 System.out.println("Compilation error:\n"+diag.getMessage(Locale.getDefault()).replace(name+".","").replace("Generated",""));
                 throw new CompilerException(diagnostics.getDiagnostics());
             }
         }
+        if (classToGet == null) return null;
         Class<?> clazz;
         try {
             clazz = manager.getClassLoader(null).loadClass(classToGet);
@@ -88,11 +93,10 @@ public class TaskCompiler {
      */
     public static TaskInfo getTaskInfo(String name, InputStream is) throws ClassNotFoundException, IllegalAccessException, InstantiationException, IOException, CompilerException{
         //Check if the taskinfo cache contains the class, return if its in the cache
-        if (compiledTasks.containsKey(name)) return compiledTasks.get(name);
+        if (compiledTasks.map.containsKey(name)) return compiledTasks.map.get(name);
         String task = IOUtils.toString(is);
-        TaskInfo info = (TaskInfo) compile(name, task, name + AnnotationProcessor.TASK_INFO_SUFFIX).newInstance();
-        compiledTasks.put(name,info);
-        return info;
+        compile(name, task, null);
+        return compiledTasks.map.get(name);
     }
 
     /**
@@ -102,16 +106,16 @@ public class TaskCompiler {
      */
     public static TaskResponse compile(TaskRequest request) {
         TaskInfo task;
-        StringBuilder output = new StringBuilder();
+        String output = "";
         List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
-        if (request.getFile() == null) return new TaskResponse("","","",new String[]{}, junitOut,diagnostics);
+        if (request.getFile() == null) return new TaskResponse("","","",Collections.emptyList(), junitOut,diagnostics);
         //First, compile the source class into a task.
         try {
             task = TaskCompiler.getTaskInfo(request.getFile(), new FileInputStream("tasks/" + request.getFile() + ".java"));
         } catch (Exception ex) {
             ex.printStackTrace();
-            return new TaskResponse(ERROR,"",ex.toString(),new String[]{}, junitOut,diagnostics);
+            return new TaskResponse(ERROR,"",ex.toString(),Collections.emptyList(), junitOut,diagnostics);
         }
         //Combine the processed source code with the user code (adding a timeout rule in the process)
         String userCode = task.getProcessedSource() + request.getCode() + "@Rule public Timeout globalTimeout = Timeout.seconds("+timeout+"); }";
@@ -121,7 +125,7 @@ public class TaskCompiler {
         }
         if (request.getCode() != null && !request.getCode().isEmpty()) {
             List<String> restricted = new ArrayList<>();
-            restricted.addAll(Arrays.asList(task.getRestricted()));
+            restricted.addAll(task.getRestricted());
             restricted.addAll(TaskCompiler.restricted);
             //Look for restricted keywords
             for (String str: restricted) {
@@ -165,7 +169,7 @@ public class TaskCompiler {
             } finally {
                 //Set system.out to the normal system.out
                 System.setOut(normal);
-                output = new StringBuilder(bos.toString());
+                output = bos.toString();
             }
         } else {
             junitOut.clear();
@@ -173,7 +177,7 @@ public class TaskCompiler {
                 junitOut.add(new TestResult(method,"Not Tested"));
             }
         }
-        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics);
+        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output, task.getTestableMethods(), junitOut, diagnostics);
     }
 
 

@@ -22,9 +22,7 @@ public class TrayManager {
 
         // Create a pop-up menu components
         MenuItem exitItem = new MenuItem("Exit");
-        exitItem.addActionListener(s -> {
-            System.exit(0);
-        });
+        exitItem.addActionListener(s -> System.exit(0));
         popup.add(exitItem);
 
         trayIcon.setPopupMenu(popup);

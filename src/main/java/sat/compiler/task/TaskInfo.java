@@ -1,18 +1,16 @@
 package sat.compiler.task;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+import java.util.List;
+
 /**
  * A class that is generated to describe a task
  */
-public abstract class TaskInfo {
-    public abstract String getCodeToDisplay();
-    public abstract String getMethodsToFill();
-    public abstract String[] getTestableMethods();
-    public abstract String getName();
-    public abstract String getProcessedSource();
-    public abstract String[] getRestricted();
-    public abstract String[] getMethods();
-    public abstract String[] getVariables();
-    public abstract String[] getClasses();
-    public abstract String[] getEnums();
-    public abstract String[] getInterfaces();
+@Data
+@AllArgsConstructor
+public class TaskInfo {
+    private String codeToDisplay,methodsToFill,name,processedSource;
+    private List<String> testableMethods,restricted,methods,variables,classes,enums,interfaces;
 }

@@ -38,8 +38,8 @@ let lastTimeout;
 userInput.getSession().on('change', function() {
     localStorage.setItem(file,userInput.getValue());
     clearTimeout(lastTimeout);
-    if (new Date().getTime()-lastMillis < 500) {
-        lastTimeout = setTimeout(send,500);
+    if (new Date().getTime()-lastMillis < 100) {
+        lastTimeout = setTimeout(send,100);
     } else {
         lastMillis = new Date().getTime();
         send();
