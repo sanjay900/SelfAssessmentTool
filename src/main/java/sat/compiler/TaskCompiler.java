@@ -41,7 +41,10 @@ public class TaskCompiler {
                 if (diag.getSource() == null) {
                     continue;
                 }
-                if (!Objects.equals(diag.getSource().getName().substring(1), classToGet+".java")) {
+                if (classToGet == null) {
+                    System.out.println("Compilation error:\n"+diag.getMessage(Locale.getDefault()).replace(name+".","").replace("Generated",""));
+                }
+                if (classToGet == null || !Objects.equals(diag.getSource().getName().substring(1), classToGet+".java")) {
                     continue;
                 }
                 System.out.println("Compilation error:\n"+diag.getMessage(Locale.getDefault()).replace(name+".","").replace("Generated",""));

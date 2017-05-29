@@ -136,7 +136,8 @@ public class AnnotationProcessor extends AbstractProcessor {
                 }
                 shown.append(classCode).append("\n");
             }
-            generateClasses((TypeElement) taskElement);
+
+            generateTaskInfo((TypeElement) taskElement);
         }
 
         //This code has been fully processed.
@@ -186,15 +187,6 @@ public class AnnotationProcessor extends AbstractProcessor {
         code = code.replaceAll(" /\\* = new \\w*\\(\\) \\*/","");
         return code;
     }
-
-    /**
-     * Generate the source code
-     * @param taskEle the source files class element
-     */
-    private void generateClasses(TypeElement taskEle) {
-        generateTaskInfo(taskEle);
-    }
-
     /**
      * Generate the processed source code from the source file (removing classes/methods to be described by the user code)
      * @param taskEle the source file's class element

@@ -7,7 +7,7 @@ import java.io.IOException;
 public class JavaProcess {
     private Process process;
     public void stop() {
-        if (process.isAlive()) {
+        if (process != null && process.isAlive()) {
             process.destroyForcibly();
         }
     }
