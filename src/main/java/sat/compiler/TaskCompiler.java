@@ -120,13 +120,16 @@ public class TaskCompiler {
             junitOut.add(new TestResult(method, "Failed"));
         }
         if (request.getCode() != null && !request.getCode().isEmpty()) {
+            List<String> restricted = new ArrayList<>();
+            restricted.addAll(Arrays.asList(task.getRestricted()));
+            restricted.addAll(TaskCompiler.restricted);
             //Look for restricted keywords
-            for (String str: task.getRestricted()) {
-                if (request.getCode().contains(str)) {
-                    String[] split = request.getCode().split("\n");
+            for (String str: restricted) {
+                if (request.getCode().toLowerCase().contains(str.toLowerCase())) {
+                    String[] split = request.getCode().toLowerCase().split("\n");
                     for (int lineNum = 0; lineNum < split.length; lineNum++) {
                         String line = split[lineNum];
-                        int indexOf = line.indexOf(str);
+                        int indexOf = line.indexOf(str.toLowerCase());
                         if (indexOf != -1) {
                             //The javascript gui expects line numbers to start from 1
                             diagnostics.add(new CompilationError(lineNum+1,indexOf+1,"You have attempted to use a restricted word: "+str));
@@ -179,5 +182,7 @@ public class TaskCompiler {
     private static final String ERROR = "An error occurred with the source for this file.\n"+
             "contact a lecturer as this is a problem with the tool not your code.";
     private static final int timeout = 2;
+    //Do we want to also restrict file access??
+    private static final List<String> restricted = Arrays.asList("Process","File");
 
 }
