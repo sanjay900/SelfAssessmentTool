@@ -6,13 +6,15 @@ import static org.junit.Assert.*;
 
 
 /**
- * Welcome to the scratch pad. Use this file for testing methods, as no actuall task is set here.
+ * A place for you to program and experiment with java without actually having to write a task.
+ * The single test in this program just calls main, so any code in main will be run.
  */
 @Task(name="99. Scratchpad",showModifiers=false)
 public abstract class ScratchPad {
     @Test
+    @Hidden(shouldWriteComment=false)
     public void test() {
-        run();
+        main();
     }
-    abstract void run();
+    abstract void main();
 }

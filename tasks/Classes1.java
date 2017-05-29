@@ -1,11 +1,7 @@
 import org.junit.Test;
-import sat.util.*;
-import java.util.stream.*;
-import sat.compiler.annotations.*;
+import sat.compiler.annotations.Task;
 
-import static org.junit.Assert.*;
-import static sat.util.AssertUtils.*;
-import java.util.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Ensure that all tests pass. You are not allowed to type in any integer literals.

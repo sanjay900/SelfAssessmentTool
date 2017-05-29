@@ -25,7 +25,7 @@ public class TaskCompiler {
     /**
      * Compile a class, and then return classToGet
      * @param classToGet the class to get from the classpath
-     * @return classToGet from the classpath
+     * @return classToGet from the classpath, or null if you just want to compile (e.g. to make a TaskInfo)
      */
     public static Class<?> compile(String name, String code, String classToGet) throws ClassNotFoundException, CompilerException {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
@@ -41,8 +41,9 @@ public class TaskCompiler {
                 if (diag.getSource() == null) {
                     continue;
                 }
-                if (classToGet == null) {
-                    System.out.println("Compilation error (This may not be an issue.):\n"+diag.getMessage(Locale.getDefault()).replace(name+".","").replace("Generated",""));
+                String msg = diag.getMessage(Locale.getDefault());
+                if (classToGet == null && !msg.contains("abstract")) {
+                    System.err.println("Compilation error:\n"+diag.getMessage(Locale.getDefault()).replace(name+".","").replace("Generated",""));
                 }
                 if (classToGet == null || !Objects.equals(diag.getSource().getName().substring(1), classToGet+".java")) {
                     continue;
@@ -140,7 +141,7 @@ public class TaskCompiler {
                         }
                     }
 
-                    return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics);
+                    return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output, task.getTestableMethods(), junitOut, diagnostics);
                 }
             }
             //Save system.out to a writer

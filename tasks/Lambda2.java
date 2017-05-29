@@ -1,11 +1,8 @@
 import org.junit.Test;
-import sat.util.*;
-import java.util.stream.*;
-import sat.compiler.annotations.*;
+import sat.compiler.annotations.ClassToComplete;
+import sat.compiler.annotations.Task;
 
-import static org.junit.Assert.*;
-import static sat.util.AssertUtils.*;
-import java.util.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Complete the interface Parser to make all of the lambda expressions work in order to pass the tests. This task shows
@@ -16,7 +13,7 @@ public abstract class Lambda2 {
 
     @ClassToComplete
     interface Parser {
-
+        String parse(String s);
     }
 
     @Test
@@ -30,7 +27,7 @@ public abstract class Lambda2 {
             }
             return sb.toString().substring(0, sb.length() - 1);
         }, "something"));
-        assertEquals("SOMETHING", parseString(s -> s.toUpperCase(), "something"));
+        assertEquals("SOMETHING", parseString(String::toUpperCase, "something"));
     }
 
     public String parseString(Parser parser, final String string) {

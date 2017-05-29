@@ -1,4 +1,4 @@
-package sat.compiler.task;
+package sat.compiler.remote;
 
 import lombok.Getter;
 import lombok.Setter;
