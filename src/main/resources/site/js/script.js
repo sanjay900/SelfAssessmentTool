@@ -36,7 +36,7 @@ userInput.completers = [autocompleter];
 let lastMillis = new Date().getTime();
 let lastTimeout;
 userInput.getSession().on('change', function() {
-
+    localStorage.setItem(file,userInput.getValue());
     clearTimeout(lastTimeout);
     if (new Date().getTime()-lastMillis < 500) {
         lastTimeout = setTimeout(send,500);
@@ -99,6 +99,10 @@ let file = null;
 function loadFile(name,fullName) {
     file = name;
     $("#asstitle").text(fullName);
-    reload = true;
+    if (localStorage.getItem(name)) {
+        userInput.setValue(localStorage.getItem(name));
+    } else {
+        reload = true;
+    }
     send();
 }

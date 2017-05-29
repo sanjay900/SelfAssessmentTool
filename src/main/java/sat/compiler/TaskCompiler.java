@@ -1,7 +1,6 @@
 package sat.compiler;
 
 import org.apache.commons.io.IOUtils;
-import org.eclipse.jetty.io.WriterOutputStream;
 import org.junit.runner.JUnitCore;
 import sat.compiler.java.ClassFileManager;
 import sat.compiler.java.CompilationError;
