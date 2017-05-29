@@ -7,6 +7,7 @@ import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.junit.Test;
+import sat.compiler.TaskCompiler;
 import sat.compiler.annotations.ClassToComplete;
 import sat.compiler.annotations.Hidden;
 import sat.compiler.annotations.Task;
@@ -42,12 +43,12 @@ public class AnnotationProcessor extends AbstractProcessor {
     //Keep a list of code we want to filter out of processed code
     private List<String> codeToRemove = new ArrayList<>();
     //Keep a list of methods that are going to be tested
-    private Set<String> testedMethods = new HashSet<>();
-    private Set<String> methods = new HashSet<>();
-    private Set<String> variables = new HashSet<>();
-    private Set<String> classes = new HashSet<>();
-    private Set<String> enums = new HashSet<>();
-    private Set<String> interfaces = new HashSet<>();
+    private List<String> testedMethods = new ArrayList<>();
+    private List<String> methods = new ArrayList<>();
+    private List<String> variables = new ArrayList<>();
+    private List<String> classes = new ArrayList<>();
+    private List<String> enums = new ArrayList<>();
+    private List<String> interfaces = new ArrayList<>();
     private Task task;
 
     @Override
@@ -191,15 +192,7 @@ public class AnnotationProcessor extends AbstractProcessor {
      * @param taskEle the source files class element
      */
     private void generateClasses(TypeElement taskEle) {
-        try {
-            JavaFileObject jfo;
-            jfo = processingEnv.getFiler().createSourceFile(taskEle.getQualifiedName()+TASK_INFO_SUFFIX);
-            BufferedWriter bw = new BufferedWriter(jfo.openWriter());
-            bw.append(generateTaskInfo(taskEle));
-            bw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        generateTaskInfo(taskEle);
     }
 
     /**
@@ -242,75 +235,12 @@ public class AnnotationProcessor extends AbstractProcessor {
      * @param taskEle the class element for the current task
      * @return the code for a TaskInfo class describing the class
      */
-    private String generateTaskInfo(TypeElement taskEle) {
-        TreePath path = trees.getPath(taskEle);
+    private void generateTaskInfo(TypeElement taskEle) {
         //Generate code for all methods in TaskInfo
-        String source = StringEscapeUtils.escapeJava(generateProcessedSource(taskEle));
-        String toDisplay = StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(shown.toString()));
-        String toFill = StringEscapeUtils.escapeJava(fixWeirdCompilationIssues(this.toFill.toString()));
-        String testedMethods = escapeStringArray(this.testedMethods);
-        String restricted = escapeStringArray(task.restricted());
-        String methods = escapeStringArray(this.methods);
-        String variables = escapeStringArray(this.variables);
-        String classes = escapeStringArray(this.classes);
-        String enums = escapeStringArray(this.enums);
-        String interfaces = escapeStringArray(this.interfaces);
-        //Generate a TaskInfo for the class
-        return flatten(path.getCompilationUnit().getImports()) +
-                "import " + TaskInfo.class.getName() + ";" +
-                "public class " + taskEle.getQualifiedName() + TASK_INFO_SUFFIX + " extends TaskInfo {" +
-                generateMethodSource(String.class,"getCodeToDisplay",toDisplay)+
-                generateMethodSource(String.class,"getMethodsToFill",toFill)+
-                generateMethodSource(String[].class,"getTestableMethods",testedMethods)+
-                generateMethodSource(String[].class,"getRestricted", restricted)+
-                generateMethodSource(String[].class,"getVariables",variables)+
-                generateMethodSource(String[].class,"getMethods", methods)+
-                generateMethodSource(String[].class,"getClasses",classes)+
-                generateMethodSource(String[].class,"getEnums", enums)+
-                generateMethodSource(String[].class,"getInterfaces", interfaces)+
-                generateMethodSource(String.class,"getName",task.name())+
-                generateMethodSource(String.class,"getProcessedSource",source)+
-                "}";
-    }
-
-    /**
-     * Escape a string to put into another generated source code (surround with ")
-     * @param str the string
-     * @return the string wrapped in quotes
-     */
-    private String escapeString(String str) {
-        return "\""+str+"\"";
-    }
-
-    /**
-     * Escape all the contents of an array, and then build source code for that array
-     * @param str the array
-     * @return the array in source code form {"ele1","ele2"...}
-     */
-    private String escapeStringArray(String... str) {
-        return Arrays.stream(str).map(this::escapeString).collect(Collectors.joining(","));
-    }
-    private String escapeStringArray(Set<String> str) {
-        return str.stream().map(this::escapeString).collect(Collectors.joining(","));
-    }
-    /**
-     * Generate the source code for a method
-     * @param ret the return type
-     * @param name the method name
-     * @param body the method body
-     * @return the source code for a method
-     */
-    private String generateMethodSource(Class<?> ret, String name, String body) {
-        if (ret.isArray()) {
-            body ="new "+ret.getSimpleName()+"{"+body+"}";
-        } else if (ret == String.class) {
-            body = escapeString(body);
-        }
-        //Generate the method
-        return "@Override\n"+
-                "public "+ret.getSimpleName()+" "+name+"() {\n"+
-                "return " + body + ";\n"+
-                "}";
+        String source = generateProcessedSource(taskEle);
+        String toDisplay = fixWeirdCompilationIssues(shown.toString());
+        String toFill = fixWeirdCompilationIssues(this.toFill.toString());
+        TaskCompiler.compiledTasks.map.put(taskEle.getQualifiedName()+"",new TaskInfo(toDisplay,toFill,task.name(),source,testedMethods,Arrays.asList(task.restricted()),variables,methods,classes,enums,interfaces));
     }
 
     /**
@@ -358,8 +288,6 @@ public class AnnotationProcessor extends AbstractProcessor {
     //Text to show in an omitted block of code
     private static final String OMITTED_BLOCK = "\n\t//omitted\n}\n";
     private static final String FULL_OMITTED_BLOCK = "{"+OMITTED_BLOCK;
-    //The generated class that only contains methods for rendering this class to the browser
-    public static final String TASK_INFO_SUFFIX = "Info";
     //The generated class that contains rendering and is extended by the browser code
     public static final String OUTPUT_CLASS_SUFFIX = "Generated";
 }

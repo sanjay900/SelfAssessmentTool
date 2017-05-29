@@ -14,7 +14,7 @@ public class TaskResponse {
     private String codeToDisplay;
     private String startingCode;
     private String console;
-    private String[] testedMethods;
+    private List<String> testedMethods;
     private List<TestResult> junitResults;
     private List<CompilationError> errors;
 }
