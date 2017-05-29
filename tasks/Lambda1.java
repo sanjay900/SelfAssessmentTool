@@ -1,11 +1,8 @@
 import org.junit.Test;
-import sat.util.*;
-import java.util.stream.*;
-import sat.compiler.annotations.*;
+import sat.compiler.annotations.Hidden;
+import sat.compiler.annotations.Task;
 
-import static org.junit.Assert.*;
-import static sat.util.AssertUtils.*;
-import java.util.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Complete the method performAction(), which performs the arithmetic operation specified by the Action parameter, which

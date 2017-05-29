@@ -102,17 +102,8 @@ public class WebServer {
      */
     private List<TaskNameInfo> listTasks() {
         List<TaskNameInfo> navs = new ArrayList<>();
-        for (File task : new File("tasks").listFiles()) {
-            try {
-                String name = FilenameUtils.getBaseName(task.getName());
-                if (!task.getName().endsWith(".java")) continue;;
-                TaskInfo taskInfo = TaskCompiler.getTaskInfo(name,new FileInputStream(task));
-                navs.add(new TaskNameInfo(name, taskInfo.getName()));
-            } catch (IllegalAccessException | InstantiationException | IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (CompilerException e) {
-                System.out.println(e.getErrors());
-            }
+        for (TaskInfo task:TaskCompiler.compiledTasks.map.values()) {
+            navs.add(new TaskNameInfo(task.getName(), task.getFullName()));
         }
         navs.sort(Comparator.comparing(TaskNameInfo::getFullName));
         return navs;

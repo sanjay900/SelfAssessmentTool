@@ -1,8 +1,7 @@
 import org.junit.Test;
-import sat.util.*;
-import sat.compiler.annotations.*;
+import sat.compiler.annotations.Task;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 
 /**

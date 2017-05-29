@@ -1,11 +1,13 @@
 import org.junit.Test;
-import sat.util.*;
-import java.util.*;
-import java.util.stream.*;
-import sat.compiler.annotations.*;
+import sat.compiler.annotations.Hidden;
+import sat.compiler.annotations.Task;
 
-import static org.junit.Assert.*;
-import static sat.util.AssertUtils.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static sat.util.AssertUtils.assertStreamEquals;
 
 /**
  * Here you are required to make a method that can combine streams. FlatMap will be useful here.
@@ -22,7 +24,7 @@ public abstract class Streams2 {
     }
     @Hidden
     public Stream<Stream<?>> listToStream(List<List<?>> ele1) {
-        return Arrays.asList(ele1).stream().map(List::stream);
+        return Stream.of(ele1).map(List::stream);
     }
     @Hidden
     public Stream defaultCombineStream(Stream<Stream<?>> stream) {
