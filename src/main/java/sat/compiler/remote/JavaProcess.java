@@ -23,7 +23,6 @@ public class JavaProcess {
         String classpath = System.getProperty("java.class.path");
         String className = klass.getCanonicalName();
         ProcessBuilder builder = new ProcessBuilder(javaBin, "-cp", classpath, className, id+"");
-        builder.inheritIO();
         process = builder.start();
         process.waitFor();
     }

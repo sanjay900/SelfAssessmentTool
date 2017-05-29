@@ -42,7 +42,7 @@ public class TaskCompiler {
                     continue;
                 }
                 if (classToGet == null) {
-                    System.out.println("Compilation error:\n"+diag.getMessage(Locale.getDefault()).replace(name+".","").replace("Generated",""));
+                    System.out.println("Compilation error (This may not be an issue.):\n"+diag.getMessage(Locale.getDefault()).replace(name+".","").replace("Generated",""));
                 }
                 if (classToGet == null || !Objects.equals(diag.getSource().getName().substring(1), classToGet+".java")) {
                     continue;
