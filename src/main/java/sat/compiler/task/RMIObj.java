@@ -2,14 +2,13 @@ package sat.compiler.task;
 
 import lombok.Getter;
 import lombok.Setter;
-import sat.compiler.RMIIntf;
+import sat.compiler.remote.RMIIntf;
 import sat.compiler.TaskCompiler;
 import sat.util.JSONUtils;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by sanjay on 29/05/17.

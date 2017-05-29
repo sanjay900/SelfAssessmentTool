@@ -1,4 +1,4 @@
-package sat.compiler;
+package sat.compiler.remote;
 
 
 import java.io.File;
@@ -7,8 +7,9 @@ import java.io.IOException;
 public class JavaProcess {
     private Process process;
     public void stop() {
-        if (process != null && process.isAlive())
-            process.destroy();
+        if (process.isAlive()) {
+            process.destroyForcibly();
+        }
     }
     public boolean isRunning() {
         return process != null && process.isAlive();

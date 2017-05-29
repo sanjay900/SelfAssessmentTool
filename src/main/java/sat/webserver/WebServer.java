@@ -1,16 +1,11 @@
 package sat.webserver;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
-import org.junit.runner.notification.RunNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sat.autocompletion.AutoCompletion;
 import sat.autocompletion.Autocompletor;
-import sat.compiler.CompilerProcess;
-import sat.compiler.JavaProcess;
+import sat.compiler.remote.CompilerProcess;
+import sat.compiler.remote.JavaProcess;
 import sat.compiler.TaskCompiler;
 import sat.compiler.java.CompilerException;
 import sat.compiler.task.RMIObj;
@@ -26,16 +21,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.fusesource.jansi.Ansi.ansi;
 import static spark.Spark.get;

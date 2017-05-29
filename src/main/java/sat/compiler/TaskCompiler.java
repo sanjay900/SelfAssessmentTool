@@ -103,7 +103,7 @@ public class TaskCompiler {
      */
     public static TaskResponse compile(TaskRequest request) {
         TaskInfo task;
-        StringBuilder output = new StringBuilder();
+        String output = "";
         List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
         if (request.getFile() == null) return new TaskResponse("","","",Collections.emptyList(), junitOut,diagnostics);
@@ -166,7 +166,7 @@ public class TaskCompiler {
             } finally {
                 //Set system.out to the normal system.out
                 System.setOut(normal);
-                output = new StringBuilder(bos.toString());
+                output = bos.toString();
             }
         } else {
             junitOut.clear();
@@ -174,7 +174,7 @@ public class TaskCompiler {
                 junitOut.add(new TestResult(method,"Not Tested"));
             }
         }
-        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output.toString(), task.getTestableMethods(), junitOut, diagnostics);
+        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output, task.getTestableMethods(), junitOut, diagnostics);
     }
 
 
