@@ -15,7 +15,7 @@ import java.util.*;
 public abstract class Streams5 {
 
     @Hidden
-    private static final Contact[] contacts = new Contact[] {
+    private final Contact[] contacts = new Contact[] {
             new Contact("Bob Bobbs", "0211234567"),
             new Contact("John Smith", "0274439810"),
             new Contact("John Doe", "0211112222"),

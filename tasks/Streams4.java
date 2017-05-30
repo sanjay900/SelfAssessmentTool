@@ -15,13 +15,13 @@ import java.util.*;
 @Task(name="Streams 4: Converting int array to List<String>", restricted="numbers[")
 public abstract class Streams4 {
 
-    @Task
+    @Test
     public void testConvert1() {
         List<String> result = Arrays.asList(new String[] {"a1", "b2", "c3", "d4", "e5"});
         assertTrue(result.equals(convert(new int[] {1, 2, 3, 4, 5})));
     }
 
-    @Task
+    @Test
     public void testConvert2() {
         List<String> result = Arrays.asList(new String[] {"a200", "b102", "c0", "d90"});
         assertTrue(result.equals(convert(new int[] {200, 102, 0, 90})));
