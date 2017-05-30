@@ -8,6 +8,11 @@
       <profile default="true" name="Default" enabled="true" />
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="..__main" target="1.8" />
+      <module name="..__test" target="1.8" />
+      <module name="sat.tasks_main" target="1.8" />
+      <module name="sat.tasks_tasks" target="1.8" />
+      <module name="sat.tasks_test" target="1.8" />
       <module name="SelfAssessmentTool_main" target="1.8" />
       <module name="SelfAssessmentTool_test" target="1.8" />
     </bytecodeTargetLevel>

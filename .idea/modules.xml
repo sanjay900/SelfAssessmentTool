@@ -2,9 +2,12 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SelfAssessmentTool.iml" filepath="$PROJECT_DIR$/.idea/modules/SelfAssessmentTool.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SelfAssessmentTool.iml" filepath="$PROJECT_DIR$/.idea/modules/SelfAssessmentTool.iml" group="SelfAssessmentTool" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/SelfAssessmentTool_main.iml" filepath="$PROJECT_DIR$/.idea/modules/SelfAssessmentTool_main.iml" group="SelfAssessmentTool" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/SelfAssessmentTool_test.iml" filepath="$PROJECT_DIR$/.idea/modules/SelfAssessmentTool_test.iml" group="SelfAssessmentTool" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sat.tasks.iml" filepath="$PROJECT_DIR$/.idea/modules/sat.tasks.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sat.tasks_main.iml" filepath="$PROJECT_DIR$/.idea/modules/sat.tasks_main.iml" group="sat.tasks" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sat.tasks_test.iml" filepath="$PROJECT_DIR$/.idea/modules/sat.tasks_test.iml" group="sat.tasks" />
     </modules>
   </component>
 </project>

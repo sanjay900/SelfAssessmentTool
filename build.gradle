@@ -48,3 +48,10 @@ task zip2(type: Zip) {
 
 }
 build.dependsOn zip
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+}
