@@ -23,7 +23,7 @@ public abstract class Streams5 {
             new Contact("Captain Morgan", "0219991010")
     };
 
-    private static class Contact {
+    private class Contact {
         private final String name;
         private final String phoneNumber;
 

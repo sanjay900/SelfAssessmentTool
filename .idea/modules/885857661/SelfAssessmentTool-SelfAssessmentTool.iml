@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id=":../:SelfAssessmentTool" external.linked.project.path="$MODULE_DIR$/../../../SelfAssessmentTool" external.root.project.path="$MODULE_DIR$/../../../tasksModule" external.system.id="GRADLE" external.system.module.group="sat.tasks.../" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../../SelfAssessmentTool">
+      <excludeFolder url="file://$MODULE_DIR$/../../../SelfAssessmentTool/.gradle" />
+      <excludeFolder url="file://$MODULE_DIR$/../../../SelfAssessmentTool/build" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

@@ -1,17 +1,21 @@
 import org.junit.Test;
-import sat.compiler.annotations.Task;
+import sat.util.*;
+import sat.compiler.annotations.*;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 
 /**
- * Welcome to our self assessment tool. Fill in the method below with 42 to pass this test.
+ * Welcome to our self assessment tool.
+ * Fill in the method below with 42 to pass this test.
+ * Try returning the wrone answer Or wrong type
  */
-@Task(name="0. Demo 0",showModifiers=false)
+@Task(name="A1. Demo 0",showModifiers=false)
 public abstract class Demo0 {
     @Test
     public void testThings() {
         assertTrue("Should be 42",getAnswer()==42);
     }
     abstract int getAnswer();
+    abstract int getAnswer2();
 }
