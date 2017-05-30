@@ -1,0 +1,3 @@
+rootProject.name = 'sat.tasks'
+include 'SelfAssessmentTool'
+project(':SelfAssessmentTool').projectDir = new File('../')
