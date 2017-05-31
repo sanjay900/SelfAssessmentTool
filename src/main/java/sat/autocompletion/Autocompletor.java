@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.sort;
 
 /**
  * Created by sanjay on 28/05/17.
@@ -39,50 +40,49 @@ public class Autocompletor {
         boolean matched = false;
         if (request.getCode() != null && request.getCol() != 0) {
             String curLine = request.getCode().split("\n")[request.getLine()];
-            if (request.getCol() == curLine.length()) {
-                //Work out what word the user was typing
-                String curWord = getWordAt(curLine, request.getCol());
-                String beforeDot = curWord;
-                String afterDot = "";
-                //They were part way through auto completing a method from a variable.
-                if (beforeDot.contains(".")) {
-                    beforeDot = beforeDot.substring(0, curWord.indexOf("."));
-                    if (curWord.indexOf(".") < curWord.length()) {
-                        afterDot = curWord.substring(curWord.indexOf(".") + 1);
-                    }
+            //Work out what word the user was typing
+            String curWord = getWordAt(curLine, request.getCol());
+            System.out.println(curWord);
+            String beforeDot = curWord;
+            String afterDot = "";
+            //They were part way through auto completing a method from a variable.
+            if (beforeDot.contains(".")) {
+                beforeDot = beforeDot.substring(0, curWord.indexOf("."));
+                if (curWord.indexOf(".") < curWord.length()) {
+                    afterDot = curWord.substring(curWord.indexOf(".") + 1);
                 }
-                //Remove brackets as they break the pattern
-                beforeDot = beforeDot.replaceAll("[({})]","");
-                //Search for something looking like the declaration for that variable
-                Matcher search = Pattern.compile(VAR_DECL+beforeDot+"[ ;),]").matcher(request.getCode());
-                if (!search.find()) {
-                    search = Pattern.compile(VAR_DECL + beforeDot + "[ ;),]").matcher(userCode);
+            }
+            //Remove brackets as they break the pattern
+            beforeDot = beforeDot.replaceAll("[({})]","");
+            //Search for something looking like the declaration for that variable
+            Matcher search = Pattern.compile(VAR_DECL+beforeDot+"[ ;),]").matcher(request.getCode());
+            if (!search.find()) {
+                search = Pattern.compile(VAR_DECL + beforeDot + "[ ;),]").matcher(userCode);
+            }
+            //Reset the search since we called find once.
+            search.reset();
+            if (search.find()) {
+                matched= true;
+                String name = search.group(1);
+                //Strip away generics, we cant search for them.
+                if (name.contains("<")) {
+                    name = name.substring(0,name.indexOf("<"));
                 }
-                //Reset the search since we called find once.
-                search.reset();
-                if (search.find()) {
-                    matched= true;
-                    String name = search.group(1);
-                    //Strip away generics, we cant search for them.
-                    if (name.contains("<")) {
-                        name = name.substring(0,name.indexOf("<"));
-                    }
-                    addClassAutocompletions(name,afterDot,completions);
+                addClassAutocompletions(name,afterDot,completions);
 
-
-                }
-                //If nothing was matched above, attempt to match the word as if it was a class.
-                if (!matched) {
-                    if (curWord.contains(".")) {
-                        addClassAutocompletions(beforeDot,afterDot,completions);
-                    } else {
-                        for (Class<?> clazz : findClasses(beforeDot, false)) {
-                            completions.add(new AutoCompletion(clazz.getSimpleName(), clazz.getSimpleName(), "class"));
-                        }
-                    }
-                }
 
             }
+            //If nothing was matched above, attempt to match the word as if it was a class.
+            if (!matched) {
+                if (curWord.contains(".")) {
+                    addClassAutocompletions(beforeDot,afterDot,completions);
+                } else {
+                    for (Class<?> clazz : findClasses(beforeDot, false)) {
+                        completions.add(new AutoCompletion(clazz.getSimpleName(), clazz.getSimpleName(), "class"));
+                    }
+                }
+            }
+
         }
         if (!matched) {
             if (request.getCode() != null) {
@@ -142,10 +142,11 @@ public class Autocompletor {
         StringBuilder curWord = new StringBuilder();
         int idx = 0;
         for (char c : str.toCharArray()) {
-            curWord.append(c);
-            if (Character.isSpaceChar(c) || c == '(') {
-                curWord = new StringBuilder();
+            if (Character.isSpaceChar(c) || c == '('||c ==')') {
                 if (idx >= index) break;
+                curWord = new StringBuilder();
+            } else {
+                curWord.append(c);
             }
             idx++;
         }
