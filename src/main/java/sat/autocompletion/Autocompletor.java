@@ -42,7 +42,6 @@ public class Autocompletor {
             String curLine = request.getCode().split("\n")[request.getLine()];
             //Work out what word the user was typing
             String curWord = getWordAt(curLine, request.getCol());
-            System.out.println(curWord);
             String beforeDot = curWord;
             String afterDot = "";
             //They were part way through auto completing a method from a variable.
@@ -94,6 +93,15 @@ public class Autocompletor {
                         continue;
                     }
                     completions.add(new AutoCompletion(variable,variable,"variable"));
+                }
+                Matcher methodMatcher = METHOD_DECL.matcher(request.getCode());
+                while (methodMatcher.find()) {
+                    String method = methodMatcher.group(1);
+                    //don't match modifiers (public, private..)
+                    if (Arrays.toString(javax.lang.model.element.Modifier.values()).contains(method.toLowerCase())) {
+                        continue;
+                    }
+                    completions.add(new AutoCompletion(method, method+"(","method",method+"()"));
                 }
             }
             for (String variable : task.getVariables()) {
@@ -204,6 +212,7 @@ public class Autocompletor {
     }
     private static final String VAR_DECL = "((?:[a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*) ";
     private static final Pattern VAR_DECL_FULL = Pattern.compile(VAR_DECL+"(\\w[A-z\\d_]+)[ ),;]");
+    private static final Pattern METHOD_DECL = Pattern.compile(" (.+)\\s*\\(\\)");
     private static final List<String> keywords = Arrays.asList("while","new","do","for","return","super","static",
             "synchronized","transient","this", "throws","try","catch","volatile","case","default",
             "instanceof","implements","if","else","extends");
