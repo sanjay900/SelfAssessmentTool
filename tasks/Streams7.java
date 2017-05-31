@@ -11,7 +11,7 @@ import java.util.*;
  * Using streams, particularly the flatMap function, return all unique languages that a Set of Developers has. There cannot
  * be any repeats as the return type for your method is a Set. The implementation of Developer is given for you.
  */
-@Task(name="Streams 7: Using Flatmaps", restricted={"addAll"})
+@Task(name="S2. Using Flatmap", restricted={"addAll"})
 public abstract class Streams7 {
 
     @Hidden(shouldWriteComment = false)

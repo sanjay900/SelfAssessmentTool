@@ -29,8 +29,6 @@ import static spark.Spark.post;
 
 
 public class WebServer {
-    //TODO: We should add a button for copying the ace editorQ
-    //TODO: should we read this from a config file?
     private static final int port = 4567;
     private Logger logger = LoggerFactory.getLogger(WebServer.class);
     Map<String,JavaProcess> processMap = new HashMap<>();
@@ -108,10 +106,7 @@ public class WebServer {
     private void createRMI() {
         try { //special exception handler for registry creation
             LocateRegistry.createRegistry(1099);
-            System.out.println("java RMI registry created.");
-        } catch (RemoteException e) {
-            //do nothing, error means registry already exists
-            System.out.println("java RMI registry already exists.");
+        } catch (RemoteException ignored) {
         }
 
         //Instantiate RmiServer

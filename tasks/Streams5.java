@@ -1,17 +1,19 @@
 import org.junit.Test;
-import sat.util.*;
-import java.util.stream.*;
-import sat.compiler.annotations.*;
+import sat.compiler.annotations.Hidden;
+import sat.compiler.annotations.Task;
 
-import static org.junit.Assert.*;
-import static sat.util.AssertUtils.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Using streams, complete the two methods to return a list of Contact objects which name or phone number starts
  * with the given String prefix. The implementation of the Contact class is given for you.
  */
-@Task(name="Streams 5: Filtering and collectors")
+@Task(name="B4. Filtering an address book")
 public abstract class Streams5 {
 
     @Hidden

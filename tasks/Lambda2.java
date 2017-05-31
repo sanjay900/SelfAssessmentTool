@@ -8,7 +8,7 @@ import static org.junit.Assert.assertEquals;
  * Complete the interface Parser to make all of the lambda expressions work in order to pass the tests. This task shows
  * one of the ways to define custom lambda functions.
  */
-@Task(name="Lambdas 2: Parsing strings")
+@Task(name="F2 Parsing strings")
 public abstract class Lambda2 {
 
     @ClassToComplete

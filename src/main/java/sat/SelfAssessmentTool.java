@@ -15,6 +15,7 @@ public class SelfAssessmentTool {
         new SelfAssessmentTool();
     }
     private SelfAssessmentTool() {
+        System.out.println("Compiling tasks");
         for (File task : new File("tasks").listFiles()) {
             if (!task.getName().endsWith(".java")) continue;
             try {
@@ -23,6 +24,7 @@ public class SelfAssessmentTool {
                 e.printStackTrace();
             }
         }
+        System.out.println("Tasks compiled! Starting app");
         new WebServer().startServer();
         new TrayManager().showTray();
     }

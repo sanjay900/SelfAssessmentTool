@@ -12,18 +12,18 @@ import java.util.*;
  * and so on using streams. You can assume an integer array will not be longer than 26. So array {4, 5, 6} will
  * become {"a4", "b5", "c6"} as stored in the returned list.
  */
-@Task(name="Streams 4: Converting int array to List<String>", restricted="numbers[")
+@Task(name="C3. Map int to string", restricted="numbers[")
 public abstract class Streams4 {
 
     @Test
     public void testConvert1() {
-        List<String> result = Arrays.asList(new String[] {"a1", "b2", "c3", "d4", "e5"});
+        List<String> result = Arrays.asList("a1", "b2", "c3", "d4", "e5");
         assertTrue(result.equals(convert(new int[] {1, 2, 3, 4, 5})));
     }
 
     @Test
     public void testConvert2() {
-        List<String> result = Arrays.asList(new String[] {"a200", "b102", "c0", "d90"});
+        List<String> result = Arrays.asList("a200", "b102", "c0", "d90");
         assertTrue(result.equals(convert(new int[] {200, 102, 0, 90})));
     }
 

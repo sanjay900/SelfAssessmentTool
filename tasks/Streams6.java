@@ -11,7 +11,7 @@ import java.util.*;
  * Using streams, find the average of the given list of integers and return this average value. You can assume that
  * all numbers will be integers and rounding/truncation will follow standard Java guidelines.
  */
-@Task(name="Streams 6: Average of list of numbers")
+@Task(name="E2. Filter average")
 public abstract class Streams6 {
 
     @Test

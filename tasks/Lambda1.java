@@ -2,16 +2,16 @@ import org.junit.Test;
 import sat.compiler.annotations.Hidden;
 import sat.compiler.annotations.Task;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.Assert.assertEquals;
 
 /**
- * Complete the method performAction(), which performs the arithmetic operation specified by the Action parameter, which
- * is simply an enum containing all of the arithmetic operations of Java. Check which Action is being used, and then call
- * execute to execute the specific Operation in the form of a lambda expression.
- *
- * You cannot create anonymous inner classes, or any other new class which implements Operation.
+ * Fill in the populateMap function, so that it fills the map with lambda functions based on the different operations
+ * from java.
  */
-@Task(name="Lambdas 1: Implementing Lambda Expressions", restricted={"new", "Operation", "implements"})
+@Task(name="F3 Lambda Calculator")
 public abstract class Lambda1 {
     enum Action {
         ADD,
@@ -21,7 +21,7 @@ public abstract class Lambda1 {
         MODULO;
     }
     interface Operation {
-        int action();
+        int action(int a, int b);
     }
 
     @Test
@@ -58,11 +58,10 @@ public abstract class Lambda1 {
         assertEquals(3, performAction(Action.MODULO, 39, 12));
         assertEquals(1, performAction(Action.MODULO, 19, 2));
     }
-
-    public abstract int performAction(Action action, int a, int b);
-
-    @Hidden
-    public int execute(Operation operation) {
-        return operation.action();
+    Map<Action,Operation> operationMap = new HashMap<>();
+    public int performAction(Action action, int a, int b) {
+        populateMap();
+        return operationMap.get(action).action(a,b);
     }
+    abstract void populateMap();
 }

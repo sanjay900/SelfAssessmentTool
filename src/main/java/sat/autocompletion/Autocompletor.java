@@ -6,16 +6,21 @@ import sat.compiler.task.TaskInfo;
 import sat.util.PrintUtils;
 import sat.webserver.TaskRequest;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static java.util.Collections.emptyList;
 
 /**
  * Created by sanjay on 28/05/17.
@@ -27,7 +32,7 @@ public class Autocompletor {
             task = TaskCompiler.getTaskInfo(request.getFile(), new FileInputStream("tasks/" + request.getFile() + ".java"));
         } catch (Exception ex) {
             ex.printStackTrace();
-            return Collections.emptyList();
+            return emptyList();
         }
         String userCode = task.getProcessedSource() + request.getCode() +"}";
         List<AutoCompletion> completions = new ArrayList<>();
@@ -179,19 +184,12 @@ public class Autocompletor {
      * @return
      */
     private static List<Class<?>> findClasses(String name, boolean exact) {
-        try {
-            return ClassPath.from(
-                    Thread.currentThread().getContextClassLoader()).getAllClasses().stream()
-                    .filter(info -> exact?info.getSimpleName().equals(name):info.getSimpleName().startsWith(name))
-                    .filter(info -> shouldComplete(info.getName()))
-                    .map(ClassPath.ClassInfo::load)
-                    .sorted(Comparator.comparing(Class::getSimpleName))
-                    .collect(Collectors.toList()
-                    );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return Collections.emptyList();
+        return classes.stream()
+                .filter(info -> exact?info.getSimpleName().equals(name):info.getSimpleName().startsWith(name))
+                .map(ClassPath.ClassInfo::load)
+                .sorted(Comparator.comparing(Class::getSimpleName))
+                .collect(Collectors.toList()
+                );
     }
 
     /**
@@ -209,4 +207,14 @@ public class Autocompletor {
             "synchronized","transient","this", "throws","try","catch","volatile","case","default",
             "instanceof","implements","if","else","extends");
     private static final List<String> primitives = Arrays.asList("byte","short","int","long","float","double","char","boolean");
+    private static Set<ClassPath.ClassInfo> classes;
+    static {
+        try {
+            URLClassLoader rt = new URLClassLoader(new URL[]{new File(System.getProperty("java.home") + File.separator + "lib" + File.separator + "rt.jar").toURL()});
+            classes = ClassPath.from(rt).getAllClasses().stream()
+                    .filter(info -> shouldComplete(info.getName())).collect(Collectors.toSet());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
