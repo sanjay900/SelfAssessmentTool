@@ -27,6 +27,7 @@ $("#compileBt").click(function() {
 });
 const autocompleter = {
     getCompletions: function(editor, session, pos, prefix, callback) {
+        if (file === null) return;
         $.post("/autocomplete",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
             callback(null, JSON.parse(data));
         });
@@ -46,6 +47,7 @@ userInput.getSession().on('change', function() {
     }
 });
 function send() {
+    if (file === null) return;
     const pos = userInput.getCursorPosition();
     $.post("/testCode",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
         let results = JSON.parse(data);
