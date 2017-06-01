@@ -107,6 +107,7 @@ function loadFile(name,fullName) {
         } else {
             userInput.setValue(results.startingCode,-1);
         }
+        $("#info").html(results.info);
         startingCode = results.startingCode;
         codeDisplay.setValue(results.codeToDisplay, -1);
     });

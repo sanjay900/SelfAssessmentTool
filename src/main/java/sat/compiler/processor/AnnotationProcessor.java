@@ -47,6 +47,7 @@ public class AnnotationProcessor extends AbstractProcessor {
     private List<String> enums = new ArrayList<>();
     private List<String> interfaces = new ArrayList<>();
     private Task task;
+    private StringBuilder info;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -60,14 +61,15 @@ public class AnnotationProcessor extends AbstractProcessor {
         for (Element taskElement : roundEnv.getElementsAnnotatedWith(Task.class)) {
             shown = new StringBuilder();
             toFill = new StringBuilder();
+            info = new StringBuilder();
             methods.clear();
             variables.clear();
             testedMethods.clear();
             classes.clear();
             enums.clear();
             interfaces.clear();
-            String taskComment = getComment(taskElement);
-            shown.append(taskComment);
+            String taskComment = getComment(taskElement,false);
+            info.append(taskComment);
             task = taskElement.getAnnotation(Task.class);
             for (Element element : taskElement.getEnclosedElements()) {
                 switch (element.getKind()) {
@@ -162,7 +164,7 @@ public class AnnotationProcessor extends AbstractProcessor {
             header += flatten(modifiers)+" ";
         }
         header += methodTree.getReturnType()+" "+methodTree.getName()+"("+methodTree.getParameters()+")";
-        String comment = getComment(element);
+        String comment = getComment(element,true);
 
         shown.append(comment).append(header).append(" ");
         if (hidden != null && hidden.shouldWriteComment()) {
@@ -234,10 +236,9 @@ public class AnnotationProcessor extends AbstractProcessor {
         String source = generateProcessedSource(taskEle);
         String toDisplay = fixWeirdCompilationIssues(shown.toString());
         String toFill = fixWeirdCompilationIssues(this.toFill.toString());
-        String className = taskEle.getSimpleName()+"";
         List<String> restricted = Arrays.asList(task.restricted());
         TaskCompiler.compiledTasks.map.put(taskEle.getQualifiedName()+"",
-                new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,testedMethods,restricted,methods,variables,classes,enums,interfaces));
+                new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,info.toString(),testedMethods,restricted,methods,variables,classes,enums,interfaces));
     }
 
     /**
@@ -254,8 +255,9 @@ public class AnnotationProcessor extends AbstractProcessor {
      * @param element the element
      * @return the javadoc style comment attached to the element, or an empty string if none exists.
      */
-    private String getComment(Element element) {
+    private String getComment(Element element,boolean addBorder) {
         String comment = elementUtils.getDocComment(element);
+        if (!addBorder) return comment;
         if (comment != null) {
             return "/**\n *" + comment.replace("\n", "\n *") + "/\n";
         }

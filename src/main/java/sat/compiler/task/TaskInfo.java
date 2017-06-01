@@ -11,6 +11,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class TaskInfo {
-    private String codeToDisplay,methodsToFill,fullName,name,processedSource;
+    private String codeToDisplay,methodsToFill,fullName,name,processedSource,info;
     private List<String> testableMethods,restricted,methods,variables,classes,enums,interfaces;
 }
