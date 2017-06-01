@@ -72,6 +72,7 @@ public class RemoteSecurityManager extends SecurityManager {
         throw new SecurityException(msg);
     }
     void setAllowAll(boolean allowAll) {
+        //Only allow access to setAllowAll from CompilerProcess.
         if (getClassContext()[1] != CompilerProcess.class) error("You do not have permission to modify the security manager");
         this.allowAll = allowAll;
     }

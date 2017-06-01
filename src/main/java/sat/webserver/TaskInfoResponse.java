@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @AllArgsConstructor
 @Data
-public class SimpleTaskResponse {
+public class TaskInfoResponse {
     private String codeToDisplay;
     private String startingCode;
     private String info;

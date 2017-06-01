@@ -42,7 +42,7 @@ task zip2(type: Zip) {
     from('build/libs/')
     include 'SelfAssessmentTool.jar'
     from('.')
-    include 'tasks/*'
+    include 'tasks/**'
     into('tasks')
     archiveName 'dist.zip'
     destinationDir(file('.'))

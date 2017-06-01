@@ -1,7 +1,5 @@
 package sat.compiler;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.junit.runner.JUnitCore;
 import sat.compiler.annotations.TaskList;
 import sat.compiler.java.ClassFileManager;
@@ -12,10 +10,9 @@ import sat.compiler.processor.AnnotationProcessor;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TestResult;
 import sat.webserver.TaskRequest;
-import sat.webserver.TaskResponse;
+import sat.webserver.CompileResponse;
 
 import javax.tools.*;
-import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -85,14 +82,14 @@ public class TaskCompiler {
      * @param request the request from the web server
      * @return the response to send to the client.
      */
-    public static TaskResponse compile(TaskRequest request) {
+    public static CompileResponse compile(TaskRequest request) {
         TaskInfo task;
         List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
-        if (request.getFile() == null) return new TaskResponse("",Collections.emptyList(), junitOut,diagnostics);
+        if (request.getFile() == null) return new CompileResponse("",Collections.emptyList(), junitOut,diagnostics);
         task = TaskCompiler.compiledTasks.map.get(request.getFile());
         if (task == null) {
-            return new TaskResponse(ERROR,Collections.emptyList(), junitOut,diagnostics);
+            return new CompileResponse(ERROR,Collections.emptyList(), junitOut,diagnostics);
         }
         //Combine the processed source code with the user code (adding a timeout rule in the process)
         String userCode = task.getProcessedSource() + request.getCode() + "@Rule public Timeout globalTimeout = Timeout.seconds("+timeout+"); }";
@@ -117,7 +114,7 @@ public class TaskCompiler {
                     }
                 }
 
-                return new TaskResponse("", task.getTestableMethods(), junitOut, diagnostics);
+                return new CompileResponse("", task.getTestableMethods(), junitOut, diagnostics);
             }
         }
         try {
@@ -142,7 +139,7 @@ public class TaskCompiler {
             }
         }
 
-        return new TaskResponse( "", task.getTestableMethods(), junitOut, diagnostics);
+        return new CompileResponse( "", task.getTestableMethods(), junitOut, diagnostics);
     }
 
 

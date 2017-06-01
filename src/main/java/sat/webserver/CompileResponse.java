@@ -11,7 +11,7 @@ import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class TaskResponse implements Serializable {
+public class CompileResponse implements Serializable {
     private String console;
     private List<String> testedMethods;
     private List<TestResult> junitResults;

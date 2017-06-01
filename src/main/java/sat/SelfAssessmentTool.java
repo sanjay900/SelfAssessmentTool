@@ -30,10 +30,11 @@ public class SelfAssessmentTool {
                     String name = FilenameUtils.getBaseName(task.getFileName()+"");
                     try {
                         TaskCompiler.compile(name, IOUtils.toString(new FileInputStream(task.toFile())),null);
+                        System.out.println("Loaded: "+name);
                     } catch (ClassNotFoundException | IOException | CompilerException e) {
+                        System.out.println("Error loading: "+name);
                         e.printStackTrace();
                     }
-                    System.out.println("Loaded: "+name);
                     return FileVisitResult.CONTINUE;
                 }
             });
