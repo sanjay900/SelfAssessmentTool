@@ -6,11 +6,12 @@ import sat.autocompletion.AutoCompletion;
 import sat.compiler.java.CompilationError;
 import sat.compiler.task.TestResult;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class TaskResponse {
+public class TaskResponse implements Serializable {
     private String codeToDisplay;
     private String startingCode;
     private String console;

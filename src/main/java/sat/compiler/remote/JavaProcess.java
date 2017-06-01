@@ -1,8 +1,9 @@
 package sat.compiler.remote;
 
 
-import java.io.File;
-import java.io.IOException;
+import org.apache.commons.io.IOUtils;
+
+import java.io.*;
 
 public class JavaProcess {
     private Process process;
@@ -14,7 +15,7 @@ public class JavaProcess {
     public boolean isRunning() {
         return process != null && process.isAlive();
     }
-    public void exec(Class klass, int id) throws IOException,
+    public String exec(Class klass, int id) throws IOException,
             InterruptedException {
         String javaHome = System.getProperty("java.home");
         String javaBin = javaHome +
@@ -23,7 +24,8 @@ public class JavaProcess {
         String classpath = System.getProperty("java.class.path");
         String className = klass.getCanonicalName();
         ProcessBuilder builder = new ProcessBuilder(javaBin, "-cp", classpath, className, id+"");
+        builder.redirectErrorStream();
         process = builder.start();
-        process.waitFor();
+        return IOUtils.toString(process.getInputStream());
     }
 }

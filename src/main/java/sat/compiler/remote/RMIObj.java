@@ -2,9 +2,10 @@ package sat.compiler.remote;
 
 import lombok.Getter;
 import lombok.Setter;
-import sat.compiler.remote.RMIIntf;
 import sat.compiler.TaskCompiler;
 import sat.util.JSONUtils;
+import sat.webserver.TaskRequest;
+import sat.webserver.TaskResponse;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -19,21 +20,21 @@ public class RMIObj extends UnicastRemoteObject implements RMIIntf {
 
     private String messageSent;
     private String messageReceived;
-    private HashMap<Integer,String> received = new HashMap<>();
-    private HashMap<Integer,String> sent = new HashMap<>();
+    private HashMap<Integer,TaskResponse> remote = new HashMap<>();
+    private HashMap<Integer,TaskRequest> local = new HashMap<>();
     private String compiled;
     public RMIObj() throws RemoteException {
         super(0);
         compiled = JSONUtils.toJSON(TaskCompiler.compiledTasks);
     }
     @Override
-    public String getMessageFrom(int id) throws RemoteException {
-        return sent.get(id);
+    public TaskRequest getMessageFrom(int id) throws RemoteException {
+        return local.get(id);
     }
 
     @Override
-    public void setMessageFor(String message, int id) throws RemoteException {
-        received.put(id,message);
+    public void setMessageFor(TaskResponse message, int id) throws RemoteException {
+        remote.put(id,message);
     }
 
     @Override

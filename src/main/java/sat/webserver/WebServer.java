@@ -1,5 +1,6 @@
 package sat.webserver;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sat.autocompletion.Autocompleter;
@@ -44,27 +45,32 @@ public class WebServer {
                 processMap.get(req.ip()).stop();
             }
             int id = new Random().nextInt(50000);
-            rmi.getSent().put(id,req.body());
+            rmi.getLocal().put(id,JSONUtils.fromJSON(req.body(),TaskRequest.class));
             JavaProcess process = new JavaProcess();
             processMap.put(req.ip(),process);
             final ExecutorService executor = Executors.newSingleThreadExecutor();
-            final Future future = executor.submit(() -> {
+            final Future<String> future = executor.submit(() -> {
                 try {
-                    process.exec(CompilerProcess.class,id);
+                    return process.exec(CompilerProcess.class,id);
                 } catch (IOException | InterruptedException e) {
                     e.printStackTrace();
                 }
+                return null;
             });
             executor.shutdown(); // This does not cancel the already-scheduled task.
+            String console;
             try {
-                future.get(5, TimeUnit.SECONDS);
+                console = future.get(5, TimeUnit.SECONDS);
             }
             catch (InterruptedException | ExecutionException | TimeoutException ie) {
                 process.stop();
                 executor.shutdownNow();
-                return JSONUtils.toJSON(new TaskResponse("", "", "Error: timeout reached (2 seconds)", Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+                return TIMEOUT;
             }
-            return rmi.getReceived().get(id);
+            TaskResponse response = rmi.getRemote().get(id);
+            if (response == null) return "cancel";
+            response.setConsole(StringEscapeUtils.escapeHtml4(console));
+            return JSONUtils.toJSON(response);
         });
         post("/autocomplete", (req, res) -> {
             TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);
@@ -119,4 +125,6 @@ public class WebServer {
             e.printStackTrace();
         }
     }
+
+    private static final String TIMEOUT = JSONUtils.toJSON(new TaskResponse("", "", "Error: timeout reached (2 seconds)", Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));;
 }

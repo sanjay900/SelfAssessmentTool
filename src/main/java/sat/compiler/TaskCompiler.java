@@ -108,7 +108,6 @@ public class TaskCompiler {
      */
     public static TaskResponse compile(TaskRequest request) {
         TaskInfo task;
-        String output = "";
         List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
         if (request.getFile() == null) return new TaskResponse("","","",Collections.emptyList(), junitOut,diagnostics);
@@ -128,7 +127,7 @@ public class TaskCompiler {
         if (request.getCode() != null && !request.getCode().isEmpty()) {
             List<String> restricted = new ArrayList<>();
             restricted.addAll(task.getRestricted());
-            restricted.addAll(TaskCompiler.restricted);
+//            restricted.addAll(TaskCompiler.restricted);
 
             //Look for restricted keywords
             for (String str: restricted) {
@@ -143,12 +142,9 @@ public class TaskCompiler {
                         }
                     }
 
-                    return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output, task.getTestableMethods(), junitOut, diagnostics);
+                    return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), "", task.getTestableMethods(), junitOut, diagnostics);
                 }
             }
-            //Save system.out to a writer
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            System.setOut(new PrintStream(bos));
             try {
                 //compile and run with junit
                 Class<?> clazz = compileTask(request.getFile(), userCode);
@@ -169,11 +165,6 @@ public class TaskCompiler {
                     diagnostics.add(new CompilationError(diagnostic.getLineNumber()-task.getProcessedSource().split("\n").length,diagnostic.getColumnNumber(),msg));
 
                 }
-            } finally {
-                //Set system.out to the normal system.out
-                System.setOut(normal);
-                output = bos.toString();
-                output = StringEscapeUtils.escapeHtml4(output);
             }
         } else {
             junitOut.clear();
@@ -181,7 +172,7 @@ public class TaskCompiler {
                 junitOut.add(new TestResult(method,"Not Tested"));
             }
         }
-        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), output, task.getTestableMethods(), junitOut, diagnostics);
+        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), "", task.getTestableMethods(), junitOut, diagnostics);
     }
 
 
@@ -190,7 +181,6 @@ public class TaskCompiler {
     private static final String ERROR = "An error occurred with the source for this file.\n"+
             "contact a lecturer as this is a problem with the tool not your code.";
     private static final int timeout = 2;
-    //Do we want to also restrict file access??
-    private static final List<String> restricted = Arrays.asList("Process","File","java.io","exec","Runtime");
+//    private static final List<String> restricted = Arrays.asList("Process","File","java.io","exec","Runtime");
 
 }

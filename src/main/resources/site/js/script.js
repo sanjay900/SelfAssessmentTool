@@ -50,6 +50,7 @@ function send() {
     if (file === null) return;
     const pos = userInput.getCursorPosition();
     $.post("/testCode",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
+        if (data === "cancel") return;
         let results = JSON.parse(data);
         if (userInput.getValue().length === 0 || reload) {
             userInput.setValue(results.startingCode,-1);
