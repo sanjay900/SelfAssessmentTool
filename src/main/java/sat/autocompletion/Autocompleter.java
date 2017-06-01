@@ -144,7 +144,6 @@ public class Autocompleter {
             }
             idx++;
         }
-        System.out.println(curWord.toString());
         return curWord.toString();
     }
 
