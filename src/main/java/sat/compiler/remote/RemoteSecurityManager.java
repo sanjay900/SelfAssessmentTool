@@ -62,43 +62,17 @@ public class RemoteSecurityManager extends SecurityManager {
     public void checkMulticast(InetAddress maddr) {
         error("You may not use networking!");
     }
-
-    @Override
-    public void checkPropertiesAccess() {
-    }
-
-    @Override
-    public void checkPropertyAccess(String key) {
-    }
-
     @Override
     public void checkPrintJobAccess() {
         error("You may not print!");
-    }
-
-    @Override
-    public void checkPackageAccess(String pkg) {
-    }
-
-    @Override
-    public void checkPackageDefinition(String pkg) {
-    }
-
-    @Override
-    public void checkSetFactory() {
-    }
-
-    @Override
-    public void checkSecurityAccess(String target) {
-        System.out.println(target);
     }
     private void error(String msg) {
         if (allowAll) return;
         System.out.println(msg);
         throw new SecurityException(msg);
     }
-
     void setAllowAll(boolean allowAll) {
+        if (getClassContext()[1] != CompilerProcess.class) error("You do not have permission to modify the security manager");
         this.allowAll = allowAll;
     }
 }
