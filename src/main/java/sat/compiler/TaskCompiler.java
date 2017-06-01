@@ -1,6 +1,7 @@
 package sat.compiler;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.junit.runner.JUnitCore;
 import sat.compiler.annotations.TaskList;
 import sat.compiler.java.ClassFileManager;
@@ -128,6 +129,7 @@ public class TaskCompiler {
             List<String> restricted = new ArrayList<>();
             restricted.addAll(task.getRestricted());
             restricted.addAll(TaskCompiler.restricted);
+
             //Look for restricted keywords
             for (String str: restricted) {
                 if (request.getCode().toLowerCase().contains(str.toLowerCase())) {
@@ -171,6 +173,7 @@ public class TaskCompiler {
                 //Set system.out to the normal system.out
                 System.setOut(normal);
                 output = bos.toString();
+                output = StringEscapeUtils.escapeHtml4(output);
             }
         } else {
             junitOut.clear();
@@ -188,6 +191,6 @@ public class TaskCompiler {
             "contact a lecturer as this is a problem with the tool not your code.";
     private static final int timeout = 2;
     //Do we want to also restrict file access??
-    private static final List<String> restricted = Arrays.asList("Process","File");
+    private static final List<String> restricted = Arrays.asList("Process","File","java.io","exec","Runtime");
 
 }

@@ -19,21 +19,19 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static java.util.Collections.emptyList;
-import static java.util.Collections.sort;
+import java.util.stream.Stream;
 
 /**
- * Created by sanjay on 28/05/17.
+ * A basic autocompleter that accepts a TaskRequest then uses it to form a list of auto completions.
  */
-public class Autocompletor {
+public class Autocompleter {
     public static List<AutoCompletion> getCompletions(TaskRequest request) {
         TaskInfo task;
         try {
             task = TaskCompiler.getTaskInfo(request.getFile(), new FileInputStream("tasks/" + request.getFile() + ".java"));
         } catch (Exception ex) {
             ex.printStackTrace();
-            return emptyList();
+            return Collections.emptyList();
         }
         String userCode = task.getProcessedSource() + request.getCode() +"}";
         List<AutoCompletion> completions = new ArrayList<>();
@@ -54,9 +52,9 @@ public class Autocompletor {
             //Remove brackets as they break the pattern
             beforeDot = beforeDot.replaceAll("[({})]","");
             //Search for something looking like the declaration for that variable
-            Matcher search = Pattern.compile(VAR_DECL+beforeDot+"[ ;),]").matcher(request.getCode());
+            Matcher search = Pattern.compile(TYPE_DECLARATION +beforeDot+"[ ;),]").matcher(request.getCode());
             if (!search.find()) {
-                search = Pattern.compile(VAR_DECL + beforeDot + "[ ;),]").matcher(userCode);
+                search = Pattern.compile(TYPE_DECLARATION + beforeDot + "[ ;),]").matcher(userCode);
             }
             //Reset the search since we called find once.
             search.reset();
@@ -67,14 +65,14 @@ public class Autocompletor {
                 if (name.contains("<")) {
                     name = name.substring(0,name.indexOf("<"));
                 }
-                addClassAutocompletions(name,afterDot,completions);
+                addClassAutoCompletions(name,afterDot,completions);
 
 
             }
             //If nothing was matched above, attempt to match the word as if it was a class.
             if (!matched) {
                 if (curWord.contains(".")) {
-                    addClassAutocompletions(beforeDot,afterDot,completions);
+                    addClassAutoCompletions(beforeDot,afterDot,completions);
                 } else {
                     for (Class<?> clazz : findClasses(beforeDot, false)) {
                         completions.add(new AutoCompletion(clazz.getSimpleName(), clazz.getSimpleName(), "class"));
@@ -85,7 +83,7 @@ public class Autocompletor {
         }
         if (!matched) {
             if (request.getCode() != null) {
-                Matcher varMatcher = VAR_DECL_FULL.matcher(request.getCode());
+                Matcher varMatcher = VAR_DECLARATION.matcher(request.getCode());
                 while (varMatcher.find()) {
                     String variable = varMatcher.group(2);
                     //don't match modifiers (public, private..)
@@ -94,7 +92,7 @@ public class Autocompletor {
                     }
                     completions.add(new AutoCompletion(variable,variable,"variable"));
                 }
-                Matcher methodMatcher = METHOD_DECL.matcher(request.getCode());
+                Matcher methodMatcher = METHOD_DECLARATION.matcher(request.getCode());
                 while (methodMatcher.find()) {
                     String method = methodMatcher.group(1);
                     //don't match modifiers (public, private..)
@@ -110,20 +108,7 @@ public class Autocompletor {
             for (String method : task.getMethods()) {
                 completions.add(new AutoCompletion(method, method.substring(0,method.indexOf("(")+1), "method",method));
             }
-            for (Method method: PrintUtils.class.getMethods()) {
-                if (Modifier.isStatic(method.getModifiers())) {
-                    StringBuilder params = new StringBuilder();
-                    for (Parameter parameter : method.getParameters()) {
-                        params.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
-                    }
-                    String param = params.toString();
-                    if (params.length() > 0) {
-                        param = params.substring(0,param.length()-1);
-                    }
-                    String m = method.getName()+"("+param+")";
-                    completions.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",m));
-                }
-            }
+            completions.addAll(printUtilMethods);
             for (String clazz : task.getClasses()) {
                 completions.add(new AutoCompletion(clazz, clazz, "class"));
             }
@@ -133,19 +118,20 @@ public class Autocompletor {
             for (String enu : task.getEnums()) {
                 completions.add(new AutoCompletion(enu, enu, "enum"));
             }
-            for (String keyword : keywords) {
-                completions.add(new AutoCompletion(keyword, keyword+" ", "keyword",keyword));
-            }
-            for (String primitive : primitives) {
-                completions.add(new AutoCompletion(primitive, primitive+" ", "primitive",primitive));
-            }
+            completions.addAll(keywords);
+            completions.addAll(primitives);
         }
         completions.sort(Comparator.comparing(AutoCompletion::getCaption));
         return completions;
     }
 
-
-    public static String getWordAt(String str, int index) {
+    /**
+     * Get the word at an index in a string
+     * @param str the string to get the word from
+     * @param index the index to get the word at
+     * @return the word at index index
+     */
+    private static String getWordAt(String str, int index) {
         //Work out what word the user was typing
         StringBuilder curWord = new StringBuilder();
         int idx = 0;
@@ -158,14 +144,21 @@ public class Autocompletor {
             }
             idx++;
         }
+        System.out.println(curWord.toString());
         return curWord.toString();
     }
 
-    private static void addClassAutocompletions(String name, String afterDot, List<AutoCompletion> completions) {
+    /**
+     * Look for methods matching the prefix from the class name, even if we don't have a package
+     * @param name class name
+     * @param prefix method prefix
+     * @param completions the list of completions to add to
+     */
+    private static void addClassAutoCompletions(String name, String prefix, List<AutoCompletion> completions) {
         for (Class<?> clazz : findClasses(name,true)) {
             //Autocomplete methods from found classes
             for(Method m: clazz.getMethods()) {
-                if (!m.getName().startsWith(afterDot)) continue;
+                if (!m.getName().startsWith(prefix)) continue;
                 StringBuilder param = new StringBuilder();
                 for (Parameter parameter: m.getParameters()) {
                     param.append(parameter.getType().getSimpleName()).append(" ")
@@ -179,7 +172,7 @@ public class Autocompletor {
             }
             //Autocomplete fields from found classes
             for(Field f: clazz.getFields()) {
-                if (!f.getName().startsWith(afterDot)) continue;
+                if (!f.getName().startsWith(prefix)) continue;
                 completions.add(new AutoCompletion(clazz.getSimpleName(),
                         f.getName(),
                         f.getType().getSimpleName()));
@@ -190,7 +183,7 @@ public class Autocompletor {
      * Find a class by name using guava
      * @param name the name
      * @param exact true if you have the entire class name, false if you only have part of it
-     * @return
+     * @return a list of matching classes
      */
     private static List<Class<?>> findClasses(String name, boolean exact) {
         return classes.stream()
@@ -210,21 +203,43 @@ public class Autocompletor {
         //Note that we exclude inner classes as they are not useful to autocomplete.
         return !name.contains("$") && (name.startsWith("java.util") || name.startsWith("java.lang"));
     }
-    private static final String VAR_DECL = "((?:[a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*) ";
-    private static final Pattern VAR_DECL_FULL = Pattern.compile(VAR_DECL+"(\\w[A-z\\d_]+)[ ),;]");
-    private static final Pattern METHOD_DECL = Pattern.compile(" (.+)\\s*\\(\\)");
-    private static final List<String> keywords = Arrays.asList("while","new","do","for","return","super","static",
+    private static final String TYPE_DECLARATION = "((?:[a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*)\\s";
+    private static final Pattern VAR_DECLARATION = Pattern.compile(TYPE_DECLARATION +"(\\w[A-z\\d_]+)[ ),;]");
+    private static final Pattern METHOD_DECLARATION = Pattern.compile(TYPE_DECLARATION +"(.+)\\(");
+    private static final List<AutoCompletion> keywords = Stream.of("while","new","do","for","return","super","static",
             "synchronized","transient","this", "throws","try","catch","volatile","case","default",
-            "instanceof","implements","if","else","extends");
-    private static final List<String> primitives = Arrays.asList("byte","short","int","long","float","double","char","boolean");
+            "instanceof","implements","if","else","extends")
+            .map(keyword->new AutoCompletion(keyword, keyword+" ", "keyword",keyword))
+            .collect(Collectors.toList());
+    private static final List<AutoCompletion> primitives = Stream.of("byte","short","int","long","float","double","char","boolean")
+            .map(primitive ->new AutoCompletion(primitive, primitive+" ", "primitive",primitive))
+            .collect(Collectors.toList());
+    private static final List<AutoCompletion> printUtilMethods = new ArrayList<>();
     private static Set<ClassPath.ClassInfo> classes;
     static {
+        //Use Guava's ClassPath to scan rt.jar (java runtime) and collect all classes from java.util and java.lang
         try {
-            URLClassLoader rt = new URLClassLoader(new URL[]{new File(System.getProperty("java.home") + File.separator + "lib" + File.separator + "rt.jar").toURL()});
+            String rtJar = System.getProperty("java.home") + File.separator + "lib" + File.separator + "rt.jar";
+            URLClassLoader rt = new URLClassLoader(new URL[]{new File(rtJar).toURI().toURL()});
             classes = ClassPath.from(rt).getAllClasses().stream()
                     .filter(info -> shouldComplete(info.getName())).collect(Collectors.toSet());
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+        for (Method method: PrintUtils.class.getMethods()) {
+            if (Modifier.isStatic(method.getModifiers())) {
+                StringBuilder params = new StringBuilder();
+                for (Parameter parameter : method.getParameters()) {
+                    params.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
+                }
+                String param = params.toString();
+                if (params.length() > 0) {
+                    param = params.substring(0,param.length()-1);
+                }
+                String m = method.getName()+"("+param+")";
+                printUtilMethods.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",m));
+            }
         }
     }
 }

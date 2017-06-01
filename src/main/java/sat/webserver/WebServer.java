@@ -2,7 +2,7 @@ package sat.webserver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sat.autocompletion.Autocompletor;
+import sat.autocompletion.Autocompleter;
 import sat.compiler.remote.CompilerProcess;
 import sat.compiler.remote.JavaProcess;
 import sat.compiler.TaskCompiler;
@@ -68,7 +68,7 @@ public class WebServer {
         });
         post("/autocomplete", (req, res) -> {
             TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);
-            return JSONUtils.toJSON(Autocompletor.getCompletions(request));
+            return JSONUtils.toJSON(Autocompleter.getCompletions(request));
         });
         logger.info(""+ansi().render("@|green Starting Socket.IO Server|@"));
         //Compile all the current tasks so that we don't have to do it on the first connection.

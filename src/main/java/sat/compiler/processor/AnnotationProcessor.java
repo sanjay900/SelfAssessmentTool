@@ -232,7 +232,10 @@ public class AnnotationProcessor extends AbstractProcessor {
         String source = generateProcessedSource(taskEle);
         String toDisplay = fixWeirdCompilationIssues(shown.toString());
         String toFill = fixWeirdCompilationIssues(this.toFill.toString());
-        TaskCompiler.compiledTasks.map.put(taskEle.getQualifiedName()+"",new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,testedMethods,Arrays.asList(task.restricted()),variables,methods,classes,enums,interfaces));
+        String className = taskEle.getSimpleName()+"";
+        List<String> restricted = Arrays.asList(task.restricted());
+        TaskCompiler.compiledTasks.map.put(className,
+                new TaskInfo(toDisplay,toFill,task.name(),className,source,testedMethods,restricted,methods,variables,classes,enums,interfaces));
     }
 
     /**
