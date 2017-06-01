@@ -16,14 +16,15 @@ import java.rmi.NotBoundException;
 public class CompilerProcess {
     public static void main(String[] args) throws IOException, NotBoundException {
         RemoteSecurityManager manager = new RemoteSecurityManager();
+        manager.setAllowAll(true);
+        System.setSecurityManager(manager);
         int id = Integer.parseInt(args[0]);
         RMIIntf obj = (RMIIntf) Naming.lookup("//localhost/AssessRMI");
-        System.setSecurityManager(manager);
         TaskCompiler.compiledTasks = JSONUtils.fromJSON(obj.getCompiledTasks(),TaskList.class);
         TaskRequest request = obj.getMessageFrom(id);
-        manager.setAllowNetworking(false);
+        manager.setAllowAll(false);
         TaskResponse response = TaskCompiler.compile(request);
-        manager.setAllowNetworking(true);
+        manager.setAllowAll(true);
         obj.setMessageFor(response,id);
     }
 }

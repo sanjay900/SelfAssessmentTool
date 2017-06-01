@@ -1,17 +1,13 @@
 package sat.compiler.remote;
 
-import java.io.File;
 import java.net.InetAddress;
-import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.Permission;
 
 /**
  * Created by sanjay on 1/06/17.
  */
 public class RemoteSecurityManager extends SecurityManager {
-    private boolean allowNetworking = true;
+    private boolean allowAll;
 
     @Override
     public void checkPermission(Permission perm) {
@@ -44,7 +40,6 @@ public class RemoteSecurityManager extends SecurityManager {
 
     @Override
     public void checkConnect(String host, int port) {
-        if (allowNetworking) return;
         error("You may not use networking!");
     }
 
@@ -98,11 +93,12 @@ public class RemoteSecurityManager extends SecurityManager {
         System.out.println(target);
     }
     private void error(String msg) {
+        if (allowAll) return;
         System.out.println(msg);
         throw new SecurityException(msg);
     }
 
-    void setAllowNetworking(boolean allowNetworking) {
-        this.allowNetworking = allowNetworking;
+    void setAllowAll(boolean allowAll) {
+        this.allowAll = allowAll;
     }
 }
