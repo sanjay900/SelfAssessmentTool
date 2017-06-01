@@ -16,10 +16,7 @@ import sat.util.PrintUtils;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.*;
 import javax.lang.model.util.Elements;
 import javax.tools.JavaFileObject;
 import java.io.BufferedWriter;
@@ -194,7 +191,12 @@ public class AnnotationProcessor extends AbstractProcessor {
      */
     private String generateProcessedSource(TypeElement taskEle) {
         TreePath path = trees.getPath(taskEle);
-        String endClass = flatten(path.getCompilationUnit().getImports()) +
+        PackageElement pe=(PackageElement)taskEle.getEnclosingElement();
+        String packageStmt = "";
+        if (!pe.isUnnamed()) {
+            packageStmt = "package "+pe+";\n";
+        }
+        String endClass = packageStmt+flatten(path.getCompilationUnit().getImports()) +
                 "import static "+PrintUtils.class.getName()+".*;" +
                 "import java.util.*;" +
                 "import java.util.stream.*;" +
@@ -217,8 +219,8 @@ public class AnnotationProcessor extends AbstractProcessor {
         }
         endClass = endClass.replaceAll("@Task.*","");
         endClass = endClass.replaceAll("@ClassToComplete.*","");
-        endClass = endClass.replace("abstract class "+ taskEle.getQualifiedName(),"class "+ taskEle.getQualifiedName()+ OUTPUT_CLASS_SUFFIX);
-        endClass = endClass.replace(" "+ taskEle.getQualifiedName()+"() {"," "+ taskEle.getQualifiedName()+ OUTPUT_CLASS_SUFFIX +"() {");
+        endClass = endClass.replace("abstract class "+ taskEle.getSimpleName(),"class "+ taskEle.getSimpleName()+ OUTPUT_CLASS_SUFFIX);
+        endClass = endClass.replace(" "+ taskEle.getSimpleName()+"() {"," "+ taskEle.getSimpleName()+ OUTPUT_CLASS_SUFFIX +"() {");
         return fixWeirdCompilationIssues(endClass);
     }
 
@@ -234,8 +236,8 @@ public class AnnotationProcessor extends AbstractProcessor {
         String toFill = fixWeirdCompilationIssues(this.toFill.toString());
         String className = taskEle.getSimpleName()+"";
         List<String> restricted = Arrays.asList(task.restricted());
-        TaskCompiler.compiledTasks.map.put(className,
-                new TaskInfo(toDisplay,toFill,task.name(),className,source,testedMethods,restricted,methods,variables,classes,enums,interfaces));
+        TaskCompiler.compiledTasks.map.put(taskEle.getQualifiedName()+"",
+                new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,testedMethods,restricted,methods,variables,classes,enums,interfaces));
     }
 
     /**

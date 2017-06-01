@@ -21,7 +21,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TaskCompiler {
-    private static PrintStream normal = System.out;
     public static TaskList compiledTasks = new TaskList();
     /**
      * Compile a class, and then return classToGet
@@ -46,7 +45,7 @@ public class TaskCompiler {
                 if (classToGet == null && !msg.contains("abstract")) {
                     System.err.println("Compilation error:\n"+diag.getMessage(Locale.getDefault()).replace(name+".","").replace("Generated",""));
                 }
-                if (classToGet == null || !Objects.equals(diag.getSource().getName().substring(1), classToGet+".java")) {
+                if (classToGet == null || !Objects.equals(diag.getSource().getName().substring(1), MemorySourceFile.replace(name)+".java")) {
                     continue;
                 }
                 System.out.println("Compilation error:\n"+diag.getMessage(Locale.getDefault()).replace(name+".","").replace("Generated",""));
@@ -81,26 +80,6 @@ public class TaskCompiler {
             throw new RuntimeException(e);
         }
     }
-
-    /**
-     * Get information about a task
-     * @param name the task name
-     * @param is the source code of the task
-     * @return a TaskInfo describing the task
-     * @throws ClassNotFoundException There was an issue creating the class
-     * @throws IllegalAccessException There was an issue accessing the class
-     * @throws InstantiationException There was an issue instantiating the class
-     * @throws IOException there as an io exception
-     * @throws CompilerException there was an issue compiling
-     */
-    public static TaskInfo getTaskInfo(String name, InputStream is) throws ClassNotFoundException, IllegalAccessException, InstantiationException, IOException, CompilerException{
-        //Check if the taskinfo cache contains the class, return if its in the cache
-        if (compiledTasks.map.containsKey(name)) return compiledTasks.map.get(name);
-        String task = IOUtils.toString(is);
-        compile(name, task, null);
-        return compiledTasks.map.get(name);
-    }
-
     /**
      * Compile a task from the web server
      * @param request the request from the web server
@@ -110,13 +89,10 @@ public class TaskCompiler {
         TaskInfo task;
         List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
-        if (request.getFile() == null) return new TaskResponse("","","",Collections.emptyList(), junitOut,diagnostics);
-        //First, compile the source class into a task.
-        try {
-            task = TaskCompiler.getTaskInfo(request.getFile(), new FileInputStream("tasks/" + request.getFile() + ".java"));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return new TaskResponse(ERROR,"",ex.toString(),Collections.emptyList(), junitOut,diagnostics);
+        if (request.getFile() == null) return new TaskResponse("",Collections.emptyList(), junitOut,diagnostics);
+        task = TaskCompiler.compiledTasks.map.get(request.getFile());
+        if (task == null) {
+            return new TaskResponse(ERROR,Collections.emptyList(), junitOut,diagnostics);
         }
         //Combine the processed source code with the user code (adding a timeout rule in the process)
         String userCode = task.getProcessedSource() + request.getCode() + "@Rule public Timeout globalTimeout = Timeout.seconds("+timeout+"); }";
@@ -124,55 +100,49 @@ public class TaskCompiler {
         for (String method : task.getTestableMethods()) {
             junitOut.add(new TestResult(method, "Failed"));
         }
-        if (request.getCode() != null && !request.getCode().isEmpty()) {
-            List<String> restricted = new ArrayList<>();
-            restricted.addAll(task.getRestricted());
+        List<String> restricted = new ArrayList<>();
+        restricted.addAll(task.getRestricted());
 //            restricted.addAll(TaskCompiler.restricted);
 
-            //Look for restricted keywords
-            for (String str: restricted) {
-                if (request.getCode().toLowerCase().contains(str.toLowerCase())) {
-                    String[] split = request.getCode().toLowerCase().split("\n");
-                    for (int lineNum = 0; lineNum < split.length; lineNum++) {
-                        String line = split[lineNum];
-                        int indexOf = line.indexOf(str.toLowerCase());
-                        if (indexOf != -1) {
-                            //The javascript gui expects line numbers to start from 1
-                            diagnostics.add(new CompilationError(lineNum+1,indexOf+1,"You have attempted to use a restricted word: "+str));
-                        }
+        //Look for restricted keywords
+        for (String str: restricted) {
+            if (request.getCode().toLowerCase().contains(str.toLowerCase())) {
+                String[] split = request.getCode().toLowerCase().split("\n");
+                for (int lineNum = 0; lineNum < split.length; lineNum++) {
+                    String line = split[lineNum];
+                    int indexOf = line.indexOf(str.toLowerCase());
+                    if (indexOf != -1) {
+                        //The javascript gui expects line numbers to start from 1
+                        diagnostics.add(new CompilationError(lineNum+1,indexOf+1,"You have attempted to use a restricted word: "+str));
                     }
-
-                    return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), "", task.getTestableMethods(), junitOut, diagnostics);
                 }
-            }
-            try {
-                //compile and run with junit
-                Class<?> clazz = compileTask(request.getFile(), userCode);
-                JUnitCore junit = new JUnitCore();
-                JUnitTestCollector listener = new JUnitTestCollector();
-                junit.addListener(listener);
-                junit.run(clazz);
-                junitOut = listener.getResults();
-            } catch (CompilerException error) {
-                for (Diagnostic<? extends JavaFileObject> diagnostic : error.getErrors()) {
-                    String msg = diagnostic.getMessage(Locale.getDefault());
-                    Matcher matcher = MISSING_METHOD.matcher(msg);
-                    if (matcher.matches()) {
-                        diagnostics.add(new CompilationError(1,0,String.format(METHOD_ERROR,matcher.group(1))));
-                        continue;
-                    }
-                    //Remember, the line numbers are off by the size of the processed source.
-                    diagnostics.add(new CompilationError(diagnostic.getLineNumber()-task.getProcessedSource().split("\n").length,diagnostic.getColumnNumber(),msg));
 
-                }
-            }
-        } else {
-            junitOut.clear();
-            for (String method : task.getTestableMethods()) {
-                junitOut.add(new TestResult(method,"Not Tested"));
+                return new TaskResponse("", task.getTestableMethods(), junitOut, diagnostics);
             }
         }
-        return new TaskResponse(task.getCodeToDisplay(),task.getMethodsToFill(), "", task.getTestableMethods(), junitOut, diagnostics);
+        try {
+            //compile and run with junit
+            Class<?> clazz = compileTask(request.getFile(), userCode);
+            JUnitCore junit = new JUnitCore();
+            JUnitTestCollector listener = new JUnitTestCollector();
+            junit.addListener(listener);
+            junit.run(clazz);
+            junitOut = listener.getResults();
+        } catch (CompilerException error) {
+            for (Diagnostic<? extends JavaFileObject> diagnostic : error.getErrors()) {
+                String msg = diagnostic.getMessage(Locale.getDefault());
+                Matcher matcher = MISSING_METHOD.matcher(msg);
+                if (matcher.matches()) {
+                    diagnostics.add(new CompilationError(1,0,String.format(METHOD_ERROR,matcher.group(1))));
+                    continue;
+                }
+                //Remember, the line numbers are off by the size of the processed source.
+                diagnostics.add(new CompilationError(diagnostic.getLineNumber()-task.getProcessedSource().split("\n").length,diagnostic.getColumnNumber(),msg));
+
+            }
+        }
+
+        return new TaskResponse( "", task.getTestableMethods(), junitOut, diagnostics);
     }
 
 

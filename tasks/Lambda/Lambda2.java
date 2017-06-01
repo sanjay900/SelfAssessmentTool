@@ -1,3 +1,5 @@
+package Lambda;
+
 import org.junit.Test;
 import sat.compiler.annotations.ClassToComplete;
 import sat.compiler.annotations.Task;

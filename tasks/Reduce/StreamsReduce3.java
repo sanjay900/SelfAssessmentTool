@@ -1,10 +1,12 @@
+package Reduce;
+
 import org.junit.Test;
-import sat.util.*;
+
 import java.util.stream.*;
 import sat.compiler.annotations.*;
 
 import static org.junit.Assert.*;
-import static sat.util.AssertUtils.*;
+
 import javafx.util.Pair;
 
 /**

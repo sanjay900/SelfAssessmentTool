@@ -1,3 +1,5 @@
+package Filter;
+
 import org.junit.Test;
 import sat.compiler.annotations.Hidden;
 import sat.compiler.annotations.Task;

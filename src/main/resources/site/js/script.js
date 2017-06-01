@@ -21,7 +21,6 @@ userInput.setOptions({
 userInput.setWrapBehavioursEnabled(false);
 codeDisplay.setWrapBehavioursEnabled(false);
 userInput.getSession().setMode("ace/mode/java");
-let reload = false;
 $("#compileBt").click(function() {
     send();
 });
@@ -46,17 +45,16 @@ userInput.getSession().on('change', function() {
         send();
     }
 });
+let startingCode = "";
 function send() {
     if (file === null) return;
     const pos = userInput.getCursorPosition();
     $.post("/testCode",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
         if (data === "cancel") return;
         let results = JSON.parse(data);
-        if (userInput.getValue().length === 0 || reload) {
-            userInput.setValue(results.startingCode,-1);
-            reload = false;
+        if (userInput.getValue().length === 0) {
+            userInput.setValue(startingCode,-1);
         }
-        codeDisplay.setValue(results.codeToDisplay, -1);
         const Range = ace.require("ace/range").Range;
         const editor = userInput.getSession();
 
@@ -102,10 +100,16 @@ let file = null;
 function loadFile(name,fullName) {
     file = name;
     $("#asstitle").text(fullName);
-    if (localStorage.getItem(name)) {
-        userInput.setValue(localStorage.getItem(name));
-    } else {
-        reload = true;
-    }
+    $.post("/getTask",file,function(data) {
+        let results = JSON.parse(data);
+        if (localStorage.getItem(name)) {
+            userInput.setValue(localStorage.getItem(name));
+        } else {
+            userInput.setValue(results.startingCode,-1);
+        }
+        startingCode = results.startingCode;
+        codeDisplay.setValue(results.codeToDisplay, -1);
+    });
+
     send();
 }

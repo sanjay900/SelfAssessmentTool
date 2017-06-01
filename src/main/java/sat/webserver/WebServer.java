@@ -72,6 +72,14 @@ public class WebServer {
             response.setConsole(StringEscapeUtils.escapeHtml4(console));
             return JSONUtils.toJSON(response);
         });
+        post("/getTask", (Request req, Response res) -> {
+            TaskInfo info = TaskCompiler.compiledTasks.map.get(req.body());
+            if (info == null)  {
+                return JSONUtils.toJSON(new SimpleTaskResponse("Unable to find requested file","",""));
+            }
+            //TODO: info
+            return JSONUtils.toJSON(new SimpleTaskResponse(info.getCodeToDisplay(),info.getMethodsToFill(),""));
+        });
         post("/autocomplete", (req, res) -> {
             TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);
             return JSONUtils.toJSON(Autocompleter.getCompletions(request));
@@ -108,7 +116,7 @@ public class WebServer {
         navs.sort(Comparator.comparing(TaskNameInfo::getFullName));
         return navs;
     }
-    RMIObj rmi;
+    private RMIObj rmi;
     private void createRMI() {
         try { //special exception handler for registry creation
             LocateRegistry.createRegistry(1099);
@@ -126,5 +134,5 @@ public class WebServer {
         }
     }
 
-    private static final String TIMEOUT = JSONUtils.toJSON(new TaskResponse("", "", "Error: timeout reached (2 seconds)", Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));;
+    private static final String TIMEOUT = JSONUtils.toJSON(new TaskResponse("Error: timeout reached (2 seconds)", Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));;
 }

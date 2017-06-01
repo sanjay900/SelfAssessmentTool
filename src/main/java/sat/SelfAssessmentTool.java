@@ -5,10 +5,16 @@ import sat.compiler.TaskCompiler;
 import sat.compiler.java.CompilerException;
 import sat.gui.TrayManager;
 import sat.webserver.WebServer;
+import spark.utils.IOUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 
 public class SelfAssessmentTool {
     public static void main(String[] args) {
@@ -16,13 +22,23 @@ public class SelfAssessmentTool {
     }
     private SelfAssessmentTool() {
         System.out.println("Compiling tasks");
-        for (File task : new File("tasks").listFiles()) {
-            if (!task.getName().endsWith(".java")) continue;
-            try {
-                TaskCompiler.getTaskInfo(FilenameUtils.getBaseName(task.getName()),new FileInputStream(task));
-            } catch (ClassNotFoundException | IllegalAccessException | IOException | InstantiationException | CompilerException e) {
-                e.printStackTrace();
-            }
+        try {
+            Files.walkFileTree(new File("tasks").toPath(), new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path task, BasicFileAttributes attrs)
+                        throws IOException {
+                    String name = FilenameUtils.getBaseName(task.getFileName()+"");
+                    try {
+                        TaskCompiler.compile(name, IOUtils.toString(new FileInputStream(task.toFile())),null);
+                    } catch (ClassNotFoundException | IOException | CompilerException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("Loaded: "+name);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         System.out.println("Tasks compiled! Starting app");
         new WebServer().startServer();

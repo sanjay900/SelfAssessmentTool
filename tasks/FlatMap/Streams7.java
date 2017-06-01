@@ -1,3 +1,5 @@
+package FlatMap;
+
 import org.junit.Test;
 import sat.util.*;
 import java.util.stream.*;

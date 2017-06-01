@@ -12,8 +12,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class TaskResponse implements Serializable {
-    private String codeToDisplay;
-    private String startingCode;
     private String console;
     private List<String> testedMethods;
     private List<TestResult> junitResults;

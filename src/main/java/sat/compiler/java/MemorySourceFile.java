@@ -15,8 +15,11 @@ public class MemorySourceFile extends SimpleJavaFileObject {
      * @param source the source code string
      */
     public MemorySourceFile(String name, String source) {
-        super(URI.create("string:///" +name.replaceAll("\\.", "/") + Kind.SOURCE.extension), Kind.SOURCE);
+        super(URI.create("string:///" +replace(name) + Kind.SOURCE.extension), Kind.SOURCE);
         this.sourceCode = source ;
+    }
+    public static String replace(String str) {
+        return str.replaceAll("\\.", "/");
     }
 
     @Override

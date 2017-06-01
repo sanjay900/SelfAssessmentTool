@@ -1,3 +1,5 @@
+package Map;
+
 import org.junit.Test;
 import sat.util.*;
 import java.util.stream.*;
