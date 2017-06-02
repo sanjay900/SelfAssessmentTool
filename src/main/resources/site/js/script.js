@@ -94,27 +94,19 @@ function send() {
 }
 function addTasks(data) {
     let html = $("#dropdown-master").html();
-    html += addTask(data);
+    for (const i in data) { // idk, it fixes it
+        html += addTask(data[i], i);
+    }
     $("#dropdown-master").html(html);
-
-    /*if (data.fullName) {
-        let html = $("#sidenav").html();
-        html +=`<li><a href="#${data.name}" onclick="loadFile('${data.name}','${data.fullName}')">${data.fullName}</a></li>`;
-        $("#sidenav").html(html);
-    } else {
-        for (const i in data) {
-            addTasks(data[i]);
-        }
-    }*/
 }
 
-function addTask(data) {
+function addTask(data, name) {
     if (data.fullName) {
         return `<li><a href="#${data.name}" onclick="loadFile('${data.name}','${data.fullName}')">${data.fullName}</a></li>`;
     } else {
-        let str = `<li class="dropdown-subment"><a tabindex="-1" href="#">dropdown temp</a><ul class="dropdown-menu">`;
+        let str = `<li class="dropdown-submenu"><a tabindex="-1" href="${name}/">${name}</a><ul class="dropdown-menu">`;
         for (const i in data) {
-            str += addTask(data[i], "#")
+            str += addTask(data[i], i);
         }
         str += `</ul></li>`;
         return str;
