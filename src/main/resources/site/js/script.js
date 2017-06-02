@@ -107,6 +107,10 @@ function loop(data) {
     for (const i in data) {
         html += addTask(data[i], i);
     }
+    if (Object.keys(data).length > 0 && Object.keys(ordered).length > 0) {
+        html += `<li class="divider"></li>`;
+    }
+
     for (const i in ordered) {
         html += addTask(ordered[i], i);
     }
