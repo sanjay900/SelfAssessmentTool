@@ -12,7 +12,7 @@ import java.util.*;
 /**   Look up Stream.Filter(Lambda)
  * Filter out  only even numbers from a stream.
  */
-@Task(name="B1. Filter ")
+@Task(name="B1. Filter")
 public abstract class Filter1 {
     @Test
     public void test1filter() {

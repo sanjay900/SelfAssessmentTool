@@ -39,7 +39,7 @@ public class WebServer {
         if (checkPortInUse()) return;
         Spark.staticFileLocation("site");
         Spark.port(port);
-        get("/listTasks", (req, res) -> JSONUtils.toJSON(listTasks()));
+        get("/listTasks", (req, res) -> JSONUtils.toJSON(TaskCompiler.taskDirs));
         post("/testCode", (Request req, Response res) -> {
             if (processMap.containsKey(req.ip())) {
                 processMap.get(req.ip()).stop();
@@ -73,7 +73,7 @@ public class WebServer {
             return JSONUtils.toJSON(response);
         });
         post("/getTask", (Request req, Response res) -> {
-            TaskInfo info = TaskCompiler.compiledTasks.map.get(req.body());
+            TaskInfo info = TaskCompiler.tasks.get(req.body());
             if (info == null)  {
                 return JSONUtils.toJSON(new TaskInfoResponse("Unable to find requested file","",""));
             }
@@ -84,8 +84,6 @@ public class WebServer {
             return JSONUtils.toJSON(Autocompleter.getCompletions(request));
         });
         logger.info(""+ansi().render("@|green Starting Socket.IO Server|@"));
-        //Compile all the current tasks so that we don't have to do it on the first connection.
-        listTasks();
     }
 
     /**
@@ -101,19 +99,6 @@ public class WebServer {
             logger.info(""+ansi().render("@|yellow Type exit to close the program.|@"));
             return true;
         }
-    }
-
-    /**
-     * Compile all tasks in the tasks folder and generate a TaskNameInfo for them
-     * @return a list of tasks
-     */
-    private List<TaskNameInfo> listTasks() {
-        List<TaskNameInfo> navs = new ArrayList<>();
-        for (TaskInfo task:TaskCompiler.compiledTasks.map.values()) {
-            navs.add(new TaskNameInfo(task.getName(), task.getFullName()));
-        }
-        navs.sort(Comparator.comparing(TaskNameInfo::getFullName));
-        return navs;
     }
     private RemoteTaskInfoImpl rmi;
     private void createRMI() {

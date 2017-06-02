@@ -12,6 +12,7 @@ import sat.compiler.annotations.ClassToComplete;
 import sat.compiler.annotations.Hidden;
 import sat.compiler.annotations.Task;
 import sat.compiler.task.TaskInfo;
+import sat.compiler.task.TaskNameInfo;
 import sat.util.PrintUtils;
 
 import javax.annotation.processing.*;
@@ -237,7 +238,18 @@ public class AnnotationProcessor extends AbstractProcessor {
         String toDisplay = fixWeirdCompilationIssues(shown.toString());
         String toFill = fixWeirdCompilationIssues(this.toFill.toString());
         List<String> restricted = Arrays.asList(task.restricted());
-        TaskCompiler.compiledTasks.map.put(taskEle.getQualifiedName()+"",
+        String name = taskEle.getQualifiedName()+"";
+        if (name.contains(".")) {
+            HashMap<String, Object> packMap = (HashMap<String, Object>) TaskCompiler.taskDirs;
+            String[] split = name.split("\\.");
+            for (int i = 0; i < split.length-1; i++) {
+                String s = split[i];
+                packMap.putIfAbsent(s, new HashMap<String, Object>());
+                packMap = (HashMap<String, Object>) packMap.get(s);
+            }
+            packMap.put(split[split.length-1],new TaskNameInfo(name,task.name()));
+        }
+        TaskCompiler.tasks.put(taskEle.getQualifiedName()+"",
                 new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,info.toString(),testedMethods,restricted,methods,variables,classes,enums,interfaces));
     }
 

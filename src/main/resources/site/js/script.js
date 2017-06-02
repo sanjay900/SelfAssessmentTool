@@ -87,14 +87,19 @@ function send() {
 
     });
 }
-$.get( "listTasks", function( data ) {
-    const availTasks = JSON.parse(data);
-    let html = "";
-    for (const i in availTasks) {
-        const task = availTasks[i];
-        html +=`<li><a href="#${task.name}" onclick="loadFile('${task.name}','${task.fullName}')">${task.fullName}</a></li>`;
+function addTasks(data) {
+    if (data.fullName) {
+        let html = $("#sidenav").html();
+        html +=`<li><a href="#${data.name}" onclick="loadFile('${data.name}','${data.fullName}')">${data.fullName}</a></li>`;
+        $("#sidenav").html(html);
+    } else {
+        for (const i in data) {
+            addTasks(data[i]);
+        }
     }
-    $("#sidenav").html(html);
+}
+$.get( "listTasks", function( data ) {
+    addTasks(JSON.parse(data));
 });
 let file = null;
 function loadFile(name,fullName) {

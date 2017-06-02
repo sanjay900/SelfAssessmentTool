@@ -3,6 +3,7 @@ package sat;
 import org.apache.commons.io.FilenameUtils;
 import sat.compiler.TaskCompiler;
 import sat.compiler.java.CompilerException;
+import sat.compiler.task.TaskNameInfo;
 import sat.gui.TrayManager;
 import sat.webserver.WebServer;
 import spark.utils.IOUtils;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Comparator;
 
 public class SelfAssessmentTool {
     public static void main(String[] args) {

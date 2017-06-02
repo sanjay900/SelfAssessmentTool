@@ -25,7 +25,7 @@ public class RemoteTaskInfoImpl extends UnicastRemoteObject implements RemoteTas
     private String compiled;
     public RemoteTaskInfoImpl() throws RemoteException {
         super(0);
-        compiled = JSONUtils.toJSON(TaskCompiler.compiledTasks);
+        compiled = JSONUtils.toJSON(TaskCompiler.tasks);
     }
     @Override
     public TaskRequest getMessageFrom(int id) throws RemoteException {

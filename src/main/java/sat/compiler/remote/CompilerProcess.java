@@ -1,7 +1,6 @@
 package sat.compiler.remote;
 
 import sat.compiler.TaskCompiler;
-import sat.compiler.annotations.TaskList;
 import sat.util.JSONUtils;
 import sat.webserver.TaskRequest;
 import sat.webserver.CompileResponse;
@@ -9,6 +8,7 @@ import sat.webserver.CompileResponse;
 import java.io.IOException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
+import java.util.Map;
 
 /**
  * The process that is spun up to compile user code in its own thread.
@@ -21,7 +21,7 @@ public class CompilerProcess {
         System.setSecurityManager(manager);
         int id = Integer.parseInt(args[0]);
         RemoteTaskInfo obj = (RemoteTaskInfo) Naming.lookup("//localhost/AssessRMI");
-        TaskCompiler.compiledTasks = JSONUtils.fromJSON(obj.getCompiledTasks(),TaskList.class);
+        TaskCompiler.tasks = JSONUtils.fromJSON(obj.getCompiledTasks(),Map.class);
         TaskRequest request = obj.getMessageFrom(id);
         //Disable everything so that the compiled code has no access.
         manager.setAllowAll(false);

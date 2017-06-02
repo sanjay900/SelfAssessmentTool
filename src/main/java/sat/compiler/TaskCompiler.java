@@ -1,7 +1,6 @@
 package sat.compiler;
 
 import org.junit.runner.JUnitCore;
-import sat.compiler.annotations.TaskList;
 import sat.compiler.java.ClassFileManager;
 import sat.compiler.java.CompilationError;
 import sat.compiler.java.CompilerException;
@@ -18,7 +17,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TaskCompiler {
-    public static TaskList compiledTasks = new TaskList();
+    public static Map<String,TaskInfo> tasks = new HashMap<>();
+    public static Map<String,Object> taskDirs = new HashMap<>();
     /**
      * Compile a class, and then return classToGet
      * @param classToGet the class to get from the classpath
@@ -87,7 +87,7 @@ public class TaskCompiler {
         List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
         if (request.getFile() == null) return new CompileResponse("",Collections.emptyList(), junitOut,diagnostics);
-        task = TaskCompiler.compiledTasks.map.get(request.getFile());
+            task = TaskCompiler.tasks.get(request.getFile());
         if (task == null) {
             return new CompileResponse(ERROR,Collections.emptyList(), junitOut,diagnostics);
         }
