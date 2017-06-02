@@ -28,7 +28,7 @@ public class Autocompleter {
     public static List<AutoCompletion> getCompletions(TaskRequest request) {
         TaskInfo task;
         try {
-            task = TaskCompiler.tasks.get(request.getFile());
+            task = TaskCompiler.tasks.tasks.get(request.getFile());
         } catch (Exception ex) {
             ex.printStackTrace();
             return Collections.emptyList();

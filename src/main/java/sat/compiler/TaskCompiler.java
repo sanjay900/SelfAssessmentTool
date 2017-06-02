@@ -1,5 +1,6 @@
 package sat.compiler;
 
+import com.google.gson.internal.LinkedTreeMap;
 import org.junit.runner.JUnitCore;
 import sat.compiler.java.ClassFileManager;
 import sat.compiler.java.CompilationError;
@@ -7,6 +8,7 @@ import sat.compiler.java.CompilerException;
 import sat.compiler.java.MemorySourceFile;
 import sat.compiler.processor.AnnotationProcessor;
 import sat.compiler.task.TaskInfo;
+import sat.compiler.task.TaskList;
 import sat.compiler.task.TestResult;
 import sat.webserver.TaskRequest;
 import sat.webserver.CompileResponse;
@@ -17,8 +19,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TaskCompiler {
-    public static Map<String,TaskInfo> tasks = new HashMap<>();
-    public static Map<String,Object> taskDirs = new HashMap<>();
+    public static TaskList tasks = new TaskList();
+    public static Map<String,Object> taskDirs = new LinkedTreeMap<>();
     /**
      * Compile a class, and then return classToGet
      * @param classToGet the class to get from the classpath
@@ -87,7 +89,7 @@ public class TaskCompiler {
         List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
         if (request.getFile() == null) return new CompileResponse("",Collections.emptyList(), junitOut,diagnostics);
-            task = TaskCompiler.tasks.get(request.getFile());
+        task = TaskCompiler.tasks.tasks.get(request.getFile());
         if (task == null) {
             return new CompileResponse(ERROR,Collections.emptyList(), junitOut,diagnostics);
         }
@@ -148,6 +150,5 @@ public class TaskCompiler {
     private static final String ERROR = "An error occurred with the source for this file.\n"+
             "contact a lecturer as this is a problem with the tool not your code.";
     private static final int timeout = 2;
-//    private static final List<String> restricted = Arrays.asList("Process","File","java.io","exec","Runtime");
 
 }

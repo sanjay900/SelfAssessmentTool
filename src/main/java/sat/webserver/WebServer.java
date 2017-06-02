@@ -73,7 +73,7 @@ public class WebServer {
             return JSONUtils.toJSON(response);
         });
         post("/getTask", (Request req, Response res) -> {
-            TaskInfo info = TaskCompiler.tasks.get(req.body());
+            TaskInfo info = TaskCompiler.tasks.tasks.get(req.body());
             if (info == null)  {
                 return JSONUtils.toJSON(new TaskInfoResponse("Unable to find requested file","",""));
             }
