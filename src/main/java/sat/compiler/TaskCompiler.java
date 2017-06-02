@@ -97,14 +97,10 @@ public class TaskCompiler {
         String userCode = task.getProcessedSource() + request.getCode() + "@Rule public Timeout globalTimeout = Timeout.seconds("+timeout+"); }";
         //Start all methods as failed, and correct if we compile successfully
         for (String method : task.getTestableMethods()) {
-            junitOut.add(new TestResult(method, "Failed"));
+            junitOut.add(new TestResult(method, false,"An error occurred while compiling"));
         }
-        List<String> restricted = new ArrayList<>();
-        restricted.addAll(task.getRestricted());
-//            restricted.addAll(TaskCompiler.restricted);
-
         //Look for restricted keywords
-        for (String str: restricted) {
+        for (String str: task.getRestricted()) {
             if (request.getCode().toLowerCase().contains(str.toLowerCase())) {
                 String[] split = request.getCode().toLowerCase().split("\n");
                 for (int lineNum = 0; lineNum < split.length; lineNum++) {

@@ -5,10 +5,6 @@ const codeDisplay = ace.edit("code-output-display");
 codeDisplay.getSession().setMode("ace/mode/java");
 codeDisplay.setReadOnly(true);
 
-const COLOR_MAPPING = {
-    "Passed" : "#5cb85c", // everything normal
-    "Failed" : "#d9534f" // error thrown or assertions failed
-};
 
 const userInput = ace.edit("user-input-box");
 ace.require("ace/ext/language_tools");
@@ -50,7 +46,6 @@ function send() {
     const pos = userInput.getCursorPosition();
     console.log("SENDING:"+file);
     $.post("/testCode",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
-        console.log(data);
         if (data === "cancel") return;
         let results = JSON.parse(data);
         console.log(results);
@@ -59,7 +54,9 @@ function send() {
         }
         const Range = ace.require("ace/range").Range;
         const editor = userInput.getSession();
+        const editorDisplay = codeDisplay.getSession();
 
+        editorDisplay.clearAnnotations();
         editor.clearAnnotations();
         _.each(editor.$backMarkers,(val,key)=>editor.removeMarker(key));
         const lines = {};
@@ -73,30 +70,26 @@ function send() {
             }
             editor.addMarker(new Range(error.line-1, error.col-1, error.line-1, error.col), "ace_underline");
         }
+        let anno = [];
         for (const i in lines) {
-            editor.setAnnotations([{row: i-1, column: 0, text: lines[i], type: "error"}]);
+            anno.push({row: i-1, column: 0, text: lines[i], type: "error"});
         }
-        let jhtml = "";
-        console.log(results);
-        //TODO: could we just search with ace then add markers? https://stackoverflow.com/questions/26555492/ace-editor-find-text-select-row-and-replace-text
+        editor.setAnnotations(anno);
+        anno = [];
         for (const i in results.junitResults) {
             const res = results.junitResults[i];
-            var range = codeDisplay.find(res.name+"(",{
+            const range = codeDisplay.find(res.name+"(",{
                 wrap: true,
                 caseSensitive: true,
                 wholeWord: true,
                 regExp: false,
                 preventScroll: true // do not change selection
             });
-            console.log(range);
-            jhtml += `<tr style="background: ${COLOR_MAPPING[res.status]}">
-                      <td class="l-col">${res.name}</td>
-                      <td class="r-col">${res.status}</td>
-                      </tr>`;
+            if (res.passed) res.message = "Passed!";
+            anno.push({row: range.start.row, column: 0, text: res.message, type: res.passed?"info":"error"});
         }
-        //$("#junit-test-list").html(jhtml);
         $("#console-output-screen").html(results.console.replace(/(?:\r\n|\r|\n)/g, '<br />'));
-
+        editorDisplay.setAnnotations(anno);
     });
 }
 function addTasks(data) {

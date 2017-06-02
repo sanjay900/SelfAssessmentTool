@@ -249,6 +249,8 @@ public class AnnotationProcessor extends AbstractProcessor {
                 packMap = (LinkedTreeMap<String, Object>) packMap.get(s);
             }
             packMap.put(split[split.length-1],new TaskNameInfo(name,task.name()));
+        } else {
+            TaskCompiler.taskDirs.put(name,new TaskNameInfo(name,task.name()));
         }
         TaskCompiler.tasks.tasks.put(taskEle.getQualifiedName()+"",
                 new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,info.toString(),testedMethods,restricted,methods,variables,classes,enums,interfaces));

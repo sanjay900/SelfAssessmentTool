@@ -10,5 +10,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class TestResult implements Serializable{
     private String name;
-    private String status;
+    private boolean passed;
+    private String message;
 }

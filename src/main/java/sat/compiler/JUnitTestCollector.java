@@ -22,10 +22,12 @@ public class JUnitTestCollector extends RunListener {
         if (failure.getException() instanceof InterruptedException) return;
         System.out.println("Assertion Failed: "+failure.getMessage());
         failure.getDescription().addChild(FAILED);
+        results.add(new TestResult(failure.getDescription().getMethodName(),false,failure.getMessage()));
     }
 
     @Override
     public void testFinished(Description description) throws Exception {
-        results.add(new TestResult(description.getMethodName(),description.getChildren().contains(FAILED)?"Failed":"Passed"));
+        if (description.getChildren().contains(FAILED)) return;
+        results.add(new TestResult(description.getMethodName(),true,""));
     }
 }
