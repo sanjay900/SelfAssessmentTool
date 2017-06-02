@@ -144,6 +144,8 @@ function loadFile(name,fullName) {
         $("#task-instructions-display").html(results.info);
         startingCode = results.startingCode;
         codeDisplay.setValue(results.codeToDisplay, -1);
+        const editorDisplay = codeDisplay.getSession();
+        editorDisplay.foldAll();
     });
 
     send();
