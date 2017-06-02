@@ -48,9 +48,12 @@ let startingCode = "";
 function send() {
     if (file === null) return;
     const pos = userInput.getCursorPosition();
+    console.log("SENDING:"+file);
     $.post("/testCode",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
+        console.log(data);
         if (data === "cancel") return;
         let results = JSON.parse(data);
+        console.log(results);
         if (userInput.getValue().length === 0) {
             userInput.setValue(startingCode,-1);
         }
@@ -74,9 +77,18 @@ function send() {
             editor.setAnnotations([{row: i-1, column: 0, text: lines[i], type: "error"}]);
         }
         let jhtml = "";
-        //TODO: could we just search with ace then add markers? https://stackoverflow.com/questions/26555492/ace-editor-find-text-select-row-and-replace-textjjjjjjjjj
+        console.log(results);
+        //TODO: could we just search with ace then add markers? https://stackoverflow.com/questions/26555492/ace-editor-find-text-select-row-and-replace-text
         for (const i in results.junitResults) {
             const res = results.junitResults[i];
+            var range = codeDisplay.find(res.name+"(",{
+                wrap: true,
+                caseSensitive: true,
+                wholeWord: true,
+                regExp: false,
+                preventScroll: true // do not change selection
+            });
+            console.log(range);
             jhtml += `<tr style="background: ${COLOR_MAPPING[res.status]}">
                       <td class="l-col">${res.name}</td>
                       <td class="r-col">${res.status}</td>

@@ -1,6 +1,7 @@
 package sat.compiler.processor;
 
 import com.google.auto.service.AutoService;
+import com.google.gson.internal.LinkedTreeMap;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
@@ -240,16 +241,16 @@ public class AnnotationProcessor extends AbstractProcessor {
         List<String> restricted = Arrays.asList(task.restricted());
         String name = taskEle.getQualifiedName()+"";
         if (name.contains(".")) {
-            HashMap<String, Object> packMap = (HashMap<String, Object>) TaskCompiler.taskDirs;
+            LinkedTreeMap<String, Object> packMap = (LinkedTreeMap<String, Object>) TaskCompiler.taskDirs;
             String[] split = name.split("\\.");
             for (int i = 0; i < split.length-1; i++) {
                 String s = split[i];
-                packMap.putIfAbsent(s, new HashMap<String, Object>());
-                packMap = (HashMap<String, Object>) packMap.get(s);
+                packMap.putIfAbsent(s, new LinkedTreeMap<String, Object>());
+                packMap = (LinkedTreeMap<String, Object>) packMap.get(s);
             }
             packMap.put(split[split.length-1],new TaskNameInfo(name,task.name()));
         }
-        TaskCompiler.tasks.put(taskEle.getQualifiedName()+"",
+        TaskCompiler.tasks.tasks.put(taskEle.getQualifiedName()+"",
                 new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,info.toString(),testedMethods,restricted,methods,variables,classes,enums,interfaces));
     }
 
