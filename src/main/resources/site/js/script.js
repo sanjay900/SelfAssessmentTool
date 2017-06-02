@@ -119,7 +119,7 @@ function loop(data) {
 
 function addTask(data, name) {
     if (data.fullName) {
-        return `<li><a href="#${data.name}" onclick="loadFile('${data.name}','${data.fullName}')">${data.fullName}</a></li>`;
+        return `<li><a href="#${data.name}" onclick="loadFile('${data.name}')">${data.fullName}</a></li>`;
     } else {
         let str = `<li class="dropdown-submenu"><a tabindex="-1" href="${name}/">${name}</a><ul class="dropdown-menu">`;
         str += loop(data);
