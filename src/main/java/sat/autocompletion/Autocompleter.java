@@ -72,7 +72,6 @@ public class Autocompleter {
                 completions.sort(Comparator.comparing(AutoCompletion::getCaption));
                 return completions;
             }
-            System.out.println(types.lambda);
             Matcher varMatcher = MULTI_STREAM_PARAM.matcher(types.lambda);
             if (!varMatcher.find()) {
                 varMatcher = SINGLE_STREAM_PARAM.matcher(types.lambda);
@@ -80,8 +79,6 @@ public class Autocompleter {
             varMatcher.reset();
             while (varMatcher.find()) {
                 String variable = varMatcher.group(1);
-                System.out.println(variable);
-                System.out.println(Arrays.toString(variable.split(",")));
                 for (String var : variable.split(",")) {
                     var = var.replaceAll("\\s*","");
                     completions.add(new AutoCompletion(var,var,"variable"));
