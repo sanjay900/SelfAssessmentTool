@@ -12,4 +12,5 @@ public class TaskInfoResponse {
     private String codeToDisplay;
     private String startingCode;
     private String info;
+    private String name;
 }

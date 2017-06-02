@@ -75,9 +75,9 @@ public class WebServer {
         post("/getTask", (Request req, Response res) -> {
             TaskInfo info = TaskCompiler.tasks.tasks.get(req.body());
             if (info == null)  {
-                return JSONUtils.toJSON(new TaskInfoResponse("Unable to find requested file","",""));
+                return JSONUtils.toJSON(new TaskInfoResponse("Unable to find requested file","","",""));
             }
-            return JSONUtils.toJSON(new TaskInfoResponse(info.getCodeToDisplay(),info.getMethodsToFill(),info.getInfo()));
+            return JSONUtils.toJSON(new TaskInfoResponse(info.getCodeToDisplay(),info.getMethodsToFill(),info.getInfo(),info.getFullName()));
         });
         post("/autocomplete", (req, res) -> {
             TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);

@@ -131,11 +131,11 @@ $.get( "listTasks", function( data ) {
     addTasks(JSON.parse(data));
 });
 let file = null;
-function loadFile(name,fullName) {
+function loadFile(name) {
     file = name;
-    $("#asstitle").text(fullName);
     $.post("/getTask",file,function(data) {
         let results = JSON.parse(data);
+        $("#asstitle").text(results.name);
         if (localStorage.getItem(name)) {
             userInput.setValue(localStorage.getItem(name));
         } else {
@@ -149,4 +149,7 @@ function loadFile(name,fullName) {
     });
 
     send();
+}
+if (window.location.hash) {
+    loadFile(window.location.hash.substr(1));
 }
