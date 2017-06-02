@@ -72,9 +72,9 @@ public class Autocompleter {
                 completions.sort(AutoCompletion::compareTo);
                 return completions;
             }
-            Matcher varMatcher = MULTI_STREAM_PARAM.matcher(types.lambda);
+            Matcher varMatcher = MULTI_STREAM_PARAM.matcher(types.lastStatement);
             if (!varMatcher.find()) {
-                varMatcher = SINGLE_STREAM_PARAM.matcher(types.lambda);
+                varMatcher = SINGLE_STREAM_PARAM.matcher(types.lastStatement);
             }
             varMatcher.reset();
             while (varMatcher.find()) {
@@ -84,7 +84,7 @@ public class Autocompleter {
                     completions.add(new AutoCompletion(var,var,"variable"));
                 }
             }
-            if (types.lambda.endsWith(".")) {
+            if (types.lastStatement.endsWith(".")) {
                 completions.sort(AutoCompletion::compareTo);
                 return completions;
             }
@@ -137,7 +137,7 @@ public class Autocompleter {
     @AllArgsConstructor
     private static class ClassType {
         String prefix;
-        String lambda;
+        String lastStatement;
         List<Class<?>> classes;
     }
     private static List<Class<?>> getClassFor(String beforeDot, String userCode, String req, boolean exact) {
