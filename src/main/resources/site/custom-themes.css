@@ -225,11 +225,8 @@ th {
  * The following code was taken and adapted from: https://bootsnipp.com/snippets/featured/multi-level-dropdown-menu-bs3
  * The HTML for this stuff located in index.html is also from the above website
  */
-.dropdown { /* TODO: fix me, padding/margins still a bit weird*/
+.dropdown {
     display: inline;
-    padding-top: 20px;
-    margin-left: 40px;
-    margin-top: 10px;
 }
 
 .dropdown-submenu {
