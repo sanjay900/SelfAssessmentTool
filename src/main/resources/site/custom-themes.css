@@ -125,6 +125,7 @@ html,body {
     resize: none;
     display: block;
     background: #fafafa;
+    padding:10px;
 }
 
 #user-input-box {
@@ -150,6 +151,7 @@ html,body {
     float: left;
     display: block;
     background: #fafafa;
+    padding:10px;
 }
 
 #junit-test-list-table {

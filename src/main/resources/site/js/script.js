@@ -86,9 +86,12 @@ function send() {
             if (res.passed) res.message = "Passed!";
             anno.push({row: range.start.row, column: 0, text: res.message, type: res.passed?"info":"error"});
         }
-        $("#console-output-screen").html(results.console.replace(/(?:\r\n|\r|\n)/g, '<br />'));
+        $("#console-output-screen").html(newLineToBr(results.console));
         editorDisplay.setAnnotations(anno);
     });
+}
+function newLineToBr(str) {
+    return str.replace(/(?:\r\n|\r|\n)/g, '<br />');
 }
 function addTasks(data) {
     $("#dropdown-master").html(loop(data));
@@ -139,7 +142,7 @@ function loadFile(name) {
         } else {
             userInput.setValue(results.startingCode,-1);
         }
-        $("#task-instructions-display").html(results.info);
+        $("#task-instructions-display").html(newLineToBr(results.info));
         startingCode = results.startingCode;
         codeDisplay.setValue(results.codeToDisplay, -1);
         const editorDisplay = codeDisplay.getSession();

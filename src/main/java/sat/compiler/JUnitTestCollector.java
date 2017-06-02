@@ -20,7 +20,7 @@ public class JUnitTestCollector extends RunListener {
     @Override
     public void testFailure(Failure failure) throws Exception {
         if (failure.getException() instanceof InterruptedException) return;
-        System.out.println("Assertion Failed: "+failure.getMessage());
+        System.out.println("Test Failed: "+failure.getMessage());
         failure.getDescription().addChild(FAILED);
         results.add(new TestResult(failure.getDescription().getMethodName(),false,failure.getMessage()));
     }
@@ -28,6 +28,7 @@ public class JUnitTestCollector extends RunListener {
     @Override
     public void testFinished(Description description) throws Exception {
         if (description.getChildren().contains(FAILED)) return;
+        System.out.println("Test Passed: "+description.getMethodName());
         results.add(new TestResult(description.getMethodName(),true,""));
     }
 }
