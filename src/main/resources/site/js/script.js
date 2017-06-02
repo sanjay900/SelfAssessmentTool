@@ -93,7 +93,11 @@ function send() {
     });
 }
 function addTasks(data) {
-    if (data.fullName) {
+    let html = $("#dropdown-master").html();
+    html += addTask(data);
+    $("#dropdown-master").html(html);
+
+    /*if (data.fullName) {
         let html = $("#sidenav").html();
         html +=`<li><a href="#${data.name}" onclick="loadFile('${data.name}','${data.fullName}')">${data.fullName}</a></li>`;
         $("#sidenav").html(html);
@@ -101,6 +105,19 @@ function addTasks(data) {
         for (const i in data) {
             addTasks(data[i]);
         }
+    }*/
+}
+
+function addTask(data) {
+    if (data.fullName) {
+        return `<li><a href="#${data.name}" onclick="loadFile('${data.name}','${data.fullName}')">${data.fullName}</a></li>`;
+    } else {
+        let str = `<li class="dropdown-subment"><a tabindex="-1" href="#">dropdown temp</a><ul class="dropdown-menu">`;
+        for (const i in data) {
+            str += addTask(data[i], "#")
+        }
+        str += `</ul></li>`;
+        return str;
     }
 }
 $.get( "listTasks", function( data ) {
