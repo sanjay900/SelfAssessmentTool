@@ -84,6 +84,10 @@ public class Autocompleter {
                     completions.add(new AutoCompletion(var,var,"variable"));
                 }
             }
+            if (types.lambda.endsWith(".")) {
+                completions.sort(AutoCompletion::compareTo);
+                return completions;
+            }
 
         }
         if (request.getCode() != null) {
