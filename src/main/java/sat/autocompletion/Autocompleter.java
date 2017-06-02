@@ -42,7 +42,7 @@ public class Autocompleter {
             ClassType types = findClasses(curLine, request.getCol(),userCode,request.getCode());
             if (!types.classes.isEmpty()) {
                 for (Class<?> clazz : types.classes) {
-                    if (clazz.getSimpleName().startsWith(types.prefix)) {
+                    if (!types.prefix.isEmpty() && clazz.getSimpleName().startsWith(types.prefix)) {
                         completions.add(new AutoCompletion(clazz.getSimpleName(),clazz.getSimpleName(),"class"));
                         continue;
                     }
@@ -71,6 +71,21 @@ public class Autocompleter {
 
                 completions.sort(Comparator.comparing(AutoCompletion::getCaption));
                 return completions;
+            }
+            System.out.println(types.lambda);
+            Matcher varMatcher = MULTI_STREAM_PARAM.matcher(types.lambda);
+            if (!varMatcher.find()) {
+                varMatcher = SINGLE_STREAM_PARAM.matcher(types.lambda);
+            }
+            varMatcher.reset();
+            while (varMatcher.find()) {
+                String variable = varMatcher.group(1);
+                System.out.println(variable);
+                System.out.println(Arrays.toString(variable.split(",")));
+                for (String var : variable.split(",")) {
+                    var = var.replaceAll("\\s*","");
+                    completions.add(new AutoCompletion(var,var,"variable"));
+                }
             }
 
         }
@@ -120,6 +135,7 @@ public class Autocompleter {
     @AllArgsConstructor
     private static class ClassType {
         String prefix;
+        String lambda;
         List<Class<?>> classes;
     }
     private static List<Class<?>> getClassFor(String beforeDot, String userCode, String req, boolean exact) {
@@ -144,18 +160,17 @@ public class Autocompleter {
         return findClasses(beforeDot, exact);
     }
     /**
-     * Get the word at an index in a string
+     * Find the prefix (Class name or function) and Classes for a variable in str at index
      * @param str the string to get the word from
      * @param index the index to get the word at
-     * @return the word at index index
+     * @return A ClassType(prefix,List&lt;class&gt;)combo
      */
     private static ClassType findClasses(String str, int index, String userCode, String request) {
         //Work out what word the user was typing
         StringBuilder curWord = new StringBuilder();
+        StringBuilder lastLambda = new StringBuilder();
         HashMap<Integer,List<Class<?>>> types = new HashMap<>();
         HashMap<Integer,String> lastMethods = new HashMap<>();
-        String lastMethodParsed = "";
-        List<Class<?>> lastTypeParsed = null;
         int idx = 0;
         int depth = 0;
         for (char c : str.toCharArray()) {
@@ -188,9 +203,16 @@ public class Autocompleter {
             } else {
                 curWord.append(c);
             }
+
+            if (c == '('||c ==')'||c==';') {
+                lastLambda = new StringBuilder();
+            } else {
+                lastLambda.append(c);
+            }
             idx++;
         }
-        lastMethodParsed = lastMethods.getOrDefault(depth,curWord.toString());
+        String lastMethodParsed = lastMethods.getOrDefault(depth,curWord.toString());
+        List<Class<?>> lastTypeParsed;
         if (!lastMethodParsed.startsWith(".")) {
             if (lastMethodParsed.contains(".")) {
                 lastMethodParsed = lastMethodParsed.substring(0,lastMethodParsed.indexOf("."));
@@ -204,7 +226,7 @@ public class Autocompleter {
         lastMethodParsed = curWord.toString();
         if (lastMethodParsed.contains("."))
             lastMethodParsed = lastMethodParsed.substring(lastMethodParsed.indexOf(".")+1);
-        return new ClassType(lastMethodParsed,lastTypeParsed);
+        return new ClassType(lastMethodParsed,lastLambda.toString(),lastTypeParsed);
     }
     /**
      * Find a class by name using guava
@@ -230,6 +252,8 @@ public class Autocompleter {
         //Note that we exclude inner classes as they are not useful to autocomplete.
         return !name.contains("$") && (name.startsWith("java.util") || name.startsWith("java.lang"));
     }
+    private static final Pattern SINGLE_STREAM_PARAM = Pattern.compile("(\\w+)\\s*->");
+    private static final Pattern MULTI_STREAM_PARAM = Pattern.compile("((?:\\w+\\s*,\\s*)+\\s*\\w+)\\s*->");
     private static final String TYPE_DECLARATION = "((?:[a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*)\\s";
     private static final Pattern VAR_DECLARATION = Pattern.compile(TYPE_DECLARATION +"(\\w[A-z\\d_]+)[ ),;]");
     private static final Pattern METHOD_DECLARATION = Pattern.compile(TYPE_DECLARATION +"(.+)\\(");
