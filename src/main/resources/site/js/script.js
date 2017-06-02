@@ -93,11 +93,24 @@ function send() {
     });
 }
 function addTasks(data) {
-    let html = $("#dropdown-master").html();
-    for (const i in data) { // idk, it fixes it
+    $("#dropdown-master").html(loop(data));
+}
+function loop(data) {
+    let html = "";
+    const ordered = {};
+    Object.keys(data).sort().forEach(function(key) {
+        if(data[key].fullName) return;
+        ordered[key] = data[key];
+        delete data[key];
+    });
+    data = _.sortBy(data,'fullName');
+    for (const i in data) {
         html += addTask(data[i], i);
     }
-    $("#dropdown-master").html(html);
+    for (const i in ordered) {
+        html += addTask(ordered[i], i);
+    }
+    return html;
 }
 
 function addTask(data, name) {
@@ -105,9 +118,7 @@ function addTask(data, name) {
         return `<li><a href="#${data.name}" onclick="loadFile('${data.name}','${data.fullName}')">${data.fullName}</a></li>`;
     } else {
         let str = `<li class="dropdown-submenu"><a tabindex="-1" href="${name}/">${name}</a><ul class="dropdown-menu">`;
-        for (const i in data) {
-            str += addTask(data[i], i);
-        }
+        str += loop(data);
         str += `</ul></li>`;
         return str;
     }
