@@ -44,11 +44,9 @@ let startingCode = "";
 function send() {
     if (file === null) return;
     const pos = userInput.getCursorPosition();
-    console.log("SENDING:"+file);
     $.post("/testCode",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
         if (data === "cancel") return;
         let results = JSON.parse(data);
-        console.log(results);
         if (userInput.getValue().length === 0) {
             userInput.setValue(startingCode,-1);
         }
@@ -151,5 +149,8 @@ function loadFile(name) {
     send();
 }
 if (window.location.hash) {
-    loadFile(window.location.hash.substr(1));
+    //Give ace time to initilize
+    window.setTimeout(function() {
+        loadFile(window.location.hash.substr(1));
+    },100);
 }
