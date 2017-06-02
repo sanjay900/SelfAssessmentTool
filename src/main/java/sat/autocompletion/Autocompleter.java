@@ -170,7 +170,8 @@ public class Autocompleter {
     private static ClassType findClasses(String str, int index, String userCode, String request) {
         //Work out what word the user was typing
         StringBuilder curWord = new StringBuilder();
-        StringBuilder lastLambda = new StringBuilder();
+        StringBuilder lastStatement = new StringBuilder();
+        //Depth maps
         HashMap<Integer,List<Class<?>>> types = new HashMap<>();
         HashMap<Integer,String> lastMethods = new HashMap<>();
         int idx = 0;
@@ -207,9 +208,9 @@ public class Autocompleter {
             }
 
             if (c == '('||c ==')'||c==';') {
-                lastLambda = new StringBuilder();
+                lastStatement = new StringBuilder();
             } else {
-                lastLambda.append(c);
+                lastStatement.append(c);
             }
             idx++;
         }
@@ -228,7 +229,7 @@ public class Autocompleter {
         lastMethodParsed = curWord.toString();
         if (lastMethodParsed.contains("."))
             lastMethodParsed = lastMethodParsed.substring(lastMethodParsed.indexOf(".")+1);
-        return new ClassType(lastMethodParsed,lastLambda.toString(),lastTypeParsed);
+        return new ClassType(lastMethodParsed, lastStatement.toString(),lastTypeParsed);
     }
     /**
      * Find a class by name using guava
