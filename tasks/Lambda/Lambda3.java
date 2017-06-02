@@ -14,7 +14,7 @@ import org.junit.Test;
  * Write a lambda to add  10 to an integer
  */
 @Task(name="F1 Adding with Lambdas")
-public abstract class lambda1 {
+public abstract class Lambda3 {
     @Test
     public void testlambda() {
         assertTrue("Should be 11",

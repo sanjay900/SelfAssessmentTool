@@ -7,7 +7,6 @@ codeDisplay.setReadOnly(true);
 
 const COLOR_MAPPING = {
     "Passed" : "#5cb85c", // everything normal
-    "Not Tested" : "#31b0d5", // nothing has actually been compiled yet
     "Failed" : "#d9534f" // error thrown or assertions failed
 };
 
@@ -75,6 +74,7 @@ function send() {
             editor.setAnnotations([{row: i-1, column: 0, text: lines[i], type: "error"}]);
         }
         let jhtml = "";
+        //TODO: could we just search with ace then add markers? https://stackoverflow.com/questions/26555492/ace-editor-find-text-select-row-and-replace-textjjjjjjjjj
         for (const i in results.junitResults) {
             const res = results.junitResults[i];
             jhtml += `<tr style="background: ${COLOR_MAPPING[res.status]}">
