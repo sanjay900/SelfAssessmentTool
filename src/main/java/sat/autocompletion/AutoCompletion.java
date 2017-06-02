@@ -8,12 +8,23 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class AutoCompletion {
+public class AutoCompletion implements Comparable<AutoCompletion> {
     String name;
     String value;
     String meta;
     String caption;
     public AutoCompletion(String name, String value, String meta) {
         this(name,value,meta,value);
+    }
+
+    @Override
+    public int compareTo(AutoCompletion o) {
+        if (caption.equals("variable") && !o.caption.equals("variable")) {
+            return -1;
+        }
+        if (!caption.equals("variable") && o.caption.equals("variable")) {
+            return 1;
+        }
+        return caption.compareTo(o.caption);
     }
 }

@@ -69,7 +69,7 @@ public class Autocompleter {
                     }
                 }
 
-                completions.sort(Comparator.comparing(AutoCompletion::getCaption));
+                completions.sort(AutoCompletion::compareTo);
                 return completions;
             }
             Matcher varMatcher = MULTI_STREAM_PARAM.matcher(types.lambda);
@@ -98,12 +98,13 @@ public class Autocompleter {
             }
             Matcher methodMatcher = METHOD_DECLARATION.matcher(request.getCode());
             while (methodMatcher.find()) {
-                String method = methodMatcher.group(1);
+                String method = methodMatcher.group(2);
+                String args = methodMatcher.group(3);
                 //don't match modifiers (public, private..)
                 if (Arrays.toString(javax.lang.model.element.Modifier.values()).contains(method.toLowerCase())) {
                     continue;
                 }
-                completions.add(new AutoCompletion(method, method+"(","method",method+"()"));
+                completions.add(new AutoCompletion(method, method+"(","method",method+args));
             }
         }
         for (String variable : task.getVariables()) {
@@ -125,7 +126,7 @@ public class Autocompleter {
         completions.addAll(keywords);
         completions.addAll(primitives);
 
-        completions.sort(Comparator.comparing(AutoCompletion::getCaption));
+        completions.sort(AutoCompletion::compareTo);
         return completions;
     }
     @Data
@@ -253,7 +254,7 @@ public class Autocompleter {
     private static final Pattern MULTI_STREAM_PARAM = Pattern.compile("((?:\\w+\\s*,\\s*)+\\s*\\w+)\\s*->");
     private static final String TYPE_DECLARATION = "((?:[a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*)\\s";
     private static final Pattern VAR_DECLARATION = Pattern.compile(TYPE_DECLARATION +"(\\w[A-z\\d_]+)[ ),;]");
-    private static final Pattern METHOD_DECLARATION = Pattern.compile(TYPE_DECLARATION +"(.+)\\(");
+    private static final Pattern METHOD_DECLARATION = Pattern.compile(TYPE_DECLARATION +"(.+)(\\(.+\\))");
     private static final List<AutoCompletion> keywords = Stream.of("while","new","do","for","return","super","static",
             "synchronized","transient","this", "throws","try","catch","volatile","case","default",
             "instanceof","implements","if","else","extends")
