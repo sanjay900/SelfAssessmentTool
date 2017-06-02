@@ -84,7 +84,9 @@ function send() {
                 preventScroll: true // do not change selection
             });
             if (res.passed) res.message = "Passed!";
-            anno.push({row: range.start.row, column: 0, text: res.message, type: res.passed?"info":"error"});
+            if (range) {
+                anno.push({row: range.start.row, column: 0, text: res.message, type: res.passed ? "info" : "error"});
+            }
         }
         $("#console-output-screen").html(newLineToBr(results.console));
         editorDisplay.setAnnotations(anno);
