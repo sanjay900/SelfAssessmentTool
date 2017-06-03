@@ -19,10 +19,10 @@ public class AutoCompletion implements Comparable<AutoCompletion> {
 
     @Override
     public int compareTo(AutoCompletion o) {
-        if (caption.equals("variable") && !o.caption.equals("variable")) {
+        if (meta.equals("variable") && !o.meta.equals("variable")) {
             return -1;
         }
-        if (!caption.equals("variable") && o.caption.equals("variable")) {
+        if (!meta.equals("variable") && o.meta.equals("variable")) {
             return 1;
         }
         return caption.compareTo(o.caption);

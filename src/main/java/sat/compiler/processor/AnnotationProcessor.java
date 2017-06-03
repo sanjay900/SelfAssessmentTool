@@ -2,10 +2,14 @@ package sat.compiler.processor;
 
 import com.google.auto.service.AutoService;
 import com.google.gson.internal.LinkedTreeMap;
+import com.sun.source.tree.ArrayTypeTree;
 import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.PrimitiveTypeTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
+import com.sun.tools.javac.code.Symbol;
+import org.apache.commons.lang3.ClassUtils;
 import org.junit.Test;
 import sat.compiler.TaskCompiler;
 import sat.compiler.annotations.ClassToComplete;
@@ -39,8 +43,8 @@ public class AnnotationProcessor extends AbstractProcessor {
     private List<String> codeToRemove = new ArrayList<>();
     //Keep a list of methods that are going to be tested
     private List<String> testedMethods = new ArrayList<>();
-    private List<String> methods = new ArrayList<>();
-    private List<String> variables = new ArrayList<>();
+    private List<TaskInfo.MethodInfo> methods = new ArrayList<>();
+    private Map<String,String> variables = new HashMap<>();
     private List<String> classes = new ArrayList<>();
     private List<String> enums = new ArrayList<>();
     private List<String> interfaces = new ArrayList<>();
@@ -88,8 +92,9 @@ public class AnnotationProcessor extends AbstractProcessor {
                     }
                 }
                 if (element.getKind() == ElementKind.FIELD) {
+                    VariableElement ele = (VariableElement) element;
                     VariableTree var = new TypeScanner(element,trees).getFirstVar();
-                    variables.add(element.getSimpleName()+"");
+                    variables.put(element.getSimpleName()+"",ele.asType()+"");
                     if (hidden != null && hidden.shouldWriteComment()) {
                         String f = stripAnnotation(var+"");
                         f = f.substring(0, f.indexOf("="));
@@ -151,7 +156,9 @@ public class AnnotationProcessor extends AbstractProcessor {
             testedMethods.add(element.getSimpleName()+"");
         }
         MethodTree methodTree = new TypeScanner(element,trees).getFirstMethod();
-        methods.add(methodTree.getName()+"("+methodTree.getParameters()+")");
+        String type = element.asType()+"";
+        type = type.substring(type.lastIndexOf(")")+1);
+        methods.add(new TaskInfo.MethodInfo(methodTree.getName()+"",methodTree.getName()+"("+methodTree.getParameters()+")",type));
         Set<Modifier> modifiers = methodTree.getModifiers().getFlags();
         if (modifiers.contains(Modifier.ABSTRACT)) {
             codeToRemove.add(methodTree.toString());
@@ -249,7 +256,7 @@ public class AnnotationProcessor extends AbstractProcessor {
             TaskCompiler.taskDirs.put(name,new TaskNameInfo(name,task.name()));
         }
         TaskCompiler.tasks.tasks.put(taskEle.getQualifiedName()+"",
-                new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,info.toString(),testedMethods,restricted,methods,variables,classes,enums,interfaces));
+                new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,info.toString(),testedMethods,restricted,classes,enums,interfaces,methods,variables));
     }
 
     /**

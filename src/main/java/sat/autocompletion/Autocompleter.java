@@ -3,6 +3,7 @@ package sat.autocompletion;
 import com.google.common.reflect.ClassPath;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.apache.commons.lang3.ClassUtils;
 import sat.compiler.TaskCompiler;
 import sat.compiler.task.TaskInfo;
 import sat.util.PrintUtils;
@@ -39,7 +40,7 @@ public class Autocompleter {
         if (request.getCode() != null && request.getCol() != 0) {
             String curLine = request.getCode().split("\n")[request.getLine()];
             //Work out what word the user was typing
-            ClassType types = findClasses(curLine, request.getCol(),userCode,request.getCode());
+            ClassType types = findClasses(curLine, request.getCol(),userCode,request.getCode(),task);
             if (!types.classes.isEmpty()) {
                 for (Class<?> clazz : types.classes) {
                     if (!types.prefix.isEmpty() && clazz.getSimpleName().startsWith(types.prefix)) {
@@ -72,6 +73,7 @@ public class Autocompleter {
                 completions.sort(AutoCompletion::compareTo);
                 return completions;
             }
+
             Matcher varMatcher = MULTI_STREAM_PARAM.matcher(types.lastStatement);
             if (!varMatcher.find()) {
                 varMatcher = SINGLE_STREAM_PARAM.matcher(types.lastStatement);
@@ -111,11 +113,11 @@ public class Autocompleter {
                 completions.add(new AutoCompletion(method, method+"(","method",method+args));
             }
         }
-        for (String variable : task.getVariables()) {
-            completions.add(new AutoCompletion(variable, variable, "field"));
+        for (String variable : task.getVariables().keySet()) {
+           completions.add(new AutoCompletion(variable, variable, "field"));
         }
-        for (String method : task.getMethods()) {
-            completions.add(new AutoCompletion(method, method.substring(0,method.indexOf("(")+1), "method",method));
+        for (TaskInfo.MethodInfo method : task.getMethods()) {
+            completions.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",method.getDecl()));
         }
         completions.addAll(printUtilMethods);
         for (String clazz : task.getClasses()) {
@@ -140,7 +142,49 @@ public class Autocompleter {
         String lastStatement;
         List<Class<?>> classes;
     }
-    private static List<Class<?>> getClassFor(String beforeDot, String userCode, String req, boolean exact) {
+
+    public static void main(String[] args) {
+            Stream<Integer> ints = Stream.of(1,2,3,4,5,6,7);
+            List<Integer> toList = ints.reduce(new ArrayList<Integer>(),(list, num) -> {
+                list.add(num);
+                return list;
+            },(list1,list2)->{
+                list1.addAll(list2);
+                return list1;
+            });
+
+
+    }
+    private static List<Class<?>> getClassFor(String beforeDot, String userCode, String req, boolean exact, TaskInfo task) {
+        List<Class<?>> classes = new ArrayList<>();
+        for (Map.Entry<String,String> field : task.getVariables().entrySet()) {
+            if (field.getKey().equals(beforeDot)) {
+                String name = field.getValue();
+                //Strip away generics, we cant search for them.
+                if (name.contains("<")) {
+                    name = name.substring(0,name.indexOf("<"));
+                }
+                try {
+                    classes.add(ClassUtils.getClass(name));
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        for (TaskInfo.MethodInfo info : task.getMethods()) {
+            if (info.getName().equals(beforeDot)) {
+                String name = info.getRet();
+                //Strip away generics, we cant search for them.
+                if (name.contains("<")) {
+                    name = name.substring(0,name.indexOf("<"));
+                }
+                try {
+                    classes.add(ClassUtils.getClass(name));
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
         //Remove brackets as they break the pattern
         beforeDot = beforeDot.replaceAll("[({})]","");
         //Search for something looking like the declaration for that variable
@@ -151,15 +195,12 @@ public class Autocompleter {
         //Reset the search since we called find once.
         search.reset();
         if (search.find()) {
-            String name = search.group(1);
-            //Strip away generics, we cant search for them.
-            if (name.contains("<")) {
-                name = name.substring(0,name.indexOf("<"));
-            }
-            return findClasses(name, true);
+            classes.addAll(findClasses(search.group(1), true)) ;
+            return classes;
         }
         //If nothing was matched above, attempt to match the word as if it was a class.
-        return findClasses(beforeDot, exact);
+        classes.addAll(findClasses(beforeDot, exact)) ;
+        return classes;
     }
     /**
      * Find the prefix (Class name or function) and Classes for a variable in str at index
@@ -167,7 +208,7 @@ public class Autocompleter {
      * @param index the index to get the word at
      * @return A ClassType(prefix,List&lt;class&gt;)combo
      */
-    private static ClassType findClasses(String str, int index, String userCode, String request) {
+    private static ClassType findClasses(String str, int index, String userCode, String request, TaskInfo task) {
         //Work out what word the user was typing
         StringBuilder curWord = new StringBuilder();
         StringBuilder lastStatement = new StringBuilder();
@@ -189,8 +230,12 @@ public class Autocompleter {
                     depth--;
                     String lastMethod = lastMethods.get(depth);
                     if (!lastMethod.startsWith(".")) {
-                        types.put(depth,getClassFor(lastMethod.substring(0, lastMethod.indexOf(".")), userCode, request, true));
-                        lastMethod = lastMethod.substring(lastMethod.indexOf("."));
+                        String method = lastMethod;
+                        if (lastMethod.contains(".")) {
+                            method = lastMethod.substring(0, lastMethod.indexOf("."));
+                            lastMethod = lastMethod.substring(lastMethod.indexOf("."));
+                        }
+                        types.put(depth,getClassFor(method, userCode, request, true,task));
                     }
                     List<Class<?>> newList = new ArrayList<>();
                     for (Class<?> type : types.get(depth)) {
@@ -219,9 +264,9 @@ public class Autocompleter {
         if (!lastMethodParsed.startsWith(".")) {
             if (lastMethodParsed.contains(".")) {
                 lastMethodParsed = lastMethodParsed.substring(0,lastMethodParsed.indexOf("."));
-                lastTypeParsed = getClassFor(lastMethodParsed,userCode,request,true);
+                lastTypeParsed = getClassFor(lastMethodParsed,userCode,request,true,task);
             } else {
-                lastTypeParsed = getClassFor(lastMethodParsed,userCode,request,false);
+                lastTypeParsed = getClassFor(lastMethodParsed,userCode,request,false,task);
             }
         } else {
             lastTypeParsed = types.get(depth);
@@ -238,8 +283,13 @@ public class Autocompleter {
      * @return a list of matching classes
      */
     private static List<Class<?>> findClasses(String name, boolean exact) {
+        //Strip away generics, we cant search for them.
+        if (name.contains("<")) {
+            name = name.substring(0,name.indexOf("<"));
+        }
+        final String name2 = name;
         return classes.stream()
-                .filter(info -> exact?info.getSimpleName().equals(name):info.getSimpleName().startsWith(name))
+                .filter(info -> exact?info.getSimpleName().equals(name2):info.getSimpleName().startsWith(name2))
                 .map(ClassPath.ClassInfo::load)
                 .sorted(Comparator.comparing(Class::getSimpleName))
                 .collect(Collectors.toList()
