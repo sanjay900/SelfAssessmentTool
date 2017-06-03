@@ -69,9 +69,6 @@ public class Autocompleter {
                                 f.getType().getSimpleName()));
                     }
                 }
-
-                completions.sort(AutoCompletion::compareTo);
-                return completions;
             }
 
             Matcher varMatcher = MULTI_STREAM_PARAM.matcher(types.lastStatement);
