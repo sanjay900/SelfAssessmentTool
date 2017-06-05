@@ -18,9 +18,6 @@ userInput.setOptions({
 userInput.setWrapBehavioursEnabled(false);
 codeDisplay.setWrapBehavioursEnabled(false);
 userInput.getSession().setMode("ace/mode/java");
-$("#compileBt").click(function() {
-    send();
-});
 const autocompleter = {
     getCompletions: function(editor, session, pos, prefix, callback) {
         if (file === null) return;
