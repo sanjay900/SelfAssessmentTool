@@ -137,7 +137,7 @@ function loadFile(name) {
     file = name;
     $.post("/getTask",file,function(data) {
         let results = JSON.parse(data);
-        $("#asstitle").text(results.name);
+        $("#asstitle").text("Current Task: " + results.name);
         if (localStorage.getItem(name)) {
             userInput.setValue(localStorage.getItem(name));
         } else {

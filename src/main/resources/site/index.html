@@ -1,40 +1,40 @@
 <!-- HTML for testing website. Made by Kristian Hansen -->
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="author" content="Kristian Hansen, Sanjay Govind" />
-      <meta name="description" content="COMP112 Self Assessment" />
-    <title>COMP112 Self Assessment Tool</title>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  <meta name="author" content="Kristian Hansen, Sanjay Govind" />
+  <meta name="description" content="COMP112 Self Assessment" />
+  <title>COMP112 Self Assessment Tool</title>
 
-    <!-- Bootstrap -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap -->
+  <link href="css/bootstrap.min.css" rel="stylesheet">
 
-      <link href="css/custom-themes.css" rel="stylesheet" />
+  <link href="css/custom-themes.css" rel="stylesheet" />
 
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">COMP112 Self Assessment Tool</a>
-        </div>
-        <ul class="nav navbar-nav">
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">COMP112 Self Assessment Tool</a>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
         <li class="dropdown">
           <a id="dLabel" role="button" data-toggle="dropdown" class="dropdown-toggle" data-target="#" href="#">
             List of Tasks <span class="caret"></span>
@@ -43,37 +43,37 @@
 
           </ul>
         </li>
-          <li><a href="#" data-toggle="button" onclick="send()"> <span class="glyphicon glyphicon-play"></span> Compile</a></li>
-        </ul>
-        <ul class="nav navbar-nav navbar-right">
-          <li><a href="#" data-toggle="button" onclick="invert()"><span class="glyphicon glyphicon-lamp"></span></a></li>
-        </ul>
-      </div>
-    </nav>
-
-    <div class="container-fluid">
-      <div class="main" style="position:fixed;display:block;height:100%;">
-        <h2 class="page-header" id="asstitle">Pick a task from above to start</h2>
-        <div class="row-type">
-          <h6><span class="heading-left">Java Code:</span><span class="heading-right">Task Instructions:</span></h6>
-          <div id="code-output-display"></div>
-          <div id="task-instructions-display" style="overflow-y: scroll"></div>
-        </div>
-        <div class="row-type">
-          <h6><span class="heading-left">Enter your text:</span><span class="heading-right">Console Output:</span></h6>
-          <div id="user-input-box"></div>
-          <div id="console-output-screen" style="overflow-y: scroll"></div>
-        </div>
-      </div>
+        <li><a href="#" data-toggle="button" onclick="send(); return false;"> <span class="glyphicon glyphicon-play"></span> Compile</a></li>
+        <li><a href="#" data-toggle="button" onclick="return false;" id="asstitle"> Current Task: None</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="#" data-toggle="button" onclick="invert()"><span class="glyphicon glyphicon-lamp"></span></a></li>
+      </ul>
     </div>
+  </div>
+</nav>
+<div class="container-fluid">
+  <div class="main">
+    <div class="row-type">
+      <h6><span class="heading-left">Java Code:</span><span class="heading-right">Task Instructions:</span></h6>
+      <div id="code-output-display"></div>
+      <div id="task-instructions-display" style="overflow-y: scroll"></div>
+    </div>
+    <div class="row-type">
+      <h6><span class="heading-left">Enter your text:</span><span class="heading-right">Console Output:</span></h6>
+      <div id="user-input-box"></div>
+      <div id="console-output-screen" style="overflow-y: scroll"></div>
+    </div>
+  </div>
+</div>
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="js/jquery.min.js"></script>
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
-    <script src="js/src-min-noconflict/ext-language_tools.js"></script>
-    <script src="js/lodash.min.js"></script>
-    <Script src="js/script.js"></Script>
-  </body>
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="js/jquery.min.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="js/bootstrap.min.js"></script>
+<script src="js/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/src-min-noconflict/ext-language_tools.js"></script>
+<script src="js/lodash.min.js"></script>
+<Script src="js/script.js"></Script>
+</body>
 </html>
