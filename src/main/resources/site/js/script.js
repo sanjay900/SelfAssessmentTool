@@ -1,12 +1,14 @@
 /**
  * Made by Kristian Hansen and Sanjay Govind
  */
+
 const codeDisplay = ace.edit("code-output-display");
+const userInput = ace.edit("user-input-box");
+if (localStorage.config_invert) {
+    invert();
+}
 codeDisplay.getSession().setMode("ace/mode/java");
 codeDisplay.setReadOnly(true);
-
-
-const userInput = ace.edit("user-input-box");
 ace.require("ace/ext/language_tools");
 userInput.setOptions({
     enableBasicAutocompletion: true,
@@ -158,4 +160,13 @@ if (window.location.hash) {
     window.setTimeout(function() {
         loadFile(window.location.hash.substr(1));
     },100);
+}
+function invert() {
+    const body = $("body");
+    body.toggleClass("invert");
+    const inverted = body.hasClass("invert");
+    const theme = "ace/theme/"+(inverted?"vibrant_ink":"clouds");
+    userInput.setTheme(theme);
+    codeDisplay.setTheme(theme);
+    localStorage.setItem("config_invert",inverted);
 }
