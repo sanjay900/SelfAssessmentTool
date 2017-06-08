@@ -45,6 +45,7 @@ public class AnnotationProcessor extends AbstractProcessor {
     private List<String> testedMethods = new ArrayList<>();
     private List<TaskInfo.MethodInfo> methods = new ArrayList<>();
     private Map<String,String> variables = new HashMap<>();
+    private Map<String,String> comments = new HashMap<>();
     private List<String> classes = new ArrayList<>();
     private List<String> enums = new ArrayList<>();
     private List<String> interfaces = new ArrayList<>();
@@ -162,6 +163,7 @@ public class AnnotationProcessor extends AbstractProcessor {
         Set<Modifier> modifiers = methodTree.getModifiers().getFlags();
         if (modifiers.contains(Modifier.ABSTRACT)) {
             codeToRemove.add(methodTree.toString());
+            comments.put(methodTree.toString(),getComment(element,true));
             return;
         }
         String header = "";
@@ -213,9 +215,13 @@ public class AnnotationProcessor extends AbstractProcessor {
                 new TypeScanner(taskEle,trees).getFirstClass();
         endClass = endClass.substring(0,endClass.length()-1);
         for (String str: codeToRemove) {
+            String comment = "";
+            if (comments.containsKey(str) && !comments.get(str).isEmpty())
+                comment = comments.get(str);
             String indent = str.contains("class")?"\t":"";
             String newStr = str.replaceAll("abstract (.+);","$1 {\n\n"+indent+"}\n").replace("abstract ","");
             newStr=newStr.replaceAll("@ClassToComplete.*\n","");
+            toFill.append(comment);
             //There is an extra \n at the start of each removed method, so we should remove it.
             toFill.append(fixWeirdCompilationIssues(newStr).substring(1));
             //The indentation is different between the class and the method on its own, so we need to ignore indentation.

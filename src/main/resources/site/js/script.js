@@ -143,7 +143,7 @@ function loadFile(name) {
         } else {
             userInput.setValue(results.startingCode,-1);
         }
-        $("#task-instructions-display").html(newLineToBr(results.info));
+        $("#task-instructions-display").html(results.info.replace(/\n\s*\n/g,"<br><br>"));
         startingCode = results.startingCode;
         codeDisplay.setValue(results.codeToDisplay, -1);
         const editorDisplay = codeDisplay.getSession();

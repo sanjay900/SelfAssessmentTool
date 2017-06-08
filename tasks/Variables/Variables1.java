@@ -79,5 +79,8 @@ public abstract class Variables1 {
         assertEquals("Hello!", message);
     }
 
+    /**
+     * Test comment, please ignore
+     */
     public abstract void run();
 }
