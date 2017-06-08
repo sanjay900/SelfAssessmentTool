@@ -201,8 +201,6 @@ public class JavaCompiler extends LanguageCompiler{
         }
     }
 
-    private static final CompileResponse TIMEOUT = new CompileResponse("Error: timeout reached (2 seconds)", Collections.emptyList(), Collections.emptyList(), Collections.emptyList());;
-
 
     private static final Pattern MISSING_METHOD = Pattern.compile(".+ is not abstract and does not override abstract method (.+)\\(.+\\).+");
     private static final String METHOD_ERROR = "You are missing the method %s!";

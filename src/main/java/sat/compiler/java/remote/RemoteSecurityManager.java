@@ -1,5 +1,7 @@
 package sat.compiler.java.remote;
 
+import sat.compiler.javascript.JavascriptCompiler;
+
 import java.net.InetAddress;
 import java.security.Permission;
 
@@ -71,9 +73,9 @@ public class RemoteSecurityManager extends SecurityManager {
         System.out.println(msg);
         throw new SecurityException(msg);
     }
-    void setAllowAll(boolean allowAll) {
+    public void setAllowAll(boolean allowAll) {
         //Only allow access to setAllowAll from CompilerProcess.
-        if (getClassContext()[1] != CompilerProcess.class) error("You do not have permission to modify the security manager");
+        if (getClassContext()[1] != CompilerProcess.class && getClassContext()[1] != JavascriptCompiler.class) error("You do not have permission to modify the security manager");
         this.allowAll = allowAll;
     }
 }

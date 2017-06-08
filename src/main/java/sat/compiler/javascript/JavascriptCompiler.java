@@ -4,7 +4,9 @@ import com.google.gson.internal.LinkedTreeMap;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import sat.SelfAssessmentTool;
 import sat.compiler.LanguageCompiler;
+import sat.compiler.RemoteProcess;
 import sat.compiler.java.java.CompilerException;
+import sat.compiler.java.remote.RemoteSecurityManager;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TaskNameInfo;
 import sat.webserver.CompileResponse;
@@ -16,17 +18,24 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by sanjay on 8/06/17.
  */
 public class JavascriptCompiler extends LanguageCompiler {
     private Map<String,TaskInfo> tasks = new HashMap<>();
+    private RemoteSecurityManager securityManager = new RemoteSecurityManager();
+    public JavascriptCompiler() {
+        securityManager.setAllowAll(true);
+        System.setSecurityManager(securityManager);
+    }
 
     @Override
     public void compile(String name, String code, String origFileName) throws CompilerException {
@@ -130,20 +139,33 @@ public class JavascriptCompiler extends LanguageCompiler {
 
     @Override
     public CompileResponse execute(TaskRequest request, Request webRequest) {
-        TaskInfo info = tasks.get(request.getFile());
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("nashorn");
-        StringWriter sw=new StringWriter();
-        engine.getContext().setWriter(sw);
+        securityManager.setAllowAll(false);
+        String console;
         try {
-            engine.eval(request.getCode());
-            engine.eval(info.getProcessedSource());
-        } catch (ScriptException e) {
-            e.printStackTrace();
+            console = runProcess(webRequest, new RemoteProcess() {
+                @Override
+                public String exec() throws IOException {
+                    TaskInfo info = tasks.get(request.getFile());
+                    ScriptEngineManager manager = new ScriptEngineManager();
+                    ScriptEngine engine = manager.getEngineByName("nashorn");
+                    StringWriter sw=new StringWriter();
+                    engine.getContext().setWriter(sw);
+                    try {
+                        engine.eval(request.getCode());
+                        engine.eval(info.getProcessedSource());
+                    } catch (ScriptException e) {
+                        e.printStackTrace();
+                    }
+                    return sw.toString();
+                }
+            });
+            return new CompileResponse(console,Collections.emptyList(), Collections.emptyList(),Collections.emptyList());
+        } catch (TimeoutException e) {
+            return TIMEOUT;
+        } finally {
+            securityManager.setAllowAll(true);
         }
-        String console = sw.toString();
 
-        return new CompileResponse(console,Collections.emptyList(), Collections.emptyList(),Collections.emptyList());
     }
 
 }

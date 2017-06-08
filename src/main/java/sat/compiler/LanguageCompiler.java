@@ -7,6 +7,7 @@ import sat.webserver.TaskRequest;
 import spark.Request;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -42,4 +43,7 @@ public abstract class LanguageCompiler {
             throw new TimeoutException();
         }
     }
+    protected static final CompileResponse TIMEOUT = new CompileResponse("Error: timeout reached (2 seconds)", Collections.emptyList(), Collections.emptyList(), Collections.emptyList());;
+
+
 }
