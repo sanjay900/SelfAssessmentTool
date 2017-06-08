@@ -1,4 +1,4 @@
-package sat.compiler.remote;
+package sat.compiler.java.remote;
 
 import sat.webserver.TaskRequest;
 import sat.webserver.CompileResponse;

@@ -1,8 +1,8 @@
 package Filter;
 
 import org.junit.Test;
-import sat.compiler.annotations.Hidden;
-import sat.compiler.annotations.Task;
+import sat.compiler.java.annotations.Hidden;
+import sat.compiler.java.annotations.Task;
 
 import java.util.ArrayList;
 import java.util.Arrays;

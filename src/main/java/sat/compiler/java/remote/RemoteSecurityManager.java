@@ -1,4 +1,4 @@
-package sat.compiler.remote;
+package sat.compiler.java.remote;
 
 import java.net.InetAddress;
 import java.security.Permission;

@@ -3,7 +3,8 @@ package Reduce;
 import org.junit.Test;
 
 import java.util.stream.*;
-import sat.compiler.annotations.*;
+
+import sat.compiler.java.annotations.Task;
 
 import static org.junit.Assert.*;
 

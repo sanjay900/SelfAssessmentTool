@@ -1,8 +1,8 @@
 package Lambda;
 
 import org.junit.Test;
-import sat.compiler.annotations.ClassToComplete;
-import sat.compiler.annotations.Task;
+import sat.compiler.java.annotations.ClassToComplete;
+import sat.compiler.java.annotations.Task;
 
 import static org.junit.Assert.assertEquals;
 

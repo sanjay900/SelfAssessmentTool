@@ -1,8 +1,7 @@
 package Lambda;
 
 import org.junit.Test;
-import sat.compiler.annotations.Hidden;
-import sat.compiler.annotations.Task;
+import sat.compiler.java.annotations.Task;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,14 +1,11 @@
 package Lambda;
 
 import org.junit.Test;
-        import sat.util.*;
-        import java.util.stream.*;
-        import java.util.function.*;
-        import sat.compiler.annotations.*;
+import sat.compiler.java.annotations.Task;
 
-        import static org.junit.Assert.*;
-        import static sat.util.AssertUtils.*;
-        import java.util.*;
+import java.util.function.*;
+
+import static org.junit.Assert.*;
 
 /**
  * Write a lambda to add  10 to an integer

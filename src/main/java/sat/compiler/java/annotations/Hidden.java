@@ -1,4 +1,4 @@
-package sat.compiler.annotations;
+package sat.compiler.java.annotations;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

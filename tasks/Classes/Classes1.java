@@ -1,7 +1,7 @@
 package Classes;
 
 import org.junit.Test;
-import sat.compiler.annotations.Task;
+import sat.compiler.java.annotations.Task;
 
 import static org.junit.Assert.assertEquals;
 

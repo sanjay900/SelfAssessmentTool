@@ -13,4 +13,6 @@ public class TaskInfoResponse {
     private String startingCode;
     private String info;
     private String name;
+    private String mode;
+    private String type;
 }

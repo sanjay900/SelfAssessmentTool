@@ -1,9 +1,12 @@
 package sat;
 
+import com.google.gson.internal.LinkedTreeMap;
+import lombok.Getter;
 import org.apache.commons.io.FilenameUtils;
-import sat.compiler.TaskCompiler;
-import sat.compiler.java.CompilerException;
-import sat.compiler.task.TaskNameInfo;
+import sat.compiler.LanguageCompiler;
+import sat.compiler.java.JavaCompiler;
+import sat.compiler.java.java.CompilerException;
+import sat.compiler.javascript.JavascriptCompiler;
 import sat.gui.TrayManager;
 import sat.webserver.WebServer;
 import spark.utils.IOUtils;
@@ -16,13 +19,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Comparator;
-
+import java.util.HashMap;
+import java.util.Map;
+@Getter
 public class SelfAssessmentTool {
+    @Getter
+    private static Map<String,LanguageCompiler> compilerMap = new HashMap<>();
+    public static Map<String,Object> taskDirs = new LinkedTreeMap<>();
     public static void main(String[] args) {
         new SelfAssessmentTool();
     }
     private SelfAssessmentTool() {
+        JavaCompiler jc = new JavaCompiler();
+        compilerMap.put("java",jc);
+        compilerMap.put("js",new JavascriptCompiler());
         System.out.println("Compiling tasks");
         try {
             Files.walkFileTree(new File("tasks").toPath(), new SimpleFileVisitor<Path>() {
@@ -30,10 +40,14 @@ public class SelfAssessmentTool {
                 public FileVisitResult visitFile(Path task, BasicFileAttributes attrs)
                         throws IOException {
                     String name = FilenameUtils.getBaseName(task.getFileName()+"");
+                    String ext = FilenameUtils.getExtension(task.getFileName()+"");
+                    if (!compilerMap.containsKey(ext)) {
+                        System.out.println("Unsupported extension: "+ext+" in file: "+task.getFileName());
+                    }
                     try {
-                        TaskCompiler.compile(name, IOUtils.toString(new FileInputStream(task.toFile())),null);
+                        compilerMap.get(ext).compile(name, IOUtils.toString(new FileInputStream(task.toFile())),task+"");
                         System.out.println("Loaded: "+name);
-                    } catch (ClassNotFoundException | IOException | CompilerException e) {
+                    } catch (IOException | CompilerException e) {
                         System.out.println("Error loading: "+name);
                         e.printStackTrace();
                     }
@@ -44,6 +58,7 @@ public class SelfAssessmentTool {
             e.printStackTrace();
         }
         System.out.println("Tasks compiled! Starting app");
+        jc.createRMI();
         new WebServer().startServer();
         new TrayManager().showTray();
     }

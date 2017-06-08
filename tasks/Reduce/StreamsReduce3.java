@@ -3,11 +3,12 @@ package Reduce;
 import org.junit.Test;
 
 import java.util.stream.*;
-import sat.compiler.annotations.*;
 
 import static org.junit.Assert.*;
 
 import javafx.util.Pair;
+import sat.compiler.java.annotations.Hidden;
+import sat.compiler.java.annotations.Task;
 
 /**
  * return the average value in the stream.

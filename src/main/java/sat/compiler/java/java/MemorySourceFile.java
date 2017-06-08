@@ -1,4 +1,4 @@
-package sat.compiler.java;
+package sat.compiler.java.java;
 
 import javax.tools.SimpleJavaFileObject;
 import java.io.IOException;

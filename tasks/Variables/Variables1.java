@@ -1,11 +1,10 @@
 package Variables;
 
 import org.junit.Test;
-import sat.compiler.annotations.Hidden;
-import sat.compiler.annotations.Task;
+import sat.compiler.java.annotations.Hidden;
+import sat.compiler.java.annotations.Task;
 
 import static org.junit.Assert.*;
-import static sat.util.PrintUtils.*;
 
 /**
  * Introduction To Variables:

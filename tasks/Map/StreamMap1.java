@@ -1,15 +1,13 @@
 package Map;
 
 import org.junit.Test;
-import sat.util.*;
+import sat.compiler.java.annotations.Task;
+
 import java.util.stream.*;
-import sat.compiler.annotations.*;
 
 import static org.junit.Assert.*;
-import static sat.util.AssertUtils.*;
-import java.util.*;
 
-    /**
+/**
      * Write a method to add 99 to each element
      * to the stream of Integers
      * Look up Streams  .map( Lambda )
