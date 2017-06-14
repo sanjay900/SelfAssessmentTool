@@ -16,11 +16,15 @@ public abstract class Demo0 {
 }
 
 ```
-The `@Task` annotation supports two arguments: 
+The `@Task` annotation supports three arguments:
 
 `name` - The name shown in the sidebar and above the code
 
 `showModifiers` - true to show modifiers such as `public`, false to hide.
+
+`restricted` - allows you to specify what cannot be used in this task. Program searches for character sequences that match
+sequences listed in this argument and prevents the code from being executed if matching code is found. Usage: `restricted={"Math","static"}`
+will prevent the class `Math` or the keyword `static` from being used.
 
 The `@Task` annotation sits above the class declaration. 
 You then need to create an abstract class.
