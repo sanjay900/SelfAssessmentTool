@@ -1,8 +1,9 @@
-package sat.compiler.java;
+package sat.compiler.java.java;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import javax.script.ScriptException;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.util.List;

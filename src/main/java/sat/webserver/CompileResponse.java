@@ -2,8 +2,7 @@ package sat.webserver;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import sat.autocompletion.AutoCompletion;
-import sat.compiler.java.CompilationError;
+import sat.compiler.java.java.CompilationError;
 import sat.compiler.task.TestResult;
 
 import java.io.Serializable;

@@ -1,13 +1,11 @@
 package Filter;
 
 import org.junit.Test;
-import sat.util.*;
-import java.util.stream.*;
-import sat.compiler.annotations.*;
+import sat.compiler.java.annotations.Hidden;
+import sat.compiler.java.annotations.Task;
+
 import java.util.Arrays;
 import static org.junit.Assert.*;
-import static sat.util.AssertUtils.*;
-import java.util.*;
 
 /**
  *  From one array build another with only the even numbers.

@@ -4,7 +4,7 @@ import com.google.common.reflect.ClassPath;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.ClassUtils;
-import sat.compiler.TaskCompiler;
+import sat.compiler.java.JavaCompiler;
 import sat.compiler.task.TaskInfo;
 import sat.util.PrintUtils;
 import sat.webserver.TaskRequest;
@@ -30,11 +30,12 @@ public class Autocompleter {
     public static List<AutoCompletion> getCompletions(TaskRequest request) {
         TaskInfo task;
         try {
-            task = TaskCompiler.tasks.tasks.get(request.getFile());
+            task = JavaCompiler.tasks.tasks.get(request.getFile());
         } catch (Exception ex) {
             ex.printStackTrace();
             return Collections.emptyList();
         }
+        if (task == null) return Collections.emptyList();
         String userCode = task.getProcessedSource() + request.getCode() +"}";
         List<AutoCompletion> completions = new ArrayList<>();
         if (request.getCode() != null && request.getCol() != 0) {

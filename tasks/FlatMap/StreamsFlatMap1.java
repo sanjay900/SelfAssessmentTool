@@ -1,12 +1,12 @@
 package FlatMap;
 
 import org.junit.Test;
-import sat.util.*;
+import sat.compiler.java.annotations.Hidden;
+import sat.compiler.java.annotations.Task;
+
 import java.util.*;
 import java.util.stream.*;
-import sat.compiler.annotations.*;
 
-import static org.junit.Assert.*;
 import static sat.util.AssertUtils.*;
 
 /**

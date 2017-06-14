@@ -1,4 +1,4 @@
-package sat.compiler;
+package sat.compiler.java;
 
 import lombok.Getter;
 import org.junit.runner.Description;

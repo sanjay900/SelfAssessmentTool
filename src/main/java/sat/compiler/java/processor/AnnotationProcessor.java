@@ -1,20 +1,17 @@
-package sat.compiler.processor;
+package sat.compiler.java.processor;
 
 import com.google.auto.service.AutoService;
 import com.google.gson.internal.LinkedTreeMap;
-import com.sun.source.tree.ArrayTypeTree;
 import com.sun.source.tree.MethodTree;
-import com.sun.source.tree.PrimitiveTypeTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
-import com.sun.tools.javac.code.Symbol;
-import org.apache.commons.lang3.ClassUtils;
 import org.junit.Test;
-import sat.compiler.TaskCompiler;
-import sat.compiler.annotations.ClassToComplete;
-import sat.compiler.annotations.Hidden;
-import sat.compiler.annotations.Task;
+import sat.SelfAssessmentTool;
+import sat.compiler.java.JavaCompiler;
+import sat.compiler.java.annotations.ClassToComplete;
+import sat.compiler.java.annotations.Hidden;
+import sat.compiler.java.annotations.Task;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TaskNameInfo;
 import sat.util.PrintUtils;
@@ -32,7 +29,7 @@ import java.util.stream.Collectors;
  * by user code, and pulls information to display on the site.
  */
 @AutoService(Processor.class)
-@SupportedAnnotationTypes("sat.compiler.annotations.Task")
+@SupportedAnnotationTypes("sat.compiler.java.annotations.Task")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class AnnotationProcessor extends AbstractProcessor {
     private Elements elementUtils;
@@ -45,6 +42,7 @@ public class AnnotationProcessor extends AbstractProcessor {
     private List<String> testedMethods = new ArrayList<>();
     private List<TaskInfo.MethodInfo> methods = new ArrayList<>();
     private Map<String,String> variables = new HashMap<>();
+    private Map<String,String> comments = new HashMap<>();
     private List<String> classes = new ArrayList<>();
     private List<String> enums = new ArrayList<>();
     private List<String> interfaces = new ArrayList<>();
@@ -162,6 +160,7 @@ public class AnnotationProcessor extends AbstractProcessor {
         Set<Modifier> modifiers = methodTree.getModifiers().getFlags();
         if (modifiers.contains(Modifier.ABSTRACT)) {
             codeToRemove.add(methodTree.toString());
+            comments.put(methodTree.toString(),getComment(element,true));
             return;
         }
         String header = "";
@@ -213,9 +212,13 @@ public class AnnotationProcessor extends AbstractProcessor {
                 new TypeScanner(taskEle,trees).getFirstClass();
         endClass = endClass.substring(0,endClass.length()-1);
         for (String str: codeToRemove) {
+            String comment = "";
+            if (comments.containsKey(str) && !comments.get(str).isEmpty())
+                comment = comments.get(str);
             String indent = str.contains("class")?"\t":"";
             String newStr = str.replaceAll("abstract (.+);","$1 {\n\n"+indent+"}\n").replace("abstract ","");
             newStr=newStr.replaceAll("@ClassToComplete.*\n","");
+            toFill.append(comment);
             //There is an extra \n at the start of each removed method, so we should remove it.
             toFill.append(fixWeirdCompilationIssues(newStr).substring(1));
             //The indentation is different between the class and the method on its own, so we need to ignore indentation.
@@ -244,19 +247,19 @@ public class AnnotationProcessor extends AbstractProcessor {
         List<String> restricted = Arrays.asList(task.restricted());
         String name = taskEle.getQualifiedName()+"";
         if (name.contains(".")) {
-            LinkedTreeMap<String, Object> packMap = (LinkedTreeMap<String, Object>) TaskCompiler.taskDirs;
+            LinkedTreeMap<String, Object> packMap = (LinkedTreeMap<String, Object>) SelfAssessmentTool.taskDirs;
             String[] split = name.split("\\.");
             for (int i = 0; i < split.length-1; i++) {
                 String s = split[i];
                 packMap.putIfAbsent(s, new LinkedTreeMap<String, Object>());
                 packMap = (LinkedTreeMap<String, Object>) packMap.get(s);
             }
-            packMap.put(split[split.length-1],new TaskNameInfo(name,task.name()));
+            packMap.put(split[split.length-1]+".java",new TaskNameInfo(name+".java",task.name()));
         } else {
-            TaskCompiler.taskDirs.put(name,new TaskNameInfo(name,task.name()));
+            SelfAssessmentTool.taskDirs.put(name+".java",new TaskNameInfo(name+".java",task.name()));
         }
-        TaskCompiler.tasks.tasks.put(taskEle.getQualifiedName()+"",
-                new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,info.toString(),testedMethods,restricted,classes,enums,interfaces,methods,variables));
+        JavaCompiler.tasks.tasks.put(taskEle.getQualifiedName()+".java",
+                new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,info.toString(),"ace/mode/java","java",testedMethods,restricted,classes,enums,interfaces,methods,variables));
     }
 
     /**

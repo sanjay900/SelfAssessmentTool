@@ -1,8 +1,8 @@
-package sat.compiler.remote;
+package sat.compiler.java.remote;
 
 import lombok.Getter;
 import lombok.Setter;
-import sat.compiler.TaskCompiler;
+import sat.compiler.java.JavaCompiler;
 import sat.util.JSONUtils;
 import sat.webserver.TaskRequest;
 import sat.webserver.CompileResponse;
@@ -25,7 +25,7 @@ public class RemoteTaskInfoImpl extends UnicastRemoteObject implements RemoteTas
     private String compiled;
     public RemoteTaskInfoImpl() throws RemoteException {
         super(0);
-        compiled = JSONUtils.toJSON(TaskCompiler.tasks);
+        compiled = JSONUtils.toJSON(JavaCompiler.tasks);
     }
     @Override
     public TaskRequest getMessageFrom(int id) throws RemoteException {

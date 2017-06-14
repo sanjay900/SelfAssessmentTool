@@ -1,4 +1,4 @@
-package sat.compiler.processor;
+package sat.compiler.java.processor;
 
 
 import com.sun.source.tree.ClassTree;

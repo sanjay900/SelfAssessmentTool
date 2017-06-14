@@ -1,4 +1,4 @@
-package sat.compiler.java;
+package sat.compiler.java.java;
 
 import javax.tools.*;
 import java.io.IOException;
@@ -48,7 +48,7 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
 
     /**
      * Compile a JavaFileObject using this file manager
-     * @param obj the file to compile
+     * @param obj the file to compileAndGet
      */
     private void compileSource(JavaFileObject obj) {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();

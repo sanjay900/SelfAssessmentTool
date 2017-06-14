@@ -7,7 +7,6 @@ const userInput = ace.edit("user-input-box");
 if (localStorage.config_invert) {
     invert();
 }
-codeDisplay.getSession().setMode("ace/mode/java");
 codeDisplay.setReadOnly(true);
 ace.require("ace/ext/language_tools");
 userInput.setOptions({
@@ -17,7 +16,6 @@ userInput.setOptions({
 });
 userInput.setWrapBehavioursEnabled(false);
 codeDisplay.setWrapBehavioursEnabled(false);
-userInput.getSession().setMode("ace/mode/java");
 const autocompleter = {
     getCompletions: function(editor, session, pos, prefix, callback) {
         if (file === null) return;
@@ -143,7 +141,9 @@ function loadFile(name) {
         } else {
             userInput.setValue(results.startingCode,-1);
         }
-        $("#task-instructions-display").html(newLineToBr(results.info));
+        codeDisplay.getSession().setMode("ace/mode/java");
+        userInput.getSession().setMode("ace/mode/java");
+        $("#task-instructions-display").html(results.info.replace(/\n\s*\n/g,"<br><br>"));
         startingCode = results.startingCode;
         codeDisplay.setValue(results.codeToDisplay, -1);
         const editorDisplay = codeDisplay.getSession();

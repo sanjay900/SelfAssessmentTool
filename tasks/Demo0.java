@@ -1,6 +1,5 @@
 import org.junit.Test;
-import sat.util.*;
-import sat.compiler.annotations.*;
+import sat.compiler.java.annotations.Task;
 
 import static org.junit.Assert.*;
 

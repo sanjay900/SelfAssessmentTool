@@ -1,39 +1,49 @@
-package sat.compiler;
+package sat.compiler.java;
 
-import com.google.gson.internal.LinkedTreeMap;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.junit.runner.JUnitCore;
-import sat.compiler.java.ClassFileManager;
-import sat.compiler.java.CompilationError;
-import sat.compiler.java.CompilerException;
-import sat.compiler.java.MemorySourceFile;
-import sat.compiler.processor.AnnotationProcessor;
+import sat.compiler.LanguageCompiler;
+import sat.compiler.java.java.ClassFileManager;
+import sat.compiler.java.java.CompilationError;
+import sat.compiler.java.java.CompilerException;
+import sat.compiler.java.java.MemorySourceFile;
+import sat.compiler.java.processor.AnnotationProcessor;
+import sat.compiler.java.remote.CompilerProcess;
+import sat.compiler.java.remote.JavaProcess;
+import sat.compiler.java.remote.RemoteTaskInfoImpl;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TaskList;
 import sat.compiler.task.TestResult;
-import sat.webserver.TaskRequest;
 import sat.webserver.CompileResponse;
+import sat.webserver.TaskInfoResponse;
+import sat.webserver.TaskRequest;
+import spark.Request;
 
 import javax.tools.*;
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TaskCompiler {
+public class JavaCompiler extends LanguageCompiler{
     public static TaskList tasks = new TaskList();
-    public static Map<String,Object> taskDirs = new LinkedTreeMap<>();
     /**
      * Compile a class, and then return classToGet
      * @param classToGet the class to get from the classpath
-     * @return classToGet from the classpath, or null if you just want to compile (e.g. to make a TaskInfo)
+     * @return classToGet from the classpath, or null if you just want to compileAndGet (e.g. to make a TaskInfo)
      */
-    public static Class<?> compile(String name, String code, String classToGet) throws ClassNotFoundException, CompilerException {
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    public static Class<?> compileAndGet(String name, String code, String classToGet) throws ClassNotFoundException, CompilerException {
+        javax.tools.JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager stdFileManager = compiler.getStandardFileManager(null, null, null);
         ClassFileManager manager =  new ClassFileManager(stdFileManager);
         Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(new MemorySourceFile(name, code));
         List<String> compileOptions = new ArrayList<>();
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-        JavaCompiler.CompilationTask compilerTask = compiler.getTask(null, manager, diagnostics, compileOptions, null, compilationUnits);
+        javax.tools.JavaCompiler.CompilationTask compilerTask = compiler.getTask(null, manager, diagnostics, compileOptions, null, compilationUnits);
         boolean status = compilerTask.call();
         if (!status){
             for (Diagnostic<? extends JavaFileObject> diag : diagnostics.getDiagnostics()) {
@@ -71,8 +81,10 @@ public class TaskCompiler {
      * @throws CompilerException there was an error compiling the files
      */
     private static Class<?> compileTask(String name, String code) throws CompilerException {
+
+        if (name.endsWith(".java")) name = name.substring(0,name.length()-5);
         try {
-            return compile(name+ AnnotationProcessor.OUTPUT_CLASS_SUFFIX,code, name + AnnotationProcessor.OUTPUT_CLASS_SUFFIX);
+            return compileAndGet(name+ AnnotationProcessor.OUTPUT_CLASS_SUFFIX,code, name + AnnotationProcessor.OUTPUT_CLASS_SUFFIX);
 
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -89,13 +101,13 @@ public class TaskCompiler {
         List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
         if (request.getFile() == null) return new CompileResponse("",Collections.emptyList(), junitOut,diagnostics);
-        task = TaskCompiler.tasks.tasks.get(request.getFile());
+        task = JavaCompiler.tasks.tasks.get(request.getFile());
         if (task == null) {
             return new CompileResponse(ERROR,Collections.emptyList(), junitOut,diagnostics);
         }
         //Combine the processed source code with the user code (adding a timeout rule in the process)
         String userCode = task.getProcessedSource() + request.getCode() + "@Rule public Timeout globalTimeout = Timeout.seconds("+timeout+"); }";
-        //Start all methods as failed, and correct if we compile successfully
+        //Start all methods as failed, and correct if we compileAndGet successfully
         for (String method : task.getTestableMethods()) {
             junitOut.add(new TestResult(method, false,"An error occurred while compiling"));
         }
@@ -116,7 +128,7 @@ public class TaskCompiler {
             }
         }
         try {
-            //compile and run with junit
+            //compileAndGet and run with junit
             Class<?> clazz = compileTask(request.getFile(), userCode);
             JUnitCore junit = new JUnitCore();
             JUnitTestCollector listener = new JUnitTestCollector();
@@ -138,6 +150,55 @@ public class TaskCompiler {
         }
 
         return new CompileResponse( "", task.getTestableMethods(), junitOut, diagnostics);
+    }
+
+    @Override
+    public void compile(String name, String code, String origFileName) throws CompilerException {
+        try {
+            compileAndGet(name,code,null);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public TaskInfoResponse getInfo(String baseName) {
+        return tasks.tasks.get(baseName).getResponse();
+    }
+
+    @Override
+    public CompileResponse execute(TaskRequest request, Request webRequest) {
+        int id = new Random().nextInt(50000);
+        rmi.getLocal().put(id,request);
+        try {
+            String stdout = runProcess(webRequest, new JavaProcess(CompilerProcess.class,id+""));
+            CompileResponse response = rmi.getRemote().get(id);
+            if (response == null) return null;
+            response.setConsole(StringEscapeUtils.escapeHtml4(stdout));
+            return response;
+        } catch (TimeoutException e) {
+            return TIMEOUT;
+        }
+    }
+    private RemoteTaskInfoImpl rmi;
+
+    /**
+     * Create a remote registry for sending objects between the remote process and this process.
+     */
+    public void createRMI() {
+        try {
+            LocateRegistry.createRegistry(1099);
+        } catch (RemoteException ignored) {
+        }
+
+        try {
+            rmi = new RemoteTaskInfoImpl();
+            // Bind this object instance to the name "RmiServer"
+            Naming.rebind("//localhost/AssessRMI", rmi);
+        } catch (RemoteException | MalformedURLException e) {
+            e.printStackTrace();
+        }
     }
 
 

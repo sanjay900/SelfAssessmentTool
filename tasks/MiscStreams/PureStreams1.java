@@ -1,7 +1,7 @@
 package MiscStreams;
 
 import org.junit.Test;
-import sat.compiler.annotations.Task;
+import sat.compiler.java.annotations.Task;
 
 import java.util.Arrays;
 import java.util.stream.Stream;
