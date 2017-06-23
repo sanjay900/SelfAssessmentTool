@@ -15,6 +15,7 @@ public class TaskInfoResponse {
     private String name;
     private String mode;
     private String type;
+    private boolean isMain;
     public TaskInfoResponse(String message) {
         this.codeToDisplay = message;
     }

@@ -20,7 +20,7 @@ public class TaskInfo {
     boolean isMain;
 
     public TaskInfoResponse getResponse() {
-        return new TaskInfoResponse(codeToDisplay, methodsToFill, name+".java",fullName,mode,type);
+        return new TaskInfoResponse(codeToDisplay, methodsToFill, name+".java",fullName,mode,type,isMain);
     }
 
     @Data
