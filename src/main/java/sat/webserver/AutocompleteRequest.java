@@ -5,14 +5,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TaskRequest implements Serializable {
+public class AutocompleteRequest implements Serializable {
     String code;
     String file;
     int line;
     int col;
+    List<CompileRequest> files;
 }

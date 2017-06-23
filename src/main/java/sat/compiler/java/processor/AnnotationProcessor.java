@@ -47,7 +47,6 @@ public class AnnotationProcessor extends AbstractProcessor {
     private List<String> enums = new ArrayList<>();
     private List<String> interfaces = new ArrayList<>();
     private Task task;
-    private StringBuilder info;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -61,15 +60,14 @@ public class AnnotationProcessor extends AbstractProcessor {
         for (Element taskElement : roundEnv.getElementsAnnotatedWith(Task.class)) {
             shown = new StringBuilder();
             toFill = new StringBuilder();
-            info = new StringBuilder();
             methods.clear();
             variables.clear();
             testedMethods.clear();
             classes.clear();
             enums.clear();
             interfaces.clear();
-            String taskComment = getComment(taskElement,false);
-            info.append(taskComment);
+            String taskComment = getComment(taskElement,true);
+            shown.append(taskComment);
             task = taskElement.getAnnotation(Task.class);
             for (Element element : taskElement.getEnclosedElements()) {
                 switch (element.getKind()) {
@@ -229,8 +227,8 @@ public class AnnotationProcessor extends AbstractProcessor {
         }
         endClass = endClass.replaceAll("@Task.*","");
         endClass = endClass.replaceAll("@ClassToComplete.*","");
-        endClass = endClass.replace("abstract class "+ taskEle.getSimpleName(),"class "+ taskEle.getSimpleName()+ OUTPUT_CLASS_SUFFIX);
-        endClass = endClass.replace(" "+ taskEle.getSimpleName()+"() {"," "+ taskEle.getSimpleName()+ OUTPUT_CLASS_SUFFIX +"() {");
+        endClass = endClass.replace("abstract class "+ taskEle.getSimpleName(),"class "+ taskEle.getSimpleName());
+        endClass = endClass.replace(" "+ taskEle.getSimpleName()+"() {"," "+ taskEle.getSimpleName() +"() {");
         return fixWeirdCompilationIssues(endClass);
     }
 
@@ -259,7 +257,7 @@ public class AnnotationProcessor extends AbstractProcessor {
             SelfAssessmentTool.taskDirs.put(name+".java",new TaskNameInfo(name+".java",task.name()));
         }
         JavaCompiler.tasks.tasks.put(taskEle.getQualifiedName()+".java",
-                new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,info.toString(),"ace/mode/java","java",testedMethods,restricted,classes,enums,interfaces,methods,variables));
+                new TaskInfo(toDisplay,toFill,task.name(),taskEle.getQualifiedName()+"",source,"ace/mode/java","java",testedMethods,restricted,classes,enums,interfaces,methods,variables,task.isMain()));
     }
 
     /**
@@ -308,6 +306,4 @@ public class AnnotationProcessor extends AbstractProcessor {
     //Text to show in an omitted block of code
     private static final String OMITTED_BLOCK = "\n\t//omitted\n}\n";
     private static final String FULL_OMITTED_BLOCK = "{"+OMITTED_BLOCK;
-    //The generated class that contains rendering and is extended by the browser code
-    public static final String OUTPUT_CLASS_SUFFIX = "Generated";
 }

@@ -10,5 +10,6 @@ import java.io.Serializable;
 public class CompilationError implements Serializable {
     long line;
     long col;
+    String file;
     String error;
 }

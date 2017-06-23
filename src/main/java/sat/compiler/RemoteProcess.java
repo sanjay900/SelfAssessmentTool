@@ -21,6 +21,7 @@ public abstract class RemoteProcess {
     protected String startProcess(String... args) throws IOException {
         ProcessBuilder builder = new ProcessBuilder(args);
         builder.redirectErrorStream();
+//        builder.inheritIO();
         process = builder.start();
         return IOUtils.toString(process.getInputStream());
     }

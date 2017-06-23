@@ -4,8 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import sat.compiler.java.JavaCompiler;
 import sat.util.JSONUtils;
-import sat.webserver.TaskRequest;
+import sat.webserver.CompileRequest;
 import sat.webserver.CompileResponse;
+import sat.webserver.ProjectRequest;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -21,14 +22,14 @@ public class RemoteTaskInfoImpl extends UnicastRemoteObject implements RemoteTas
     private String messageSent;
     private String messageReceived;
     private HashMap<Integer,CompileResponse> remote = new HashMap<>();
-    private HashMap<Integer,TaskRequest> local = new HashMap<>();
+    private HashMap<Integer,ProjectRequest> local = new HashMap<>();
     private String compiled;
     public RemoteTaskInfoImpl() throws RemoteException {
         super(0);
         compiled = JSONUtils.toJSON(JavaCompiler.tasks);
     }
     @Override
-    public TaskRequest getMessageFrom(int id) throws RemoteException {
+    public ProjectRequest getMessageFrom(int id) throws RemoteException {
         return local.get(id);
     }
 

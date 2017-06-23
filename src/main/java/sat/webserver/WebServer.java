@@ -12,6 +12,9 @@ import spark.Spark;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static org.fusesource.jansi.Ansi.ansi;
 import static spark.Spark.get;
@@ -28,8 +31,8 @@ public class WebServer {
         Spark.port(port);
         get("/listTasks", (req, res) -> JSONUtils.toJSON(SelfAssessmentTool.taskDirs));
         post("/testCode", (Request req, Response res) -> {
-            TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);
-            String ext = FilenameUtils.getExtension(request.file);
+            ProjectRequest request = JSONUtils.fromJSON(req.body(),ProjectRequest.class);
+            String ext = FilenameUtils.getExtension(request.getFiles().get(0).file);
             if (!SelfAssessmentTool.getCompilerMap().containsKey(ext)) {
                 return "cancel";
             }
@@ -40,17 +43,31 @@ public class WebServer {
         post("/getTask", (Request req, Response res) -> {
             String name = FilenameUtils.getBaseName(req.body());
             String ext = FilenameUtils.getExtension(req.body());
+            if (req.body().endsWith("_project")) {
+                Map<String,Object> files = SelfAssessmentTool.projects.get(req.body());
+                List<TaskInfoResponse> responseList = new ArrayList<>();
+                for (String task : files.keySet()) {
+                    name = req.body()+"."+FilenameUtils.getBaseName(task);
+                    ext = FilenameUtils.getExtension(task);
+                    TaskInfoResponse info = SelfAssessmentTool.getCompilerMap().get(ext).getInfo(name+"."+ext);
+                    if (info == null)  {
+                        return JSONUtils.toJSON(new TaskInfoResponse("Unable to find requested file"));
+                    }
+                    responseList.add(info);
+                }
+                return JSONUtils.toJSON(responseList);
+            }
             if (!SelfAssessmentTool.getCompilerMap().containsKey(ext)) {
-                return JSONUtils.toJSON(new TaskInfoResponse("Unrecognised Extension","","","","",""));
+                return JSONUtils.toJSON(new TaskInfoResponse("Unrecognised Extension"));
             }
             TaskInfoResponse info = SelfAssessmentTool.getCompilerMap().get(ext).getInfo(name+"."+ext);
             if (info == null)  {
-                return JSONUtils.toJSON(new TaskInfoResponse("Unable to find requested file","","","","",""));
+                return JSONUtils.toJSON(new TaskInfoResponse("Unable to find requested file"));
             }
             return JSONUtils.toJSON(info);
         });
         post("/autocomplete", (req, res) -> {
-            TaskRequest request = JSONUtils.fromJSON(req.body(),TaskRequest.class);
+            AutocompleteRequest request = JSONUtils.fromJSON(req.body(),AutocompleteRequest.class);
             return JSONUtils.toJSON(Autocompleter.getCompletions(request));
         });
         logger.info(""+ansi().render("@|green Starting Socket.IO Server|@"));
@@ -70,4 +87,4 @@ public class WebServer {
             return true;
         }
     }
-   }
+}

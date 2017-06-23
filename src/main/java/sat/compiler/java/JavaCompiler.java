@@ -7,16 +7,16 @@ import sat.compiler.java.java.ClassFileManager;
 import sat.compiler.java.java.CompilationError;
 import sat.compiler.java.java.CompilerException;
 import sat.compiler.java.java.MemorySourceFile;
-import sat.compiler.java.processor.AnnotationProcessor;
 import sat.compiler.java.remote.CompilerProcess;
 import sat.compiler.java.remote.JavaProcess;
 import sat.compiler.java.remote.RemoteTaskInfoImpl;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TaskList;
 import sat.compiler.task.TestResult;
+import sat.webserver.CompileRequest;
 import sat.webserver.CompileResponse;
+import sat.webserver.ProjectRequest;
 import sat.webserver.TaskInfoResponse;
-import sat.webserver.TaskRequest;
 import spark.Request;
 
 import javax.tools.*;
@@ -36,11 +36,14 @@ public class JavaCompiler extends LanguageCompiler{
      * @param classToGet the class to get from the classpath
      * @return classToGet from the classpath, or null if you just want to compileAndGet (e.g. to make a TaskInfo)
      */
-    public static Class<?> compileAndGet(String name, String code, String classToGet) throws ClassNotFoundException, CompilerException {
+    private static Class<?> compileAndGet(List<CompileRequest> files, String classToGet) throws ClassNotFoundException, CompilerException {
         javax.tools.JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager stdFileManager = compiler.getStandardFileManager(null, null, null);
         ClassFileManager manager =  new ClassFileManager(stdFileManager);
-        Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(new MemorySourceFile(name, code));
+        List<JavaFileObject> compilationUnits = new ArrayList<>();
+        for (CompileRequest c: files) {
+            compilationUnits.add(new MemorySourceFile(c.getFile(), c.getCode()));
+        }
         List<String> compileOptions = new ArrayList<>();
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
         javax.tools.JavaCompiler.CompilationTask compilerTask = compiler.getTask(null, manager, diagnostics, compileOptions, null, compilationUnits);
@@ -52,12 +55,12 @@ public class JavaCompiler extends LanguageCompiler{
                 }
                 String msg = diag.getMessage(Locale.getDefault());
                 if (classToGet == null && !msg.contains("abstract")) {
-                    System.err.println("Compilation error:\n"+diag.getMessage(Locale.getDefault()).replace(name+".","").replace("Generated",""));
+                    System.err.println("Compilation error:\n"+diag.getMessage(Locale.getDefault()));
                 }
-                if (classToGet == null || !Objects.equals(diag.getSource().getName().substring(1), MemorySourceFile.replace(name)+".java")) {
+                if (classToGet == null) {
                     continue;
                 }
-                System.out.println("Compilation error:\n"+diag.getMessage(Locale.getDefault()).replace(name+".","").replace("Generated",""));
+                System.out.println("Compilation error:\n"+diag.getMessage(Locale.getDefault()));
                 throw new CompilerException(diagnostics.getDiagnostics());
             }
         }
@@ -72,90 +75,100 @@ public class JavaCompiler extends LanguageCompiler{
         }
         return clazz;
     }
-
-    /**
-     * Compile a task
-     * @param name the name of the task class
-     * @param code the user code
-     * @return the compiled task
-     * @throws CompilerException there was an error compiling the files
-     */
-    private static Class<?> compileTask(String name, String code) throws CompilerException {
-
-        if (name.endsWith(".java")) name = name.substring(0,name.length()-5);
-        try {
-            return compileAndGet(name+ AnnotationProcessor.OUTPUT_CLASS_SUFFIX,code, name + AnnotationProcessor.OUTPUT_CLASS_SUFFIX);
-
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+    private static String stripJava(String name) {
+        if (name.endsWith(".java")) {
+            return name.substring(0,name.length()-".java".length());
         }
+        return name;
     }
     /**
      * Compile a task from the web server
      * @param request the request from the web server
      * @return the response to send to the client.
      */
-    public static CompileResponse compile(TaskRequest request) {
+    public static CompileResponse compile(ProjectRequest request) {
         TaskInfo task;
         List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
-        if (request.getFile() == null) return new CompileResponse("",Collections.emptyList(), junitOut,diagnostics);
-        task = JavaCompiler.tasks.tasks.get(request.getFile());
-        if (task == null) {
-            return new CompileResponse(ERROR,Collections.emptyList(), junitOut,diagnostics);
-        }
-        //Combine the processed source code with the user code (adding a timeout rule in the process)
-        String userCode = task.getProcessedSource() + request.getCode() + "@Rule public Timeout globalTimeout = Timeout.seconds("+timeout+"); }";
-        //Start all methods as failed, and correct if we compileAndGet successfully
-        for (String method : task.getTestableMethods()) {
-            junitOut.add(new TestResult(method, false,"An error occurred while compiling"));
-        }
-        //Look for restricted keywords
-        for (String str: task.getRestricted()) {
-            if (request.getCode().toLowerCase().contains(str.toLowerCase())) {
-                String[] split = request.getCode().toLowerCase().split("\n");
-                for (int lineNum = 0; lineNum < split.length; lineNum++) {
-                    String line = split[lineNum];
-                    int indexOf = line.indexOf(str.toLowerCase());
-                    if (indexOf != -1) {
-                        //The javascript gui expects line numbers to start from 1
-                        diagnostics.add(new CompilationError(lineNum+1,indexOf+1,"You have attempted to use a restricted word: "+str));
+        if (request.getFiles().isEmpty()) return new CompileResponse("",Collections.emptyList(), junitOut,diagnostics);
+        String mainTask = null;
+        List<String> testableMethods = Collections.emptyList();
+        boolean hasError = false;
+        for (CompileRequest req : request.getFiles()) {
+            task = tasks.tasks.get(req.getFile());
+            req.setFile(stripJava(req.getFile()));
+            if (task == null) {
+                return new CompileResponse(ERROR, Collections.emptyList(), junitOut, diagnostics);
+            }
+            if (task.isMain() || mainTask == null) {
+                testableMethods = task.getTestableMethods();
+                mainTask = req.getFile();
+            }
+            //Combine the processed source code with the user code (adding a timeout rule in the process)
+            String userCode = task.getProcessedSource() + req.getCode() + "@Rule public Timeout globalTimeout = Timeout.seconds(" + timeout + "); }";
+            //Start all methods as failed, and correct if we compileAndGet successfully
+            for (String method : task.getTestableMethods()) {
+                junitOut.add(new TestResult(method, false, "An error occurred while compiling"));
+            }
+            //Look for restricted keywords
+            for (String str : task.getRestricted()) {
+                if (req.getCode().toLowerCase().contains(str.toLowerCase())) {
+                    String[] split = req.getCode().toLowerCase().split("\n");
+                    for (int lineNum = 0; lineNum < split.length; lineNum++) {
+                        String line = split[lineNum];
+                        int indexOf = line.indexOf(str.toLowerCase());
+                        if (indexOf != -1) {
+                            //The javascript gui expects line numbers to start from 1
+                            diagnostics.add(new CompilationError(lineNum + 1, indexOf + 1, req.getFile(),"You have attempted to use a restricted word: " + str));
+                            hasError = true;
+                        }
                     }
                 }
-
-                return new CompileResponse("", task.getTestableMethods(), junitOut, diagnostics);
             }
+            req.setCode(userCode);
+        }
+        if (hasError) {
+            return new CompileResponse("", testableMethods, junitOut, diagnostics);
         }
         try {
             //compileAndGet and run with junit
-            Class<?> clazz = compileTask(request.getFile(), userCode);
+            Class<?> clazz = compileAndGet(request.getFiles(), mainTask);
             JUnitCore junit = new JUnitCore();
             JUnitTestCollector listener = new JUnitTestCollector();
             junit.addListener(listener);
             junit.run(clazz);
             junitOut = listener.getResults();
         } catch (CompilerException error) {
+            //Store lines of non user code
+            HashMap<String,Integer> lineCount = new HashMap<>();
+            for (CompileRequest req : request.getFiles()) {
+                lineCount.put(req.getFile()+".java",tasks.tasks.get(req.getFile()+".java").getProcessedSource().split("\n").length);
+            }
             for (Diagnostic<? extends JavaFileObject> diagnostic : error.getErrors()) {
                 String msg = diagnostic.getMessage(Locale.getDefault());
                 Matcher matcher = MISSING_METHOD.matcher(msg);
                 if (matcher.matches()) {
-                    diagnostics.add(new CompilationError(1,0,String.format(METHOD_ERROR,matcher.group(1))));
+                    diagnostics.add(new CompilationError(1,0,diagnostic.getSource().getName(),String.format(METHOD_ERROR,matcher.group(1))));
                     continue;
                 }
+                String fname = diagnostic.getSource().getName().replaceAll("[\\\\/]",".");
+                fname = fname.substring(1);
                 //Remember, the line numbers are off by the size of the processed source.
-                diagnostics.add(new CompilationError(diagnostic.getLineNumber()-task.getProcessedSource().split("\n").length,diagnostic.getColumnNumber(),msg));
+                diagnostics.add(new CompilationError(diagnostic.getLineNumber()-lineCount.get(fname),diagnostic.getColumnNumber(),fname,msg));
 
             }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            //            diagnostics.add(new CompilationError(0,0,e.msg));
         }
 
-        return new CompileResponse( "", task.getTestableMethods(), junitOut, diagnostics);
+        return new CompileResponse( "", testableMethods, junitOut, diagnostics);
     }
 
     @Override
     public void compile(String name, String code, String origFileName) throws CompilerException {
         try {
-            compileAndGet(name,code,null);
+            compileAndGet(Collections.singletonList(new CompileRequest(code,name)),null);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -168,7 +181,7 @@ public class JavaCompiler extends LanguageCompiler{
     }
 
     @Override
-    public CompileResponse execute(TaskRequest request, Request webRequest) {
+    public CompileResponse execute(ProjectRequest request, Request webRequest) {
         int id = new Random().nextInt(50000);
         rmi.getLocal().put(id,request);
         try {

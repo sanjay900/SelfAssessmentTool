@@ -1,9 +1,10 @@
 package sat.compiler;
 
 import sat.compiler.java.java.CompilerException;
+import sat.webserver.CompileRequest;
 import sat.webserver.CompileResponse;
+import sat.webserver.ProjectRequest;
 import sat.webserver.TaskInfoResponse;
-import sat.webserver.TaskRequest;
 import spark.Request;
 
 import java.io.IOException;
@@ -19,7 +20,7 @@ public abstract class LanguageCompiler {
     private static Map<String,RemoteProcess> processMap = new HashMap<>();
     public abstract void compile(String name, String code, String origFileName) throws CompilerException;
     abstract public TaskInfoResponse getInfo(String request);
-    abstract public CompileResponse execute(TaskRequest request, Request webRequest);
+    abstract public CompileResponse execute(ProjectRequest request, Request webRequest);
     public String runProcess(Request webRequest, RemoteProcess process) throws TimeoutException{
         if (processMap.containsKey(webRequest.ip())) {
             processMap.get(webRequest.ip()).stop();
@@ -44,6 +45,7 @@ public abstract class LanguageCompiler {
         }
     }
     protected static final CompileResponse TIMEOUT = new CompileResponse("Error: timeout reached (2 seconds)", Collections.emptyList(), Collections.emptyList(), Collections.emptyList());;
+
 
 
 }

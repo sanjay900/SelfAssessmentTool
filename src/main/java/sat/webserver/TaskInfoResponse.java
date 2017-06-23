@@ -11,8 +11,11 @@ import lombok.Data;
 public class TaskInfoResponse {
     private String codeToDisplay;
     private String startingCode;
-    private String info;
+    private String fileName;
     private String name;
     private String mode;
     private String type;
+    public TaskInfoResponse(String message) {
+        this.codeToDisplay = message;
+    }
 }

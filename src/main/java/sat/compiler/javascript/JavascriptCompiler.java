@@ -9,9 +9,10 @@ import sat.compiler.java.java.CompilerException;
 import sat.compiler.java.remote.RemoteSecurityManager;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TaskNameInfo;
+import sat.webserver.CompileRequest;
 import sat.webserver.CompileResponse;
+import sat.webserver.ProjectRequest;
 import sat.webserver.TaskInfoResponse;
-import sat.webserver.TaskRequest;
 import spark.Request;
 
 import javax.script.ScriptEngine;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
 
 /**
  * Created by sanjay on 8/06/17.
@@ -113,14 +115,13 @@ public class JavascriptCompiler extends LanguageCompiler {
         processed = new StringBuilder(processed.toString().replaceAll("(toFill\\(\\{(?:.|\\s)*}\\);)", ""));
         //It might be possible to autoFill variables
         TaskInfo tinfo = new TaskInfo(codeToDisplay.toString(),codeToFill.toString(),
-                fullName,name, processed.toString(),info
-                ,"ace/mode/javascript","js",Collections.emptyList(), Arrays.asList(restricted),Collections.emptyList(),
-                Collections.emptyList(),Collections.emptyList(),Collections.emptyList(),Collections.emptyMap());
+                fullName,name, processed.toString(),"ace/mode/javascript","js",Collections.emptyList(), Arrays.asList(restricted),Collections.emptyList(),
+                Collections.emptyList(),Collections.emptyList(),Collections.emptyList(),Collections.emptyMap(),true);
         origFileName = origFileName.substring(origFileName.indexOf(File.separator)+1);
         tasks.put(origFileName.replace(File.separator,"."),tinfo);
         if (origFileName.contains(File.separator)) {
             LinkedTreeMap<String, Object> packMap = (LinkedTreeMap<String, Object>) SelfAssessmentTool.taskDirs;
-            String[] split = origFileName.split(File.separator);
+            String[] split = origFileName.split(Pattern.quote(File.separator));
             for (int i = 0; i < split.length-1; i++) {
                 String s = split[i];
                 packMap.putIfAbsent(s, new LinkedTreeMap<String, Object>());
@@ -138,23 +139,25 @@ public class JavascriptCompiler extends LanguageCompiler {
     }
 
     @Override
-    public CompileResponse execute(TaskRequest request, Request webRequest) {
+    public CompileResponse execute(ProjectRequest request, Request webRequest) {
         securityManager.setAllowAll(false);
         String console;
         try {
             console = runProcess(webRequest, new RemoteProcess() {
                 @Override
                 public String exec() throws IOException {
-                    TaskInfo info = tasks.get(request.getFile());
                     ScriptEngineManager manager = new ScriptEngineManager();
                     ScriptEngine engine = manager.getEngineByName("nashorn");
                     StringWriter sw=new StringWriter();
                     engine.getContext().setWriter(sw);
-                    try {
-                        engine.eval(request.getCode());
-                        engine.eval(info.getProcessedSource());
-                    } catch (ScriptException e) {
-                        e.printStackTrace();
+                    for (CompileRequest req : request.getFiles()) {
+                        TaskInfo info = tasks.get(req.getFile());
+                        try {
+                            engine.eval(req.getCode());
+                            engine.eval(info.getProcessedSource());
+                        } catch (ScriptException e) {
+                            e.printStackTrace();
+                        }
                     }
                     return sw.toString();
                 }

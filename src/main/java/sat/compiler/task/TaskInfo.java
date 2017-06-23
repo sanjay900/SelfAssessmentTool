@@ -13,13 +13,14 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 public class TaskInfo {
-    private String codeToDisplay,methodsToFill,fullName,name,processedSource,info,mode,type;
+    private String codeToDisplay,methodsToFill,fullName,name,processedSource,mode,type;
     private List<String> testableMethods,restricted,classes,enums,interfaces;
     private List<MethodInfo> methods;
     private Map<String,String> variables;
+    boolean isMain;
 
     public TaskInfoResponse getResponse() {
-        return new TaskInfoResponse(codeToDisplay, methodsToFill, info, fullName,mode,type);
+        return new TaskInfoResponse(codeToDisplay, methodsToFill, name+".java",fullName,mode,type);
     }
 
     @Data
