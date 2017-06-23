@@ -198,7 +198,7 @@ function loadFile(name) {
                 const code = results[result];
                 let fname = code.name +" ("+code.fileName.replace(name+".","")+")";
                 if (code.isMain) {
-                    fname = `<span class="glyphicon glyphicon-play"></span>`+fname;
+                    fname = `<span class="glyphicon glyphicon-play"></span> `+fname;
                 }
                 tabs.append(`<li><a onclick="loadIndex(${result})">${fname}</a></li>`);
             }
@@ -208,7 +208,7 @@ function loadFile(name) {
             tabs.css("visibility", "hidden")
             tabs.css("height", "0");
         }
-        loadContent(results,name,0);
+        loadIndex(0);
     });
 
     send();
