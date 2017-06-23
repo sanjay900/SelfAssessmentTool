@@ -175,6 +175,8 @@ function loadContent(results,i) {
     codeDisplay.setValue(results.codeToDisplay, -1);
     const editorDisplay = codeDisplay.getSession();
     editorDisplay.foldAll();
+    //Unfold the comments
+    editorDisplay.unfold(1);
 }
 function loadFile(name) {
     file = name;
@@ -194,8 +196,11 @@ function loadFile(name) {
             tabs.html("");
             for (const result in results) {
                 const code = results[result];
-                const fname = code.fileName.replace(name+".","");
-                tabs.append(`<li><a onclick="loadIndex(${result})">${code.name} (${fname})</a></li>`);
+                let fname = code.name +" ("+code.fileName.replace(name+".","")+")";
+                if (code.isMain) {
+                    fname = `<span class="glyphicon glyphicon-play"></span>`+fname;
+                }
+                tabs.append(`<li><a onclick="loadIndex(${result})">${fname}</a></li>`);
             }
             results = results[0];
         } else {
