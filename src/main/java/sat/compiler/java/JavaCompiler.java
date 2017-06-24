@@ -1,6 +1,7 @@
 package sat.compiler.java;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.eclipse.jetty.websocket.api.Session;
 import org.junit.runner.JUnitCore;
 import sat.compiler.LanguageCompiler;
 import sat.compiler.java.java.ClassFileManager;
@@ -12,20 +13,21 @@ import sat.compiler.java.remote.JavaProcess;
 import sat.compiler.java.remote.RemoteTaskInfoImpl;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TaskList;
-import sat.compiler.task.TestResult;
-import sat.webserver.CompileRequest;
-import sat.webserver.CompileResponse;
-import sat.webserver.ProjectRequest;
-import sat.webserver.TaskInfoResponse;
-import spark.Request;
+import sat.util.JSONUtils;
+import sat.webserver.*;
 
 import javax.tools.*;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,30 +88,27 @@ public class JavaCompiler extends LanguageCompiler{
      * @param request the request from the web server
      * @return the response to send to the client.
      */
-    public static CompileResponse compile(ProjectRequest request) {
+    public static void compile(ProjectRequest request, Consumer<Object> messageQueue) {
         TaskInfo task;
-        List<TestResult> junitOut = new ArrayList<>();
         List<CompilationError> diagnostics = new ArrayList<>();
-        if (request.getFiles().isEmpty()) return new CompileResponse("",Collections.emptyList(), junitOut,diagnostics);
+        if (request.getFiles().isEmpty()) {
+            messageQueue.accept(new ErrorResponse("No files were sent from the client!"));
+            return;
+        }
         String mainTask = null;
-        List<String> testableMethods = Collections.emptyList();
         boolean hasError = false;
         for (CompileRequest req : request.getFiles()) {
             task = tasks.tasks.get(req.getFile());
             req.setFile(stripJava(req.getFile()));
             if (task == null) {
-                return new CompileResponse(ERROR, Collections.emptyList(), junitOut, diagnostics);
+                messageQueue.accept(new ErrorResponse("Unable to find the requested task"));
+                return;
             }
             if (task.isMain() || mainTask == null) {
-                testableMethods = task.getTestableMethods();
                 mainTask = req.getFile();
             }
             //Combine the processed source code with the user code (adding a timeout rule in the process)
-            String userCode = task.getProcessedSource() + req.getCode() + "@Rule public Timeout globalTimeout = Timeout.seconds(" + timeout + "); }";
-            //Start all methods as failed, and correct if we compileAndGet successfully
-            for (String method : task.getTestableMethods()) {
-                junitOut.add(new TestResult(method, false, "An error occurred while compiling"));
-            }
+            String userCode = task.getProcessedSource() + req.getCode()+"}";
             //Look for restricted keywords
             for (String str : task.getRestricted()) {
                 if (req.getCode().toLowerCase().contains(str.toLowerCase())) {
@@ -128,16 +127,18 @@ public class JavaCompiler extends LanguageCompiler{
             req.setCode(userCode);
         }
         if (hasError) {
-            return new CompileResponse("", testableMethods, junitOut, diagnostics);
+            messageQueue.accept(new CompilationErrorResponse(diagnostics,true));
+            return;
         }
+
+        messageQueue.accept(new CompilationErrorResponse(Collections.emptyList(),false));
         try {
             //compileAndGet and run with junit
             Class<?> clazz = compileAndGet(request.getFiles(), mainTask);
             JUnitCore junit = new JUnitCore();
-            JUnitTestCollector listener = new JUnitTestCollector();
+            JUnitTestCollector listener = new JUnitTestCollector(messageQueue);
             junit.addListener(listener);
             junit.run(clazz);
-            junitOut = listener.getResults();
         } catch (CompilerException error) {
             //Store lines of non user code
             HashMap<String,Integer> lineCount = new HashMap<>();
@@ -157,12 +158,11 @@ public class JavaCompiler extends LanguageCompiler{
                 diagnostics.add(new CompilationError(diagnostic.getLineNumber()-lineCount.get(fname),diagnostic.getColumnNumber(),fname,msg));
 
             }
+            messageQueue.accept(new CompilationErrorResponse(diagnostics,true));
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-            //            diagnostics.add(new CompilationError(0,0,e.msg));
         }
 
-        return new CompileResponse( "", testableMethods, junitOut, diagnostics);
     }
 
     @Override
@@ -181,17 +181,38 @@ public class JavaCompiler extends LanguageCompiler{
     }
 
     @Override
-    public CompileResponse execute(ProjectRequest request, Request webRequest) {
+    public void execute(ProjectRequest request, Session webRequest) {
         int id = new Random().nextInt(50000);
         rmi.getLocal().put(id,request);
         try {
-            String stdout = runProcess(webRequest, new JavaProcess(CompilerProcess.class,id+""));
-            CompileResponse response = rmi.getRemote().get(id);
-            if (response == null) return null;
-            response.setConsole(StringEscapeUtils.escapeHtml4(stdout));
-            return response;
+            Thread t = new Thread(()->{
+               while (!Thread.interrupted()) {
+                   try {
+                       rmi.getRemote().putIfAbsent(id,new LinkedBlockingQueue<>());
+                       String message =  rmi.getRemote().get(id).take();
+                       webRequest.getRemote().sendString(message);
+                   } catch (InterruptedException e) {
+                       return;
+                   } catch (IOException e) {
+                       e.printStackTrace();
+                   }
+               }
+            });
+            t.start();
+            runProcess(webRequest, new JavaProcess(CompilerProcess.class, (str) -> {
+                try {
+                    webRequest.getRemote().sendString(str);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            },id+""));
+            t.interrupt();
         } catch (TimeoutException e) {
-            return TIMEOUT;
+            try {
+                webRequest.getRemote().sendString(JSONUtils.toJSON(new ErrorResponse("Your code reached the timeout of 5 minutes!")));
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
         }
     }
     private RemoteTaskInfoImpl rmi;
@@ -219,6 +240,5 @@ public class JavaCompiler extends LanguageCompiler{
     private static final String METHOD_ERROR = "You are missing the method %s!";
     private static final String ERROR = "An error occurred with the source for this file.\n"+
             "contact a lecturer as this is a problem with the tool not your code.";
-    private static final int timeout = 2;
 
 }

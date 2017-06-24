@@ -4,6 +4,15 @@
 
 const codeDisplay = ace.edit("code-output-display");
 const userInput = ace.edit("user-input-box");
+const proto = window.location.protocol.replace("http","").replace(":","");
+const socket = new ReconnectingWebSocket("ws" + proto + "://" + location.hostname + ":" + location.port + "/socket/");
+
+if (window.location.hash) {
+    socket.onopen = function() {
+        loadFile(window.location.hash.substr(1));
+        socket.onopen = function(){};
+    }
+}
 if (localStorage.config_invert) {
     invert();
 }
@@ -14,13 +23,21 @@ userInput.setOptions({
     enableSnippets: true,
     enableLiveAutocompletion: true
 });
+const cinput = $('#console-input')
+cinput.on('keydown', function(e) {
+    if (e.which === 13) {
+        e.preventDefault();
+        socket.send(JSON.stringify({id:"console_input",message:cinput.val()}));
+        cinput.val("");
+    }
+});
 userInput.setWrapBehavioursEnabled(false);
 codeDisplay.setWrapBehavioursEnabled(false);
 const autocompleter = {
     getCompletions: function(editor, session, pos, prefix, callback) {
         if (file === null) return;
         let files = [];
-        if (multi) {
+        if (multi.length > 0) {
             for (const file in multi) {
                 const fname = multi[file].fileName;
                 files.push({file:fname,code:localStorage[fname]});
@@ -49,6 +66,10 @@ userInput.getSession().on('change', function() {
 let startingCode = "";
 function send() {
     if (file === null) return;
+    if (userInput.getValue().length === 0) {
+        userInput.setValue(startingCode,-1);
+        return;
+    }
     let files = [];
     if (multi) {
         for (const file in multi) {
@@ -58,37 +79,44 @@ function send() {
     } else {
         files.push({file:orig,code:userInput.getValue()});
     }
-    $.post("/testCode",JSON.stringify({files:files,project:multi?orig:null}),respond);
+    socket.send(JSON.stringify({files:files,project:multi?orig:null,id:"project"}));
 }
-const respond = function(data) {
+const cbox = $("#console-output-screen");
+socket.onmessage = function(data) {
     if (data === "cancel") return;
-    let results = JSON.parse(data);
-    if (userInput.getValue().length === 0) {
-        userInput.setValue(startingCode,-1);
-    }
+    let results = JSON.parse(data.data);
     const Range = ace.require("ace/range").Range;
     const editor = userInput.getSession();
     const editorDisplay = codeDisplay.getSession();
-
     editorDisplay.clearAnnotations();
-    editor.clearAnnotations();
-    _.each(editor.$backMarkers,(val,key)=>editor.removeMarker(key));
-    const lines = {};
-    for (const i in results.errors) {
-        const error = results.errors[i];
-        if (error.line === 0) error.line = 1;
-        if (lines[error.line]) {
-            lines[error.line]+="\n"+error.error;
-        } else {
-            lines[error.line] = error.error;
-        }
-        editor.addMarker(new Range(error.line-1, error.col-1, error.line-1, error.col), "ace_underline");
-    }
     let anno = [];
-    for (const i in lines) {
-        anno.push({row: i-1, column: 0, text: lines[i], type: "error"});
+    if (results.id === "stacktrace") {
+        reset();
+        console.log(results.errors);
+        editor.clearAnnotations();
+        _.each(editor.$backMarkers,(val,key)=>editor.removeMarker(key));
+        const lines = {};
+        for (const i in results.errors) {
+            const error = results.errors[i];
+            if (error.line === 0) error.line = 1;
+            if (lines[error.line]) {
+                lines[error.line]+="\n"+error.error;
+            } else {
+                lines[error.line] = error.error;
+            }
+            editor.addMarker(new Range(error.line-1, error.col-1, error.line-1, error.col), "ace_underline");
+        }
+        for (const i in lines) {
+            anno.push({row: i-1, column: 0, text: lines[i], type: "error"});
+        }
+        editor.setAnnotations(anno);
     }
-    editor.setAnnotations(anno);
+    if (results.id === "console") {
+        if (results.clear) {
+            cbox.html("");
+        }
+        $("#console-output-screen").append(newLineToBr(results.text));
+    }
     anno = [];
     for (const i in results.junitResults) {
         const res = results.junitResults[i];
@@ -104,7 +132,6 @@ const respond = function(data) {
             anno.push({row: range.start.row, column: 0, text: res.message, type: res.passed ? "info" : "error"});
         }
     }
-    $("#console-output-screen").html(newLineToBr(results.console));
     editorDisplay.setAnnotations(anno);
 };
 function newLineToBr(str) {
@@ -155,10 +182,11 @@ let multi = null;
 function loadIndex(idx) {
     loadContent(multi[idx],idx);
 }
+let reset = function() {};
 function loadContent(results,i) {
     const tabs = $("#tabs");
     file = results.fileName;
-    if (multi !== null) {
+    if (multi.length > 1) {
         tabs.children().removeClass("active");
         $(tabs.children()[i]).addClass("active");
     } else {
@@ -177,6 +205,29 @@ function loadContent(results,i) {
     editorDisplay.foldAll();
     //Unfold the comments
     editorDisplay.unfold(1);
+    reset = function() {
+        let anno = [];
+        for (const i in results.testableMethods) {
+            const res = results.testableMethods[i];
+            const range = codeDisplay.find(res.name + "(", {
+                wrap: true,
+                caseSensitive: true,
+                wholeWord: true,
+                regExp: false,
+                preventScroll: true // do not change selection
+            });
+            if (range) {
+                anno.push({
+                    row: range.start.row,
+                    column: 0,
+                    text: "Code has not been successfully compiled!",
+                    type: "error"
+                });
+            }
+        }
+        editorDisplay.setAnnotations(anno);
+    };
+    reset();
 }
 function loadFile(name) {
     file = name;
@@ -192,7 +243,7 @@ function loadFile(name) {
             $("#asstitle").text("Current Project: " + rname.replace("_project",""));
             tabs.css("visibility","visible");
             tabs.css("height","");
-            multi =  results;
+            multi = results;
             tabs.html("");
             for (const result in results) {
                 const code = results[result];
@@ -202,22 +253,14 @@ function loadFile(name) {
                 }
                 tabs.append(`<li><a onclick="loadIndex(${result})">${fname}</a></li>`);
             }
-            results = results[0];
         } else {
-            multi = null;
+            multi = [results];
             tabs.css("visibility", "hidden")
             tabs.css("height", "0");
         }
         loadIndex(0);
+        send();
     });
-
-    send();
-}
-if (window.location.hash) {
-    //Give ace time to initilize
-    window.setTimeout(function() {
-        loadFile(window.location.hash.substr(1));
-    },100);
 }
 function invert() {
     const body = $("body");

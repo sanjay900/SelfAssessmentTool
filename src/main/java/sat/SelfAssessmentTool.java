@@ -6,7 +6,6 @@ import org.apache.commons.io.FilenameUtils;
 import sat.compiler.LanguageCompiler;
 import sat.compiler.java.JavaCompiler;
 import sat.compiler.java.java.CompilerException;
-import sat.compiler.javascript.JavascriptCompiler;
 import sat.compiler.task.Project;
 import sat.gui.TrayManager;
 import sat.webserver.WebServer;
@@ -36,7 +35,6 @@ public class SelfAssessmentTool {
     private SelfAssessmentTool() {
         JavaCompiler jc = new JavaCompiler();
         compilerMap.put("java",jc);
-        compilerMap.put("js",new JavascriptCompiler());
         System.out.println("Compiling tasks");
         try {
             //Could we find folders that end with .project and then convert that into a multiple class project?

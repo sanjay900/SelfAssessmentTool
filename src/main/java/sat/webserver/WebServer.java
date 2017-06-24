@@ -17,8 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.fusesource.jansi.Ansi.ansi;
-import static spark.Spark.get;
-import static spark.Spark.post;
+import static spark.Spark.*;
 
 
 public class WebServer {
@@ -29,17 +28,8 @@ public class WebServer {
         if (checkPortInUse()) return;
         Spark.staticFileLocation("site");
         Spark.port(port);
+        webSocket("/socket", WebsocketServer.class);
         get("/listTasks", (req, res) -> JSONUtils.toJSON(SelfAssessmentTool.taskDirs));
-        post("/testCode", (Request req, Response res) -> {
-            ProjectRequest request = JSONUtils.fromJSON(req.body(),ProjectRequest.class);
-            String ext = FilenameUtils.getExtension(request.getFiles().get(0).file);
-            if (!SelfAssessmentTool.getCompilerMap().containsKey(ext)) {
-                return "cancel";
-            }
-            CompileResponse response = SelfAssessmentTool.getCompilerMap().get(ext).execute(request,req);
-            if (response == null) return "cancel";
-            return JSONUtils.toJSON(response);
-        });
         post("/getTask", (Request req, Response res) -> {
             String name = FilenameUtils.getBaseName(req.body());
             String ext = FilenameUtils.getExtension(req.body());
@@ -59,11 +49,11 @@ public class WebServer {
                 return JSONUtils.toJSON(responseList);
             }
             if (!SelfAssessmentTool.getCompilerMap().containsKey(ext)) {
-                return JSONUtils.toJSON(new TaskInfoResponse("Unrecognised Extension"));
+                return JSONUtils.toJSON(new ErrorResponse("Unrecognised Extension"));
             }
             TaskInfoResponse info = SelfAssessmentTool.getCompilerMap().get(ext).getInfo(name+"."+ext);
             if (info == null)  {
-                return JSONUtils.toJSON(new TaskInfoResponse("Unable to find requested file"));
+                return JSONUtils.toJSON(new ErrorResponse("Unable to find requested file"));
             }
             return JSONUtils.toJSON(info);
         });
