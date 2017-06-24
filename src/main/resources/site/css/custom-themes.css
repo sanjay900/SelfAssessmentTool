@@ -16,6 +16,29 @@ html,body {
     background-color: #1f1e1e !important;
     color: #dcdcdc;
 }
+.invert .nav {
+    background-color: #222222 !important;
+}
+
+.invert .nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover {
+    background-color: #222222 !important;
+    color: #9d9d9d;
+}
+.invert .nav-tabs>li>a, .nav-tabs>li>a:focus, .nav-tabs>li>a:hover {
+    background-color: #222222 !important;
+    color: #9d9d9d;
+}
+.invert input {
+    background-color: #1D1F21;
+    border: 1px solid black;
+    border-top: transparent
+}
+.invert .nav>li>a {
+    color: #9d9d9d;
+}
+.invert .nav-tabs {
+    border-bottom: 1px solid #9d9d9d;
+}
 /*
  * Global add-ons
  */

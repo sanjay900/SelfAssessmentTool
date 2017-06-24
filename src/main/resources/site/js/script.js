@@ -91,12 +91,12 @@ socket.onmessage = function(data) {
     let anno = [];
     if (results.id === "stacktrace") {
         reset();
-        console.log(results.errors);
         editor.clearAnnotations();
         _.each(editor.$backMarkers,(val,key)=>editor.removeMarker(key));
         const lines = {};
         for (const i in results.errors) {
             const error = results.errors[i];
+            if (file !== error.file) continue;
             if (error.line === 0) error.line = 1;
             if (lines[error.line]) {
                 lines[error.line]+="\n"+error.error;
@@ -178,6 +178,7 @@ $.get( "listTasks", function( data ) {
 let file = null;
 let orig;
 let multi = null;
+let multiTabs = null;
 function loadIndex(idx) {
     loadContent(multi[idx],idx);
 }
