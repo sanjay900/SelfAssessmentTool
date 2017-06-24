@@ -13,7 +13,7 @@ if (window.location.hash) {
         socket.onopen = function(){};
     }
 }
-if (localStorage.config_invert) {
+if (localStorage.config_invert === "true") {
     invert();
 }
 codeDisplay.setReadOnly(true);
@@ -274,7 +274,7 @@ function invert() {
     const body = $("body");
     body.toggleClass("invert");
     const inverted = body.hasClass("invert");
-    const theme = "ace/theme/"+(inverted?"vibrant_ink":"clouds");
+    const theme = "ace/theme/"+(inverted?"vibrant_ink":"crimson_editor");
     userInput.setTheme(theme);
     codeDisplay.setTheme(theme);
     localStorage.setItem("config_invert",inverted);
