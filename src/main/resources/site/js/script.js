@@ -96,8 +96,8 @@ socket.onmessage = function(data) {
         const lines = {};
         for (const i in results.errors) {
             const error = results.errors[i];
-            if (multiTabs[error.file].html().indexOf(" (error compiling)") === -1) {
-                multiTabs[error.file].html(multiTabs[error.file].html()+" (error compiling)");
+            if (multiTabs[error.file].html().indexOf(" (Compilation Error)") === -1) {
+                multiTabs[error.file].html(multiTabs[error.file].html()+" (Compilation Error)");
             }
             if (file !== error.file) continue;
             if (error.line === 0) error.line = 1;
@@ -230,7 +230,7 @@ function loadContent(results,i) {
         }
         editorDisplay.setAnnotations(anno);
         for (const tab in multiTabs) {
-            multiTabs[tab].html(multiTabs[tab].html().replace(` (error compiling)`,""))
+            multiTabs[tab].html(multiTabs[tab].html().replace(` (Compilation Error)`,""))
         }
     };
     reset();
