@@ -63,13 +63,12 @@ userInput.getSession().on('change', function() {
         send();
     }
 });
+function resetText() {
+    userInput.setValue(startingCode,-1);
+}
 let startingCode = "";
 function send() {
     if (file === null) return;
-    if (userInput.getValue().length === 0) {
-        userInput.setValue(startingCode,-1);
-        return;
-    }
     let files = [];
     if (multi) {
         for (const file in multi) {

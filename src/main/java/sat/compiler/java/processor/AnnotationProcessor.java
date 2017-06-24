@@ -14,6 +14,7 @@ import sat.compiler.java.annotations.Hidden;
 import sat.compiler.java.annotations.Task;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TaskNameInfo;
+import sat.util.InputUtils;
 import sat.util.PrintUtils;
 
 import javax.annotation.processing.*;
@@ -202,6 +203,7 @@ public class AnnotationProcessor extends AbstractProcessor {
         }
         String endClass = packageStmt+flatten(path.getCompilationUnit().getImports()) +
                 "import static "+PrintUtils.class.getName()+".*;" +
+                "import static "+InputUtils.class.getName()+".*;" +
                 "import java.util.*;" +
                 "import java.util.stream.*;" +
                 "import java.util.function.*;" +
