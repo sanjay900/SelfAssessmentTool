@@ -96,6 +96,9 @@ socket.onmessage = function(data) {
         const lines = {};
         for (const i in results.errors) {
             const error = results.errors[i];
+            if (multiTabs[error.file].html().indexOf(" (error compiling)") === -1) {
+                multiTabs[error.file].html(multiTabs[error.file].html()+" (error compiling)");
+            }
             if (file !== error.file) continue;
             if (error.line === 0) error.line = 1;
             if (lines[error.line]) {
@@ -178,7 +181,7 @@ $.get( "listTasks", function( data ) {
 let file = null;
 let orig;
 let multi = null;
-let multiTabs = null;
+let multiTabs = {};
 function loadIndex(idx) {
     loadContent(multi[idx],idx);
 }
@@ -226,6 +229,9 @@ function loadContent(results,i) {
             }
         }
         editorDisplay.setAnnotations(anno);
+        for (const tab in multiTabs) {
+            multiTabs[tab].html(multiTabs[tab].html().replace(` (error compiling)`,""))
+        }
     };
     reset();
 }
@@ -252,10 +258,12 @@ function loadFile(name) {
                     fname = `<span class="glyphicon glyphicon-play"></span> `+fname;
                 }
                 tabs.append(`<li><a onclick="loadIndex(${result})">${fname}</a></li>`);
+                multiTabs[code.fileName] = $($(tabs.children()[result]).children()[0]);
+
             }
         } else {
             multi = [results];
-            tabs.css("visibility", "hidden")
+            tabs.css("visibility", "hidden");
             tabs.css("height", "0");
         }
         loadIndex(0);
