@@ -87,7 +87,6 @@ socket.onmessage = function(data) {
     const Range = ace.require("ace/range").Range;
     const editor = userInput.getSession();
     const editorDisplay = codeDisplay.getSession();
-    editorDisplay.clearAnnotations();
     let anno = [];
     if (results.id === "stacktrace") {
         reset();
@@ -119,22 +118,21 @@ socket.onmessage = function(data) {
         }
         $("#console-output-screen").append(newLineToBr(results.text));
     }
-    anno = [];
-    for (const i in results.junitResults) {
-        const res = results.junitResults[i];
-        const range = codeDisplay.find(res.name+"(",{
+    if (results.id === "test") {
+        const range = codeDisplay.find(results.name+"(",{
             wrap: true,
             caseSensitive: true,
             wholeWord: true,
             regExp: false,
             preventScroll: true // do not change selection
         });
-        if (res.passed) res.message = "Passed!";
+        if (results.passed) results.message = "Passed!";
+        let anno = editorDisplay.getAnnotations();
         if (range) {
-            anno.push({row: range.start.row, column: 0, text: res.message, type: res.passed ? "info" : "error"});
+            anno.push({row: range.start.row, column: 0, text: results.message, type: results.passed ? "info" : "error"});
         }
+        editorDisplay.setAnnotations(anno);
     }
-    editorDisplay.setAnnotations(anno);
 };
 function newLineToBr(str) {
     return str.replace(/(?:\r\n|\r|\n)/g, '<br />');
@@ -205,9 +203,6 @@ function loadContent(results,i) {
     startingCode = results.startingCode;
     codeDisplay.setValue(results.codeToDisplay, -1);
     const editorDisplay = codeDisplay.getSession();
-    editorDisplay.foldAll();
-    //Unfold the comments
-    editorDisplay.unfold(1);
     reset = function() {
         let anno = [];
         for (const i in results.testableMethods) {
@@ -234,6 +229,11 @@ function loadContent(results,i) {
         }
     };
     reset();
+    setTimeout(function() {
+        editorDisplay.foldAll();
+        //Unfold the comments
+        editorDisplay.unfold(1);
+    },50);
 }
 function loadFile(name) {
     file = name;
