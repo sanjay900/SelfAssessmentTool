@@ -4,15 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-
-
+/**
+ * Created by Sanjay on 24/06/2017.
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TaskRequest implements Serializable {
-    String code;
-    String file;
-    int line;
-    int col;
+public class Request {
+    String id;
 }

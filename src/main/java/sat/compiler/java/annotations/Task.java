@@ -41,4 +41,10 @@ public @interface Task {
      * @return Array of <code>String</code>s representing what sequences of characters are prohibited in the solution.
      */
     String[] restricted() default {};
+
+    /**
+     * Is this task the main task in a project?
+     * @return true if main, false otherwise.
+     */
+    boolean isMain() default false;
 }

@@ -4,6 +4,15 @@
 
 const codeDisplay = ace.edit("code-output-display");
 const userInput = ace.edit("user-input-box");
+const proto = window.location.protocol.replace("http","").replace(":","");
+const socket = new ReconnectingWebSocket("ws" + proto + "://" + location.hostname + ":" + location.port + "/socket/");
+
+if (window.location.hash) {
+    socket.onopen = function() {
+        loadFile(window.location.hash.substr(1));
+        socket.onopen = function(){};
+    }
+}
 if (localStorage.config_invert) {
     invert();
 }
@@ -14,12 +23,29 @@ userInput.setOptions({
     enableSnippets: true,
     enableLiveAutocompletion: true
 });
+const cinput = $('#console-input')
+cinput.on('keydown', function(e) {
+    if (e.which === 13) {
+        e.preventDefault();
+        socket.send(JSON.stringify({id:"console_input",message:cinput.val()}));
+        cinput.val("");
+    }
+});
 userInput.setWrapBehavioursEnabled(false);
 codeDisplay.setWrapBehavioursEnabled(false);
 const autocompleter = {
     getCompletions: function(editor, session, pos, prefix, callback) {
         if (file === null) return;
-        $.post("/autocomplete",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
+        let files = [];
+        if (multi.length > 0) {
+            for (const file in multi) {
+                const fname = multi[file].fileName;
+                files.push({file:fname,code:localStorage[fname]});
+            }
+        } else {
+            files.push({file:orig,code:userInput.getValue()});
+        }
+        $.post("/autocomplete",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column,files: files}),function(data) {
             callback(null, JSON.parse(data));
         });
     }
@@ -37,21 +63,35 @@ userInput.getSession().on('change', function() {
         send();
     }
 });
+function resetText() {
+    userInput.setValue(startingCode,-1);
+}
 let startingCode = "";
 function send() {
     if (file === null) return;
-    const pos = userInput.getCursorPosition();
-    $.post("/testCode",JSON.stringify({file:file,code:userInput.getValue(),line: pos.row, col: pos.column}),function(data) {
-        if (data === "cancel") return;
-        let results = JSON.parse(data);
-        if (userInput.getValue().length === 0) {
-            userInput.setValue(startingCode,-1);
+    let files = [];
+    if (multi) {
+        for (const file in multi) {
+            const fname = multi[file].fileName;
+            files.push({file:fname,code:localStorage[fname]});
         }
-        const Range = ace.require("ace/range").Range;
-        const editor = userInput.getSession();
-        const editorDisplay = codeDisplay.getSession();
-
-        editorDisplay.clearAnnotations();
+    } else {
+        files.push({file:orig,code:userInput.getValue()});
+    }
+    socket.send(JSON.stringify({files:files,project:multi?orig:null,id:"project"}));
+}
+const cbox = $("#console-output-screen");
+socket.onmessage = function(data) {
+    if (data === "cancel") return;
+    let results = JSON.parse(data.data);
+    const Range = ace.require("ace/range").Range;
+    const editor = userInput.getSession();
+    const editorDisplay = codeDisplay.getSession();
+    editorDisplay.clearAnnotations();
+    let anno = [];
+    if (results.id === "stacktrace") {
+        reset();
+        console.log(results.errors);
         editor.clearAnnotations();
         _.each(editor.$backMarkers,(val,key)=>editor.removeMarker(key));
         const lines = {};
@@ -65,30 +105,34 @@ function send() {
             }
             editor.addMarker(new Range(error.line-1, error.col-1, error.line-1, error.col), "ace_underline");
         }
-        let anno = [];
         for (const i in lines) {
             anno.push({row: i-1, column: 0, text: lines[i], type: "error"});
         }
         editor.setAnnotations(anno);
-        anno = [];
-        for (const i in results.junitResults) {
-            const res = results.junitResults[i];
-            const range = codeDisplay.find(res.name+"(",{
-                wrap: true,
-                caseSensitive: true,
-                wholeWord: true,
-                regExp: false,
-                preventScroll: true // do not change selection
-            });
-            if (res.passed) res.message = "Passed!";
-            if (range) {
-                anno.push({row: range.start.row, column: 0, text: res.message, type: res.passed ? "info" : "error"});
-            }
+    }
+    if (results.id === "console") {
+        if (results.clear) {
+            cbox.html("");
         }
-        $("#console-output-screen").html(newLineToBr(results.console));
-        editorDisplay.setAnnotations(anno);
-    });
-}
+        $("#console-output-screen").append(newLineToBr(results.text));
+    }
+    anno = [];
+    for (const i in results.junitResults) {
+        const res = results.junitResults[i];
+        const range = codeDisplay.find(res.name+"(",{
+            wrap: true,
+            caseSensitive: true,
+            wholeWord: true,
+            regExp: false,
+            preventScroll: true // do not change selection
+        });
+        if (res.passed) res.message = "Passed!";
+        if (range) {
+            anno.push({row: range.start.row, column: 0, text: res.message, type: res.passed ? "info" : "error"});
+        }
+    }
+    editorDisplay.setAnnotations(anno);
+};
 function newLineToBr(str) {
     return str.replace(/(?:\r\n|\r|\n)/g, '<br />');
 }
@@ -110,7 +154,6 @@ function loop(data) {
     if (Object.keys(data).length > 0 && Object.keys(ordered).length > 0) {
         html += `<li class="divider"></li>`;
     }
-
     for (const i in ordered) {
         html += addTask(ordered[i], i);
     }
@@ -118,10 +161,12 @@ function loop(data) {
 }
 
 function addTask(data, name) {
-    if (data.fullName) {
+    if (data.project) {
+        return `<li><a href="#${data.name}" onclick="loadFile('${data.name}')">${name}</a></li>`;
+    } else if (data.fullName) {
         return `<li><a href="#${data.name}" onclick="loadFile('${data.name}')">${data.fullName}</a></li>`;
     } else {
-        let str = `<li class="dropdown-submenu"><a tabindex="-1" href="${name}/">${name}</a><ul class="dropdown-menu">`;
+        let str = `<li class="dropdown-submenu"><a tabindex="-1" href="" onclick="return false;">${name}</a><ul class="dropdown-menu">`;
         str += loop(data);
         str += `</ul></li>`;
         return str;
@@ -131,32 +176,90 @@ $.get( "listTasks", function( data ) {
     addTasks(JSON.parse(data));
 });
 let file = null;
+let orig;
+let multi = null;
+function loadIndex(idx) {
+    loadContent(multi[idx],idx);
+}
+let reset = function() {};
+function loadContent(results,i) {
+    const tabs = $("#tabs");
+    file = results.fileName;
+    if (multi.length > 1) {
+        tabs.children().removeClass("active");
+        $(tabs.children()[i]).addClass("active");
+    } else {
+        $("#asstitle").text("Current Task: " + results.name);
+    }
+    if (localStorage.getItem(file)) {
+        userInput.setValue(localStorage.getItem(file));
+    } else {
+        userInput.setValue(results.startingCode, -1);
+    }
+    codeDisplay.getSession().setMode("ace/mode/java");
+    userInput.getSession().setMode("ace/mode/java");
+    startingCode = results.startingCode;
+    codeDisplay.setValue(results.codeToDisplay, -1);
+    const editorDisplay = codeDisplay.getSession();
+    editorDisplay.foldAll();
+    //Unfold the comments
+    editorDisplay.unfold(1);
+    reset = function() {
+        let anno = [];
+        for (const i in results.testableMethods) {
+            const res = results.testableMethods[i];
+            const range = codeDisplay.find(res.name + "(", {
+                wrap: true,
+                caseSensitive: true,
+                wholeWord: true,
+                regExp: false,
+                preventScroll: true // do not change selection
+            });
+            if (range) {
+                anno.push({
+                    row: range.start.row,
+                    column: 0,
+                    text: "Code has not been successfully compiled!",
+                    type: "error"
+                });
+            }
+        }
+        editorDisplay.setAnnotations(anno);
+    };
+    reset();
+}
 function loadFile(name) {
     file = name;
+    orig = name;
     $.post("/getTask",file,function(data) {
         let results = JSON.parse(data);
-        $("#asstitle").text("Current Task: " + results.name);
-        if (localStorage.getItem(name)) {
-            userInput.setValue(localStorage.getItem(name));
+        const tabs = $("#tabs");
+        if (results.constructor === Array) {
+            let rname = name;
+            if (name.indexOf(".") !== -1) {
+                rname = name.substring(name.lastIndexOf(".")+1);
+            }
+            $("#asstitle").text("Current Project: " + rname.replace("_project",""));
+            tabs.css("visibility","visible");
+            tabs.css("height","");
+            multi = results;
+            tabs.html("");
+            for (const result in results) {
+                const code = results[result];
+                let fname = code.name +" ("+code.fileName.replace(name+".","")+")";
+                if (code.isMain) {
+                    fname = `<span class="glyphicon glyphicon-play"></span> `+fname;
+                }
+                tabs.append(`<li><a onclick="loadIndex(${result})">${fname}</a></li>`);
+            }
         } else {
-            userInput.setValue(results.startingCode,-1);
+            multi = [results];
+            tabs.css("visibility", "hidden")
+            tabs.css("height", "0");
         }
-        codeDisplay.getSession().setMode("ace/mode/java");
-        userInput.getSession().setMode("ace/mode/java");
-        $("#task-instructions-display").html(results.info.replace(/\n\s*\n/g,"<br><br>"));
-        startingCode = results.startingCode;
-        codeDisplay.setValue(results.codeToDisplay, -1);
-        const editorDisplay = codeDisplay.getSession();
-        editorDisplay.foldAll();
+        loadIndex(0);
+        send();
     });
-
-    send();
-}
-if (window.location.hash) {
-    //Give ace time to initilize
-    window.setTimeout(function() {
-        loadFile(window.location.hash.substr(1));
-    },100);
 }
 function invert() {
     const body = $("body");

@@ -7,7 +7,8 @@ import org.apache.commons.lang3.ClassUtils;
 import sat.compiler.java.JavaCompiler;
 import sat.compiler.task.TaskInfo;
 import sat.util.PrintUtils;
-import sat.webserver.TaskRequest;
+import sat.webserver.AutocompleteRequest;
+import sat.webserver.CompileRequest;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,10 +25,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * A basic autocompleter that accepts a TaskRequest then uses it to form a list of auto completions.
+ * A basic autocompleter that accepts a AutocompleteRequest then uses it to form a list of auto completions.
  */
 public class Autocompleter {
-    public static List<AutoCompletion> getCompletions(TaskRequest request) {
+    public static List<AutoCompletion> getCompletions(AutocompleteRequest request) {
         TaskInfo task;
         try {
             task = JavaCompiler.tasks.tasks.get(request.getFile());
@@ -84,10 +85,46 @@ public class Autocompleter {
                     completions.add(new AutoCompletion(var,var,"variable"));
                 }
             }
+            String name = request.getFile();
+            if (name.contains("_project")) {
+                name = name.substring(0,name.indexOf("_project")+"_project".length());
+                String lineToCol = curLine.substring(0,request.getCol());
+                Matcher newMatcher = NEW_DECLARATION.matcher(lineToCol);
+                String newToMatch = null;
+                while (newMatcher.find()) {
+                    newToMatch = newMatcher.group(1);
+                }
+                if (newToMatch == null) newToMatch = types.getMatchedClass();
+                if (newToMatch != null) {
+                    name = name+"."+newToMatch+".java";
+                    TaskInfo info = JavaCompiler.tasks.tasks.get(name);
+                    if (info != null) {
+                        for (TaskInfo.MethodInfo method : info.getMethods()) {
+                            completions.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",method.getDecl()));
+                        }
+                    }
+
+                    for (CompileRequest req: request.getFiles()) {
+                        if (req.getFile().equals(name)) {
+                            Matcher methodMatcher = METHOD_DECLARATION.matcher(req.getCode());
+                            while (methodMatcher.find()) {
+                                String method = methodMatcher.group(2);
+                                String args = methodMatcher.group(3);
+                                //don't match modifiers (public, private..)
+                                if (Arrays.toString(javax.lang.model.element.Modifier.values()).contains(method.toLowerCase())) {
+                                    continue;
+                                }
+                                completions.add(new AutoCompletion(method, method+"(","method",method+args));
+                            }
+                        }
+                    }
+                }
+            }
             if (types.lastStatement.endsWith(".")) {
                 completions.sort(AutoCompletion::compareTo);
                 return completions;
             }
+
 
         }
         if (request.getCode() != null) {
@@ -121,6 +158,17 @@ public class Autocompleter {
         for (String clazz : task.getClasses()) {
             completions.add(new AutoCompletion(clazz, clazz, "class"));
         }
+        String name = request.getFile();
+        if (name.contains("_project")) {
+            name = name.substring(0, name.indexOf("_project") + "_project".length());
+            for (CompileRequest req: request.getFiles()) {
+                if (req.getFile().startsWith(name)) {
+                    String clazz = req.getFile().substring(name.length()+1);
+                    clazz = clazz.substring(0,clazz.length()-".java".length());
+                    completions.add(new AutoCompletion(clazz, clazz, "class"));
+                }
+            }
+        }
         for (String iface : task.getInterfaces()) {
             completions.add(new AutoCompletion(iface, iface, "interface"));
         }
@@ -138,22 +186,10 @@ public class Autocompleter {
     private static class ClassType {
         String prefix;
         String lastStatement;
+        String matchedClass;
         List<Class<?>> classes;
     }
-
-    public static void main(String[] args) {
-            Stream<Integer> ints = Stream.of(1,2,3,4,5,6,7);
-            List<Integer> toList = ints.reduce(new ArrayList<Integer>(),(list, num) -> {
-                list.add(num);
-                return list;
-            },(list1,list2)->{
-                list1.addAll(list2);
-                return list1;
-            });
-
-
-    }
-    private static List<Class<?>> getClassFor(String beforeDot, String userCode, String req, boolean exact, TaskInfo task) {
+    private static ClassType getClassFor(String beforeDot, String userCode, String req, boolean exact, TaskInfo task) {
         List<Class<?>> classes = new ArrayList<>();
         for (Map.Entry<String,String> field : task.getVariables().entrySet()) {
             if (field.getKey().equals(beforeDot)) {
@@ -193,12 +229,13 @@ public class Autocompleter {
         //Reset the search since we called find once.
         search.reset();
         if (search.find()) {
+            String clazz = search.group(1);
             classes.addAll(findClasses(search.group(1), true)) ;
-            return classes;
+            return new ClassType("","",clazz,classes);
         }
         //If nothing was matched above, attempt to match the word as if it was a class.
         classes.addAll(findClasses(beforeDot, exact)) ;
-        return classes;
+        return new ClassType("","",null,classes);
     }
     /**
      * Find the prefix (Class name or function) and Classes for a variable in str at index
@@ -233,7 +270,7 @@ public class Autocompleter {
                             method = lastMethod.substring(0, lastMethod.indexOf("."));
                             lastMethod = lastMethod.substring(lastMethod.indexOf("."));
                         }
-                        types.put(depth,getClassFor(method, userCode, request, true,task));
+                        types.put(depth,getClassFor(method, userCode, request, true,task).classes);
                     }
                     List<Class<?>> newList = new ArrayList<>();
                     for (Class<?> type : types.get(depth)) {
@@ -259,20 +296,24 @@ public class Autocompleter {
         }
         String lastMethodParsed = lastMethods.getOrDefault(depth,curWord.toString());
         List<Class<?>> lastTypeParsed;
+        String lastTypeFound = null;
         if (!lastMethodParsed.startsWith(".")) {
+            ClassType t;
             if (lastMethodParsed.contains(".")) {
                 lastMethodParsed = lastMethodParsed.substring(0,lastMethodParsed.indexOf("."));
-                lastTypeParsed = getClassFor(lastMethodParsed,userCode,request,true,task);
+                t = getClassFor(lastMethodParsed,userCode,request,true,task);
             } else {
-                lastTypeParsed = getClassFor(lastMethodParsed,userCode,request,false,task);
+                t = getClassFor(lastMethodParsed,userCode,request,false,task);
             }
+            lastTypeParsed = t.classes;
+            lastTypeFound = t.matchedClass;
         } else {
             lastTypeParsed = types.get(depth);
         }
         lastMethodParsed = curWord.toString();
         if (lastMethodParsed.contains("."))
             lastMethodParsed = lastMethodParsed.substring(lastMethodParsed.indexOf(".")+1);
-        return new ClassType(lastMethodParsed, lastStatement.toString(),lastTypeParsed);
+        return new ClassType(lastMethodParsed, lastStatement.toString(),lastTypeFound,lastTypeParsed);
     }
     /**
      * Find a class by name using guava
@@ -306,8 +347,9 @@ public class Autocompleter {
     private static final Pattern SINGLE_STREAM_PARAM = Pattern.compile("(\\w+)\\s*->");
     private static final Pattern MULTI_STREAM_PARAM = Pattern.compile("((?:\\w+\\s*,\\s*)+\\s*\\w+)\\s*->");
     private static final String TYPE_DECLARATION = "((?:[a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*)\\s";
+    private static final Pattern NEW_DECLARATION = Pattern.compile("new\\s+((?:[a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$<>?][a-zA-Z\\d_$<>?]*)");
     private static final Pattern VAR_DECLARATION = Pattern.compile(TYPE_DECLARATION +"(\\w[A-z\\d_]+)[ ),;]");
-    private static final Pattern METHOD_DECLARATION = Pattern.compile(TYPE_DECLARATION +"(.+)(\\(.+\\))");
+    private static final Pattern METHOD_DECLARATION = Pattern.compile(TYPE_DECLARATION +"([a-zA-Z_$]+)(\\(.*\\))");
     private static final List<AutoCompletion> keywords = Stream.of("while","new","do","for","return","super","static",
             "synchronized","transient","this", "throws","try","catch","volatile","case","default",
             "instanceof","implements","if","else","extends")
