@@ -2,14 +2,9 @@ package sat.compiler;
 
 import sat.util.JSONUtils;
 import sat.webserver.ConsoleUpdateResponse;
-import spark.utils.IOUtils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * Created by sanjay on 8/06/17.
@@ -32,9 +27,13 @@ public abstract class RemoteProcess {
         builder.redirectErrorStream();
         process = builder.start();
         stream = new PrintStream(process.getOutputStream());
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        while (process.isAlive() || reader.ready()) {
-            print.accept(JSONUtils.toJSON(new ConsoleUpdateResponse(reader.lines().collect(Collectors.joining("\n"))+"\n",false)));
+        InputStream reader = process.getInputStream();
+        while (process.isAlive()) {
+            if (reader.available() > 0) {
+                byte[] b = new byte[reader.available()];
+                reader.read(b);
+                print.accept(JSONUtils.toJSON(new ConsoleUpdateResponse(new String(b), false)));
+            }
         }
     }
     public void inputString(String str) {
