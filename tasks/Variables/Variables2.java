@@ -1,7 +1,7 @@
 package Variables;
 
 import org.junit.Test;
-import sat.compiler.annotations.Task;
+import sat.compiler.java.annotations.Task;
 
 /**
  * Created by Arbiter on 14-Jun-17.
