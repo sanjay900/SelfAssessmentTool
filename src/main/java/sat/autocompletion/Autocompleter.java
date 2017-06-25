@@ -6,6 +6,7 @@ import lombok.Data;
 import org.apache.commons.lang3.ClassUtils;
 import sat.compiler.java.JavaCompiler;
 import sat.compiler.task.TaskInfo;
+import sat.util.InputUtils;
 import sat.util.PrintUtils;
 import sat.webserver.AutocompleteRequest;
 import sat.webserver.CompileRequest;
@@ -72,7 +73,6 @@ public class Autocompleter {
                     }
                 }
             }
-
             Matcher varMatcher = MULTI_STREAM_PARAM.matcher(types.lastStatement);
             if (!varMatcher.find()) {
                 varMatcher = SINGLE_STREAM_PARAM.matcher(types.lastStatement);
@@ -191,6 +191,7 @@ public class Autocompleter {
     }
     private static ClassType getClassFor(String beforeDot, String userCode, String req, boolean exact, TaskInfo task) {
         List<Class<?>> classes = new ArrayList<>();
+
         for (Map.Entry<String,String> field : task.getVariables().entrySet()) {
             if (field.getKey().equals(beforeDot)) {
                 String name = field.getValue();
@@ -217,6 +218,11 @@ public class Autocompleter {
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
+            }
+        }
+        for (Method method: InputUtils.class.getDeclaredMethods()) {
+            if (Modifier.isStatic(method.getModifiers())) {
+                classes.add(method.getReturnType());
             }
         }
         //Remove brackets as they break the pattern
@@ -371,6 +377,20 @@ public class Autocompleter {
             e.printStackTrace();
         }
 
+        for (Method method: InputUtils.class.getMethods()) {
+            if (Modifier.isStatic(method.getModifiers())) {
+                StringBuilder params = new StringBuilder();
+                for (Parameter parameter : method.getParameters()) {
+                    params.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
+                }
+                String param = params.toString();
+                if (params.length() > 0) {
+                    param = params.substring(0,param.length()-1);
+                }
+                String m = method.getName()+"("+param+")";
+                printUtilMethods.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",m));
+            }
+        }
         for (Method method: PrintUtils.class.getMethods()) {
             if (Modifier.isStatic(method.getModifiers())) {
                 StringBuilder params = new StringBuilder();

@@ -44,8 +44,8 @@
           </ul>
         </li>
         <li><a href="#" data-toggle="button" onclick="send(); return false;"> <span class="glyphicon glyphicon-play"></span> Compile</a></li>
-        <li><a href="#" data-toggle="button" onclick="resetText(); return false;"> <span class="glyphicon glyphicon-remove"></span> Reset Entered Text</a></li>
         <li><a href="#" data-toggle="button" onclick="return false;" id="asstitle"> Current Task: None</a></li>
+        <li><a href="#" data-toggle="button" onclick="return false;"> Process Status: <span id="status"></span></a></li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li><a href="#" data-toggle="button" onclick="invert()"><span class="glyphicon glyphicon-lamp"></span></a></li>
@@ -61,12 +61,13 @@
       <div id="code-output-display"></div>
     </div>
     <div class="row-type">
-      <h6><span class="heading-left">Enter your text:</span><span class="heading-right">Console:</span></h6>
+      <h6><span class="heading-left">Enter your text:<button style="float:right" onclick="resetText(); return false;"> <span class="glyphicon glyphicon-remove"></span> Reset Entered Text</button></span>
+        <span class="heading-right">Console:</span></h6>
       <div id="user-input-box"></div>
       <div id="join">
         <div id="console-output-screen" style="overflow-y: scroll"></div>
-        <input id="console-input" style="width:40%"/></div>
-    </div>
+      </div>
+      <input type="text" id="console-input" style="width:40%"/></div>
   </div>
 </div>
 

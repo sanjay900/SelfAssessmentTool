@@ -101,6 +101,8 @@ public class JavaCompiler extends LanguageCompiler{
             task = tasks.tasks.get(req.getFile());
             req.setFile(stripJava(req.getFile()));
             if (task == null) {
+                //TODO: instead of just responding that the class is missing, add in some imports and a class declearation.
+                //TODO: this this could easily handle non tasks, and we could add a button to the gui for adding classes.
                 messageQueue.accept(new ErrorResponse("Unable to find the requested task"));
                 return;
             }

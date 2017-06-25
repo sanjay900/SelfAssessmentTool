@@ -13,7 +13,7 @@ if (window.location.hash) {
         socket.onopen = function(){};
     }
 }
-if (localStorage.config_invert) {
+if (localStorage.config_invert === "true") {
     invert();
 }
 codeDisplay.setReadOnly(true);
@@ -87,16 +87,18 @@ socket.onmessage = function(data) {
     const Range = ace.require("ace/range").Range;
     const editor = userInput.getSession();
     const editorDisplay = codeDisplay.getSession();
-    editorDisplay.clearAnnotations();
     let anno = [];
     if (results.id === "stacktrace") {
         reset();
-        console.log(results.errors);
         editor.clearAnnotations();
         _.each(editor.$backMarkers,(val,key)=>editor.removeMarker(key));
         const lines = {};
         for (const i in results.errors) {
             const error = results.errors[i];
+            if (multiTabs[error.file].html().indexOf(" (Compilation Error)") === -1) {
+                multiTabs[error.file].html(multiTabs[error.file].html()+" (Compilation Error)");
+            }
+            if (file !== error.file) continue;
             if (error.line === 0) error.line = 1;
             if (lines[error.line]) {
                 lines[error.line]+="\n"+error.error;
@@ -116,22 +118,24 @@ socket.onmessage = function(data) {
         }
         $("#console-output-screen").append(newLineToBr(results.text));
     }
-    anno = [];
-    for (const i in results.junitResults) {
-        const res = results.junitResults[i];
-        const range = codeDisplay.find(res.name+"(",{
+    if (results.id === "status") {
+        $("#status").html(results.running?"Running":"Stopped");
+    }
+    if (results.id === "test") {
+        const range = codeDisplay.find(results.name+"(",{
             wrap: true,
             caseSensitive: true,
             wholeWord: true,
             regExp: false,
             preventScroll: true // do not change selection
         });
-        if (res.passed) res.message = "Passed!";
+        if (results.passed) results.message = "Passed!";
+        let anno = editorDisplay.getAnnotations();
         if (range) {
-            anno.push({row: range.start.row, column: 0, text: res.message, type: res.passed ? "info" : "error"});
+            anno.push({row: range.start.row, column: 0, text: results.message, type: results.passed ? "info" : "error"});
         }
+        editorDisplay.setAnnotations(anno);
     }
-    editorDisplay.setAnnotations(anno);
 };
 function newLineToBr(str) {
     return str.replace(/(?:\r\n|\r|\n)/g, '<br />');
@@ -178,6 +182,7 @@ $.get( "listTasks", function( data ) {
 let file = null;
 let orig;
 let multi = null;
+let multiTabs = {};
 function loadIndex(idx) {
     loadContent(multi[idx],idx);
 }
@@ -201,9 +206,6 @@ function loadContent(results,i) {
     startingCode = results.startingCode;
     codeDisplay.setValue(results.codeToDisplay, -1);
     const editorDisplay = codeDisplay.getSession();
-    editorDisplay.foldAll();
-    //Unfold the comments
-    editorDisplay.unfold(1);
     reset = function() {
         let anno = [];
         for (const i in results.testableMethods) {
@@ -225,8 +227,16 @@ function loadContent(results,i) {
             }
         }
         editorDisplay.setAnnotations(anno);
+        for (const tab in multiTabs) {
+            multiTabs[tab].html(multiTabs[tab].html().replace(` (Compilation Error)`,""))
+        }
     };
     reset();
+    setTimeout(function() {
+        editorDisplay.foldAll();
+        //Unfold the comments
+        editorDisplay.unfold(1);
+    },50);
 }
 function loadFile(name) {
     file = name;
@@ -251,10 +261,12 @@ function loadFile(name) {
                     fname = `<span class="glyphicon glyphicon-play"></span> `+fname;
                 }
                 tabs.append(`<li><a onclick="loadIndex(${result})">${fname}</a></li>`);
+                multiTabs[code.fileName] = $($(tabs.children()[result]).children()[0]);
+
             }
         } else {
             multi = [results];
-            tabs.css("visibility", "hidden")
+            tabs.css("visibility", "hidden");
             tabs.css("height", "0");
         }
         loadIndex(0);
@@ -265,7 +277,7 @@ function invert() {
     const body = $("body");
     body.toggleClass("invert");
     const inverted = body.hasClass("invert");
-    const theme = "ace/theme/"+(inverted?"vibrant_ink":"clouds");
+    const theme = "ace/theme/"+(inverted?"vibrant_ink":"crimson_editor");
     userInput.setTheme(theme);
     codeDisplay.setTheme(theme);
     localStorage.setItem("config_invert",inverted);

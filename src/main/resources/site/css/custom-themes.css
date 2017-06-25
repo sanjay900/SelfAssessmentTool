@@ -16,6 +16,38 @@ html,body {
     background-color: #1f1e1e !important;
     color: #dcdcdc;
 }
+.invert .nav {
+    background-color: #222222 !important;
+}
+
+.invert .nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover {
+    background-color: #1f1e1e !important;
+    color: #9d9d9d;
+    border: 1px solid #0F0F0F;
+    border-bottom-color: transparent;
+}
+.invert .nav-tabs>li>a, .nav-tabs>li>a:focus, .nav-tabs>li>a:hover {
+    background-color: #222222 !important;
+    color: #9d9d9d;
+    border-bottom-color: black;
+
+}
+.invert button {
+    background-color: #0F0F0F;
+    border: 1px solid black;
+    border-top: transparent
+}
+.invert input {
+    background-color: #0F0F0F;
+    border: 1px solid black;
+    border-top: transparent
+}
+.invert .nav>li>a {
+    color: #9d9d9d;
+}
+.invert .nav-tabs {
+    border-bottom: 1px solid #0F0F0F;
+}
 /*
  * Global add-ons
  */
@@ -133,7 +165,7 @@ html,body {
     background: #1D1F21 !important;
 }
 .invert #console-output-screen {
-    background: #1D1F21 !important;
+    background: #0F0F0F !important;
 }
 #user-input-box {
      position: relative;
