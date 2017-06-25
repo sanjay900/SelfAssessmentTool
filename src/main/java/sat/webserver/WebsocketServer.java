@@ -41,13 +41,15 @@ public class WebsocketServer {
                     ProjectRequest request = JSONUtils.fromJSON(message,ProjectRequest.class);
                     String ext = FilenameUtils.getExtension(request.getFiles().get(0).file);
                     if (!SelfAssessmentTool.getCompilerMap().containsKey(ext)) {
-                        try {
-                            user.getRemote().sendString("cancel");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        return;
                     }
-                    SelfAssessmentTool.getCompilerMap().get(ext).execute(request,user);
+                    try {
+                        user.getRemote().sendString(JSONUtils.toJSON(new StatusResponse(true)));
+                        SelfAssessmentTool.getCompilerMap().get(ext).execute(request,user);
+                        user.getRemote().sendString(JSONUtils.toJSON(new StatusResponse(false)));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "console_input":
                     if (!processMap.containsKey(user)) return;

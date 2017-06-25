@@ -118,6 +118,9 @@ socket.onmessage = function(data) {
         }
         $("#console-output-screen").append(newLineToBr(results.text));
     }
+    if (results.id === "status") {
+        $("#status").html(results.running?"Running":"Stopped");
+    }
     if (results.id === "test") {
         const range = codeDisplay.find(results.name+"(",{
             wrap: true,

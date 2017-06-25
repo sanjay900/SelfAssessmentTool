@@ -32,6 +32,11 @@ html,body {
     border-bottom-color: black;
 
 }
+.invert button {
+    background-color: #0F0F0F;
+    border: 1px solid black;
+    border-top: transparent
+}
 .invert input {
     background-color: #0F0F0F;
     border: 1px solid black;
