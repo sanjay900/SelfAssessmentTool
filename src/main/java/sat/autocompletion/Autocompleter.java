@@ -149,7 +149,7 @@ public class Autocompleter {
             }
         }
         for (String variable : task.getVariables().keySet()) {
-           completions.add(new AutoCompletion(variable, variable, "field"));
+            completions.add(new AutoCompletion(variable, variable, "field"));
         }
         for (TaskInfo.MethodInfo method : task.getMethods()) {
             completions.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",method.getDecl()));
@@ -220,11 +220,11 @@ public class Autocompleter {
                 }
             }
         }
-            for (Method method : InputUtils.class.getDeclaredMethods()) {
-                if (Modifier.isStatic(method.getModifiers()) && method.getName().equalsIgnoreCase(beforeDot)) {
-                    classes.add(method.getReturnType());
-                }
+        for (Method method : InputUtils.class.getDeclaredMethods()) {
+            if (Modifier.isStatic(method.getModifiers()) && method.getName().equalsIgnoreCase(beforeDot)) {
+                classes.add(method.getReturnType());
             }
+        }
 
         //Remove brackets as they break the pattern
         beforeDot = beforeDot.replaceAll("[({})]","");
