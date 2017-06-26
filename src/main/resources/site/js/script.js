@@ -88,14 +88,14 @@ socket.onmessage = function(data) {
     const editor = userInput.getSession();
     const editorDisplay = codeDisplay.getSession();
     let anno = [];
-    if (results.id === "stacktrace") {
-        reset();
+    if (results.id === "stacktrace" && results.errors.length > 0) {
+        showCompilationErrors();
         editor.clearAnnotations();
         _.each(editor.$backMarkers,(val,key)=>editor.removeMarker(key));
         const lines = {};
         for (const i in results.errors) {
             const error = results.errors[i];
-            if (multiTabs[error.file].html().indexOf(" (Compilation Error)") === -1) {
+            if (multiTabs && multiTabs[error.file].html().indexOf(" (Compilation Error)") === -1) {
                 multiTabs[error.file].html(multiTabs[error.file].html()+" (Compilation Error)");
             }
             if (file !== error.file) continue;
@@ -119,6 +119,10 @@ socket.onmessage = function(data) {
         $("#console-output-screen").append(newLineToBr(results.text));
     }
     if (results.id === "status") {
+        if (results.running) {
+            editor.clearAnnotations();
+            editorDisplay.clearAnnotations();
+        }
         $("#status").html(results.running?"Running":"Stopped");
     }
     if (results.id === "test") {
@@ -186,7 +190,7 @@ let multiTabs = {};
 function loadIndex(idx) {
     loadContent(multi[idx],idx);
 }
-let reset = function() {};
+let showCompilationErrors = function() {};
 function loadContent(results,i) {
     const tabs = $("#tabs");
     file = results.fileName;
@@ -206,11 +210,11 @@ function loadContent(results,i) {
     startingCode = results.startingCode;
     codeDisplay.setValue(results.codeToDisplay, -1);
     const editorDisplay = codeDisplay.getSession();
-    reset = function() {
+    showCompilationErrors = function() {
         let anno = [];
         for (const i in results.testableMethods) {
             const res = results.testableMethods[i];
-            const range = codeDisplay.find(res.name + "(", {
+            const range = codeDisplay.find(res + "(", {
                 wrap: true,
                 caseSensitive: true,
                 wholeWord: true,
@@ -231,7 +235,7 @@ function loadContent(results,i) {
             multiTabs[tab].html(multiTabs[tab].html().replace(` (Compilation Error)`,""))
         }
     };
-    reset();
+    showCompilationErrors();
     setTimeout(function() {
         editorDisplay.foldAll();
         //Unfold the comments
@@ -261,11 +265,12 @@ function loadFile(name) {
                     fname = `<span class="glyphicon glyphicon-play"></span> `+fname;
                 }
                 tabs.append(`<li><a onclick="loadIndex(${result})">${fname}</a></li>`);
-                multiTabs[code.fileName] = $($(tabs.children()[result]).children()[0]);
+                multiTabs[code.fileName0] = $($(tabs.children()[result]).children()[0]);
 
             }
         } else {
             multi = [results];
+            multiTabs = null;
             tabs.css("visibility", "hidden");
             tabs.css("height", "0");
         }
