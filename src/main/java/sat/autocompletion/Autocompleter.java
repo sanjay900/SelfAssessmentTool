@@ -220,11 +220,12 @@ public class Autocompleter {
                 }
             }
         }
-        for (Method method: InputUtils.class.getDeclaredMethods()) {
-            if (Modifier.isStatic(method.getModifiers())) {
-                classes.add(method.getReturnType());
+            for (Method method : InputUtils.class.getDeclaredMethods()) {
+                if (Modifier.isStatic(method.getModifiers()) && method.getName().equalsIgnoreCase(beforeDot)) {
+                    classes.add(method.getReturnType());
+                }
             }
-        }
+
         //Remove brackets as they break the pattern
         beforeDot = beforeDot.replaceAll("[({})]","");
         //Search for something looking like the declaration for that variable

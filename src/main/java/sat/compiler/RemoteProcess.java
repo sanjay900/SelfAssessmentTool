@@ -28,12 +28,16 @@ public abstract class RemoteProcess {
         process = builder.start();
         stream = new PrintStream(process.getOutputStream());
         InputStream reader = process.getInputStream();
-        while (process.isAlive()) {
-            if (reader.available() > 0) {
-                byte[] b = new byte[reader.available()];
-                reader.read(b);
-                print.accept(JSONUtils.toJSON(new ConsoleUpdateResponse(new String(b), false)));
+        try {
+            while (process.isAlive()) {
+                if (reader.available() > 0) {
+                    byte[] b = new byte[reader.available()];
+                    reader.read(b);
+                    print.accept(JSONUtils.toJSON(new ConsoleUpdateResponse(new String(b), false)));
+                }
             }
+        } catch (IOException ignored) {
+
         }
     }
     public void inputString(String str) {
