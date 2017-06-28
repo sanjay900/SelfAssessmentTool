@@ -6,7 +6,68 @@ const codeDisplay = ace.edit("code-output-display");
 const userInput = ace.edit("user-input-box");
 const proto = window.location.protocol.replace("http","").replace(":","");
 const socket = new ReconnectingWebSocket("ws" + proto + "://" + location.hostname + ":" + location.port + "/socket/");
-
+let dialog,form,allFields,name,className;
+$(function () {
+    name = $( "#name" ),
+        className = $( "#className" ),
+        allFields = $( [] ).add( name ).add( className );
+    dialog = $("#dialog-form").dialog({
+        autoOpen: false,
+        height: 400,
+        width: 350,
+        modal: true,
+        buttons: {
+            "Add class": addClass,
+            Cancel: function () {
+                dialog.dialog("close");
+            }
+        },
+        close: function () {
+            form[0].reset();
+            allFields.removeClass("ui-state-error");
+        }
+    });
+    form = dialog.find( "form" ).on( "submit", function( event ) {
+        event.preventDefault();
+        addClass();
+    });
+});
+let customFiles = {};
+if (localStorage.customFiles) {
+    customFiles = JSON.parse(localStorage.customFiles);
+}
+function addClass() {
+    let valid = true;
+    allFields.removeClass( "ui-state-error" );
+    valid = valid && name.val().length > 0;
+    if (!valid) name.addClass( "ui-state-error" );
+    valid = valid && className.val().length > 0 && className.val().indexOf(" ") === -1;
+    if (!valid) className.addClass( "ui-state-error" );
+    if (valid) {
+        const tabs = $("#tabs");
+        const result = multi.length;
+        let fileName = className.val();
+        if (!fileName.endsWith(".java")) fileName+=".java";
+        let fname = name.val() +" ("+fileName.replace(name+".","")+")";
+        fileName = orig+"."+className.val();
+        if (!fileName.endsWith(".java")) fileName+=".java";
+        tabs.append(`<li><a onclick="loadIndex(${result})">${fname}<button type="button" onclick="removeIndex(${result}); return false" style="color:red" class="close" aria-label="Close">
+  <span aria-hidden="true">&nbsp;&times;</span>
+</button></a></li>`);
+        multiTabs[fileName] = $($(tabs.children()[result]).children()[0]);
+        const addClass = $('#add-class');
+        addClass.parent().append(addClass);
+        if (!customFiles[orig]) {
+            customFiles[orig] = [];
+        }
+        const code = {fileName: fileName, name: name.val(), codeToDisplay:"//Custom file", startingCode:"",mode:multi[0].mode,type:multi[0].type};
+        customFiles[orig].push(code);
+        multi.push(code);
+        localStorage.customFiles = JSON.stringify(customFiles);
+        dialog.dialog( "close" );
+    }
+    send();
+}
 if (window.location.hash) {
     socket.onopen = function() {
         loadFile(window.location.hash.substr(1));
@@ -124,11 +185,11 @@ socket.onmessage = function(data) {
     let anno = [];
     if (results.id === "stacktrace" && results.errors.length > 0) {
         showCompilationErrors();
-        editor.clearAnnotations();
-        _.each(editor.$backMarkers,(val,key)=>editor.removeMarker(key));
         const lines = {};
         for (const i in results.errors) {
             const error = results.errors[i];
+            console.log(error);
+            console.log(multiTabs);
             if (multiTabs && multiTabs[error.file].html().indexOf(" (Compilation Error)") === -1) {
                 multiTabs[error.file].html(multiTabs[error.file].html()+" (Compilation Error)");
             }
@@ -155,7 +216,6 @@ socket.onmessage = function(data) {
             main.remove();
             return;
         }
-        console.log(element);
         if (document.getElementById(id)) {
             let hasMax = true;
             main.css("background-color",element.color+"");
@@ -245,6 +305,7 @@ socket.onmessage = function(data) {
             gui.html("");
             editor.clearAnnotations();
             editorDisplay.clearAnnotations();
+            _.each(editor.$backMarkers,(val,key)=>editor.removeMarker(key));
         }
         $("#status").html(results.running?"Running":"Stopped");
     }
@@ -310,6 +371,13 @@ let file = null;
 let orig;
 let multi = null;
 let multiTabs = {};
+function removeIndex(idx) {
+   multiTabs[multi[idx].fileName].remove();
+    customFiles[orig].splice(customFiles[orig].indexOf(multi[idx]));
+    multi.splice(idx,1);
+    localStorage.customFiles = JSON.stringify(customFiles);
+   loadIndex(0);
+}
 function loadIndex(idx) {
     loadContent(multi[idx],idx);
 }
@@ -381,16 +449,31 @@ function loadFile(name) {
             tabs.css("height","");
             multi = results;
             tabs.html("");
-            for (const result in results) {
+            let result;
+            for (result in results) {
                 const code = results[result];
                 let fname = code.name +" ("+code.fileName.replace(name+".","")+")";
                 if (code.isMain) {
                     fname = `<span class="glyphicon glyphicon-play"></span> `+fname;
                 }
                 tabs.append(`<li><a onclick="loadIndex(${result})">${fname}</a></li>`);
-                multiTabs[code.fileName0] = $($(tabs.children()[result]).children()[0]);
-
+                multiTabs[code.fileName] = $($(tabs.children()[result]).children()[0]);
             }
+            if (customFiles[rname]) {
+                result++;
+                const results2= customFiles[rname];
+                for (const res2 in results2) {
+                    const code = results2[res2];
+                    let fname = code.name +" ("+code.fileName.replace(name+".","")+")";
+                    tabs.append(`<li><a onclick="loadIndex(${result})">${fname}<button type="button" onclick="removeIndex(${result}); return false" style="color:red" class="close" aria-label="Close">
+  <span aria-hidden="true">&nbsp;&times;</span>
+</button></a></li>`);
+                    multiTabs[code.fileName] = $($(tabs.children()[result++]).children()[0]);
+                    multi.push(code);
+                    console.log(multi);
+                }
+            }
+            tabs.append(`<li id="add-class"><a onclick="dialog.dialog('open');"><span class="glyphicon glyphicon-plus"></span></a></li>`);
         } else {
             multi = [results];
             multiTabs = null;

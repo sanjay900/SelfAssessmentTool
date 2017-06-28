@@ -15,6 +15,8 @@
 
   <link href="css/custom-themes.css" rel="stylesheet" />
 
+  <link href="js/jquery-ui-1.12.1/jquery-ui.min.css" rel="stylesheet" />
+
   <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
   <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
   <!--[if lt IE 9]>
@@ -23,6 +25,22 @@
   <![endif]-->
 </head>
 <body>
+<div id="dialog-form" title="Add class">
+  <p class="validateTips">All form fields are required.</p>
+
+  <form>
+    <fieldset>
+      <label for="className">Class Name</label>
+      <input type="text" name="name" id="className" value="" class="text ui-widget-content ui-corner-all">
+      <br/ >
+      <label for="name">Name</label>
+      <input type="text" name="name" id="name" value="" class="text ui-widget-content ui-corner-all">
+
+      <!-- Allow form submission with keyboard without duplicating the dialog button -->
+      <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+    </fieldset>
+  </form>
+</div>
 <nav class="navbar navbar-inverse navbar-fixed-top">
   <div class="container-fluid">
     <div class="navbar-header">
@@ -81,6 +99,7 @@
 <script src="js/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="js/src-min-noconflict/ext-language_tools.js"></script>
 <script src="js/lodash.min.js"></script>
-<Script src="js/script.js"></Script>
+<script src="js/script.js"></script>
+<script src="js/jquery-ui-1.12.1/jquery-ui.min.js"></script>
 </body>
 </html>

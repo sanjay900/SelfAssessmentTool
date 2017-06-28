@@ -32,6 +32,14 @@ html,body {
     border-bottom-color: black;
 
 }
+.invert .ui-widget-header {
+    background-color: #4d4c4c !important;
+    color: #9d9d9d;
+}
+.invert .ui-widget-content {
+    background-color: #313030 !important;
+    color: #9d9d9d;
+}
 .invert .nav-tabs>li>a:hover {
     background-color: #3f3e3e !important;
     border: 1px solid #0F0F0F;

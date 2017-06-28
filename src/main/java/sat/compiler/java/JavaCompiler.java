@@ -3,6 +3,7 @@ package sat.compiler.java;
 import org.eclipse.jetty.websocket.api.Session;
 import org.junit.runner.JUnitCore;
 import sat.compiler.LanguageCompiler;
+import sat.compiler.java.gui.UIElement;
 import sat.compiler.java.java.ClassFileManager;
 import sat.compiler.java.java.CompilationError;
 import sat.compiler.java.java.CompilerException;
@@ -12,16 +13,21 @@ import sat.compiler.java.remote.JavaProcess;
 import sat.compiler.java.remote.RemoteTaskInfoImpl;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TaskList;
+import sat.util.InputUtils;
 import sat.util.JSONUtils;
+import sat.util.PrintUtils;
+import sat.util.Utils;
 import sat.webserver.*;
 
 import javax.tools.*;
+import java.awt.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -94,14 +100,36 @@ public class JavaCompiler extends LanguageCompiler{
         }
         String mainTask = null;
         boolean hasError = false;
+        //Store lines of non user code
+        HashMap<String,Integer> lineCount = new HashMap<>();
         for (CompileRequest req : request.getFiles()) {
             task = tasks.tasks.get(req.getFile());
             req.setFile(stripJava(req.getFile()));
             if (task == null) {
-                //TODO: instead of just responding that the class is missing, add in some imports and a class declearation.
-                //TODO: this this could easily handle non tasks, and we could add a button to the gui for adding classes.
-                messageQueue.accept(new ErrorResponse("Unable to find the requested task"));
-                return;
+                String packageName = "";
+                String className = req.getFile();
+                if (req.getFile().contains(".")) {
+                    packageName = req.getFile();
+                    className = packageName.substring(packageName.lastIndexOf(".")+1);
+                    packageName = "package "+packageName.substring(0, packageName.lastIndexOf("."))+";";
+                }
+                String userCode =  packageName +
+                        "import static "+PrintUtils.class.getName()+".*;" +
+                        "import static "+InputUtils.class.getName()+".*;" +
+                        "import static "+Utils.class.getName()+".*;" +
+                        "import "+UIElement.class.getPackage().getName()+".*;" +
+                        "import "+ Color.class.getName()+";" +
+                        "import java.time.*;" +
+                        "import java.util.*;" +
+                        "import java.util.stream.*;" +
+                        "import java.util.function.*;" +
+                        "import org.junit.Rule;"+
+                        "import org.junit.rules.Timeout;"+
+                        "public class "+className+" {";
+                lineCount.put(req.getFile()+".java",userCode.split("\n").length+1);
+                userCode+=req.getCode()+"}";
+                req.setCode(userCode);
+                continue;
             }
             if (task.isMain() || mainTask == null) {
                 mainTask = req.getFile();
@@ -139,10 +167,10 @@ public class JavaCompiler extends LanguageCompiler{
             junit.addListener(listener);
             junit.run(clazz);
         } catch (CompilerException error) {
-            //Store lines of non user code
-            HashMap<String,Integer> lineCount = new HashMap<>();
             for (CompileRequest req : request.getFiles()) {
-                lineCount.put(req.getFile()+".java",tasks.tasks.get(req.getFile()+".java").getProcessedSource().split("\n").length);
+                if (tasks.tasks.get(req.getFile()+".java") != null) {
+                    lineCount.put(req.getFile()+".java",tasks.tasks.get(req.getFile()+".java").getProcessedSource().split("\n").length);
+                }
             }
             for (Diagnostic<? extends JavaFileObject> diagnostic : error.getErrors()) {
                 String msg = diagnostic.getMessage(Locale.getDefault());
