@@ -41,8 +41,10 @@ public class Autocompleter {
             ex.printStackTrace();
             return Collections.emptyList();
         }
-        if (task == null) return Collections.emptyList();
-        String userCode = task.getProcessedSource() + request.getCode() +"}";
+        String userCode = request.getCode();
+        if (task != null) {
+            userCode = task.getProcessedSource() + request.getCode() + "}";
+        }
         List<AutoCompletion> completions = new ArrayList<>();
         if (request.getCode() != null && request.getCol() != 0) {
             String curLine = request.getCode().split("\n")[request.getLine()];
@@ -152,16 +154,18 @@ public class Autocompleter {
                 completions.add(new AutoCompletion(method, method+"(","method",method+args));
             }
         }
-        for (String variable : task.getVariables().keySet()) {
-            completions.add(new AutoCompletion(variable, variable, "field"));
+        if (task != null) {
+            for (String variable : task.getVariables().keySet()) {
+                completions.add(new AutoCompletion(variable, variable, "field"));
+            }
+            for (TaskInfo.MethodInfo method : task.getMethods()) {
+                completions.add(new AutoCompletion(method.getName(), method.getName() + "(", "method", method.getDecl()));
+            }
+            for (String clazz : task.getClasses()) {
+                completions.add(new AutoCompletion(clazz, clazz, "class"));
+            }
         }
-        for (TaskInfo.MethodInfo method : task.getMethods()) {
-            completions.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",method.getDecl()));
-        }
-        completions.addAll(printUtilMethods);
-        for (String clazz : task.getClasses()) {
-            completions.add(new AutoCompletion(clazz, clazz, "class"));
-        }
+        completions.addAll(utilMethods);
         String name = request.getFile();
         if (name.contains("_project")) {
             name = name.substring(0, name.indexOf("_project") + "_project".length());
@@ -173,11 +177,13 @@ public class Autocompleter {
                 }
             }
         }
-        for (String iface : task.getInterfaces()) {
-            completions.add(new AutoCompletion(iface, iface, "interface"));
-        }
-        for (String enu : task.getEnums()) {
-            completions.add(new AutoCompletion(enu, enu, "enum"));
+        if (task != null) {
+            for (String iface : task.getInterfaces()) {
+                completions.add(new AutoCompletion(iface, iface, "interface"));
+            }
+            for (String enu : task.getEnums()) {
+                completions.add(new AutoCompletion(enu, enu, "enum"));
+            }
         }
         completions.addAll(keywords);
         completions.addAll(primitives);
@@ -195,32 +201,33 @@ public class Autocompleter {
     }
     private static ClassType getClassFor(String beforeDot, String userCode, String req, boolean exact, TaskInfo task) {
         List<Class<?>> classes = new ArrayList<>();
-
-        for (Map.Entry<String,String> field : task.getVariables().entrySet()) {
-            if (field.getKey().equals(beforeDot)) {
-                String name = field.getValue();
-                //Strip away generics, we cant search for them.
-                if (name.contains("<")) {
-                    name = name.substring(0,name.indexOf("<"));
-                }
-                try {
-                    classes.add(ClassUtils.getClass(name));
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
+        if (task != null) {
+            for (Map.Entry<String, String> field : task.getVariables().entrySet()) {
+                if (field.getKey().equals(beforeDot)) {
+                    String name = field.getValue();
+                    //Strip away generics, we cant search for them.
+                    if (name.contains("<")) {
+                        name = name.substring(0, name.indexOf("<"));
+                    }
+                    try {
+                        classes.add(ClassUtils.getClass(name));
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
-        }
-        for (TaskInfo.MethodInfo info : task.getMethods()) {
-            if (info.getName().equals(beforeDot)) {
-                String name = info.getRet();
-                //Strip away generics, we cant search for them.
-                if (name.contains("<")) {
-                    name = name.substring(0,name.indexOf("<"));
-                }
-                try {
-                    classes.add(ClassUtils.getClass(name));
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
+            for (TaskInfo.MethodInfo info : task.getMethods()) {
+                if (info.getName().equals(beforeDot)) {
+                    String name = info.getRet();
+                    //Strip away generics, we cant search for them.
+                    if (name.contains("<")) {
+                        name = name.substring(0, name.indexOf("<"));
+                    }
+                    try {
+                        classes.add(ClassUtils.getClass(name));
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -264,10 +271,10 @@ public class Autocompleter {
         int idx = 0;
         int depth = 0;
         for (char c : str.toCharArray()) {
+            if (idx >= index) {
+                break;
+            }
             if (Character.isSpaceChar(c) || c == '('||c ==')'||c==';') {
-                if (idx >= index) {
-                    break;
-                }
                 if (c == '(') {
                     lastMethods.put(depth,curWord.toString());
                     depth++;
@@ -369,7 +376,7 @@ public class Autocompleter {
     private static final List<AutoCompletion> primitives = Stream.of("byte","short","int","long","float","double","char","boolean")
             .map(primitive ->new AutoCompletion(primitive, primitive+" ", "primitive",primitive))
             .collect(Collectors.toList());
-    private static final List<AutoCompletion> printUtilMethods = new ArrayList<>();
+    private static final List<AutoCompletion> utilMethods = new ArrayList<>();
     private static Set<ClassPath.ClassInfo> classes;
     static {
         //Use Guava's ClassPath to scan rt.jar (java runtime) and collect all classes from java.util and java.lang
@@ -381,8 +388,11 @@ public class Autocompleter {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        for (Method method: InputUtils.class.getMethods()) {
+        List<Method> methods = new ArrayList<>();
+        methods.addAll(Arrays.asList(InputUtils.class.getMethods()));
+        methods.addAll(Arrays.asList(Utils.class.getMethods()));
+        methods.addAll(Arrays.asList(PrintUtils.class.getMethods()));
+        for (Method method: methods) {
             if (Modifier.isStatic(method.getModifiers())) {
                 StringBuilder params = new StringBuilder();
                 for (Parameter parameter : method.getParameters()) {
@@ -393,35 +403,7 @@ public class Autocompleter {
                     param = params.substring(0,param.length()-1);
                 }
                 String m = method.getName()+"("+param+")";
-                printUtilMethods.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",m));
-            }
-        }
-        for (Method method: PrintUtils.class.getMethods()) {
-            if (Modifier.isStatic(method.getModifiers())) {
-                StringBuilder params = new StringBuilder();
-                for (Parameter parameter : method.getParameters()) {
-                    params.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
-                }
-                String param = params.toString();
-                if (params.length() > 0) {
-                    param = params.substring(0,param.length()-1);
-                }
-                String m = method.getName()+"("+param+")";
-                printUtilMethods.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",m));
-            }
-        }
-        for (Method method: Utils.class.getMethods()) {
-            if (Modifier.isStatic(method.getModifiers())) {
-                StringBuilder params = new StringBuilder();
-                for (Parameter parameter : method.getParameters()) {
-                    params.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
-                }
-                String param = params.toString();
-                if (params.length() > 0) {
-                    param = params.substring(0,param.length()-1);
-                }
-                String m = method.getName()+"("+param+")";
-                printUtilMethods.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",m));
+                utilMethods.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",m));
             }
         }
     }
