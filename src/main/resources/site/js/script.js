@@ -451,13 +451,14 @@ function loadFile(name) {
             tabs.css("visibility","visible");
             tabs.css("height","");
             multi = results;
+            multiTabs = {};
             tabs.html("");
             let result;
             for (result in results) {
                 const code = results[result];
                 let fname = code.name +" ("+code.fileName.replace(name+".","")+")";
                 if (code.isMain) {
-                    fname = `<span class="glyphicon glyphicon-play" style="color:green"></span> `+fname;
+                    fname = `<span class="glyphicon glyphicon-play" st></span> `+fname;
                 }
                 multiTabs[code.fileName] = $(`<li><a onclick="loadIndex(${result})">${fname}</a></li>`).appendTo(tabs).children();
             }
