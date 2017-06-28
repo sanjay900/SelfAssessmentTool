@@ -295,7 +295,9 @@ socket.onmessage = function(data) {
         if (results.clear) {
             cbox.html("");
         }
-        $("#console-output-screen").append(newLineToBr(results.text));
+        const console = $("#console-output-screen");
+        console.append(newLineToBr(results.text));
+        console.scrollTop($(console)[0].scrollHeight);
     }
     if (results.id === "status") {
         if (results.running) {
@@ -455,7 +457,7 @@ function loadFile(name) {
                 const code = results[result];
                 let fname = code.name +" ("+code.fileName.replace(name+".","")+")";
                 if (code.isMain) {
-                    fname = `<span class="glyphicon glyphicon-play"></span> `+fname;
+                    fname = `<span class="glyphicon glyphicon-play" style="color:green"></span> `+fname;
                 }
                 multiTabs[code.fileName] = $(`<li><a onclick="loadIndex(${result})">${fname}</a></li>`).appendTo(tabs).children();
             }
