@@ -1,6 +1,5 @@
 package sat.compiler.java;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.eclipse.jetty.websocket.api.Session;
 import org.junit.runner.JUnitCore;
 import sat.compiler.LanguageCompiler;
@@ -23,8 +22,6 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -185,23 +182,26 @@ public class JavaCompiler extends LanguageCompiler{
     @Override
     public void execute(ProjectRequest request, Session webRequest) {
         int id = new Random().nextInt(50000);
-        rmi.getLocal().put(id,request);
+        rmi.getRequestToID().put(id,request);
         try {
             Thread t = new Thread(()->{
                while (!Thread.interrupted()) {
                    try {
-                       rmi.getRemote().putIfAbsent(id,new LinkedBlockingQueue<>());
-                       String message =  rmi.getRemote().get(id).take();
+                       rmi.getMessagesForServer().putIfAbsent(id,new LinkedBlockingQueue<>());
+                       String message =  rmi.getMessagesForServer().get(id).take();
                        webRequest.getRemote().sendString(message);
                    } catch (InterruptedException e) {
                        return;
                    } catch (IOException e) {
                        e.printStackTrace();
                    }
-               }
+            }
             });
             t.start();
             runProcess(webRequest, new JavaProcess(CompilerProcess.class, (str) -> {
+                rmi.getMessagesForClient().putIfAbsent(id,new LinkedBlockingQueue<>());
+                rmi.getMessagesForClient().get(id).add(str);
+            }, (str) -> {
                 try {
                     webRequest.getRemote().sendString(str);
                 } catch (IOException e) {
@@ -220,7 +220,7 @@ public class JavaCompiler extends LanguageCompiler{
     private RemoteTaskInfoImpl rmi;
 
     /**
-     * Create a remote registry for sending objects between the remote process and this process.
+     * Create a messagesForServer registry for sending objects between the messagesForServer process and this process.
      */
     public void createRMI() {
         try {

@@ -80,7 +80,41 @@ function send() {
     }
     socket.send(JSON.stringify({files:files,project:multi?orig:null,id:"project"}));
 }
+function sendChange(it) {
+    switch (it.tagName.toLowerCase()) {
+        case "button":
+            socket.send(JSON.stringify({id:"button_input",eid:it.id}));
+            break;
+        case "input":
+            const type = $(it).attr("type");
+            switch (type) {
+                case undefined:
+                    socket.send(JSON.stringify({id:"textfield_input",eid:it.id,text:it.value}));
+                    break;
+                case "color":
+                    socket.send(JSON.stringify({id:"color-picker_input",eid:it.id,color:it.value}));
+                    break;
+                case "date":
+                    socket.send(JSON.stringify({id:"date-picker_input",eid:it.id,date:it.value}));
+                    break;
+                case "time":
+                    socket.send(JSON.stringify({id:"time-picker_input",eid:it.id,date:it.value}));
+                    break;
+                case "datetime-local":
+                    socket.send(JSON.stringify({id:"datetime-picker_input",eid:it.id,date:it.value}));
+                    break;
+                case "range":
+                    socket.send(JSON.stringify({id:"slider_input",eid:it.id,value:it.value}));
+                    break;
+                case "number":
+                    socket.send(JSON.stringify({id:"integer-picker_input",eid:it.id,value:it.value}));
+            }
+
+            break;
+    }
+}
 const cbox = $("#console-output-screen");
+const gui = $("#gui-panel");
 socket.onmessage = function(data) {
     if (data === "cancel") return;
     let results = JSON.parse(data.data);
@@ -112,6 +146,92 @@ socket.onmessage = function(data) {
         }
         editor.setAnnotations(anno);
     }
+    if (results.id === "updateGUI") {
+        const element = results.element;
+        const id = element.id.replace(/\s+/g,"-");
+        const main = $("#"+id);
+        const lbl = $("#"+id+"-lbl");
+        if (element.toRemove) {
+            main.remove();
+            return;
+        }
+        console.log(element);
+        if (document.getElementById(id)) {
+            let hasMax = true;
+            main.css("background-color",element.color+"");
+            main.css("color",element.textColor+"");
+            switch (element.type) {
+                case "button":
+                    main.html(element.label);
+                    break;
+                case "label":
+                    main.html(element.label);
+                    break;
+                case "textfield":
+                    lbl.html(element.label);
+                    main.attr("readonly",!element.editable);
+                    if (element.lastValue)
+                        main.val(element.lastValue);
+                    break;
+                case "color-picker":
+                    lbl.html(element.label);
+                    main.val(element.color);
+                    break;
+                case "date-picker":
+                case "datetime-picker":
+                    lbl.html(element.label);
+                    if (element.date)
+                        main.val(element.date);
+                    break;
+                case "time-picker":
+                    lbl.html(element.label);
+                    if (element.time)
+                        main.val(element.time);
+                    break;
+                case "integer-picker":
+                    hasMax = element.hasMaxMin;
+                case "slider":
+                    lbl.html(element.label);
+                    main.val(element.lastValue);
+                        main.attr("max",hasMax?element.max:"");
+                        main.attr("min",hasMax?element.min:"");
+                    break;
+
+            }
+        } else {
+            switch(element.type) {
+                case "button":
+                    gui.append(`<button id="${id}" onclick="sendChange(this)">${element.label}</button>`);
+                    break;
+                case "label":
+                    gui.append(`<label id="${id}">${element.label}</label>`);
+                    break;
+                case "textfield":
+                    const readonly = !element.editable;
+                    gui.append(`<label for="${id}" id="${id}-lbl">${element.label}: </label><input id="${id}" onchange="sendChange(this)" readonly="${readonly}"/>`);
+                    break;
+                case "color-picker":
+                    gui.append(`<label for="${id}" id="${id}-lbl">${element.label}: </label><input type="color" id="${id}" value="${element.lastColor}" onchange="sendChange(this)"/>`);
+                    break;
+                case "date-picker":
+                    gui.append(`<label for="${id}" id="${id}-lbl">${element.label}: </label><input type="date" id="${id}" value="${element.date}" onchange="sendChange(this)"/>`);
+                    break;
+                case "datetime-picker":
+                    gui.append(`<label for="${id}" id="${id}-lbl">${element.label}: </label><input type="datetime-local" id="${id}" value="${element.date}" onchange="sendChange(this)"/>`);
+                    break;
+                case "time-picker":
+                    gui.append(`<label for="${id}" id="${id}-lbl">${element.label}: </label><input type="time" id="${id}" value="${element.date}" onchange="sendChange(this)"/>`);
+                    break;
+                case "slider":
+                    gui.append(`<label for="${id}" id="${id}-lbl">${element.label}: </label><input type="range" id="${id}" value="${element.lastValue}" onchange="sendChange(this)"/>`);
+                    break;
+                case "integer-picker":
+                    gui.append(`<label for="${id}" id="${id}-lbl">${element.label}: </label><input type="number" id="${id}" value="${element.lastValue}" onchange="sendChange(this)"/>`);
+                    break;
+
+            }
+        }
+    }
     if (results.id === "console") {
         if (results.clear) {
             cbox.html("");
@@ -120,6 +240,7 @@ socket.onmessage = function(data) {
     }
     if (results.id === "status") {
         if (results.running) {
+            gui.html("");
             editor.clearAnnotations();
             editorDisplay.clearAnnotations();
         }

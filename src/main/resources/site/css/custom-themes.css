@@ -142,14 +142,14 @@ html,body {
     display: block;
     border: 1px solid black;
     border-radius: 5px;
-    width: 100%;
+    width: 59%;
     height: 100%;
     float: left;
     margin-right: 1%;
     resize: none;
 }
 
-#task-instructions-display {
+#gui-panel {
      position: relative;
     border: 1px solid black;
     border-radius: 5px;
@@ -158,8 +158,17 @@ html,body {
     float: left;
     resize: none;
     display: block;
-    background: #fafafa;
     padding:10px;
+    overflow: scroll;
+}
+#gui-panel > * {
+    display: block;
+}
+#gui-panel > input {
+    margin-bottom: 10px;
+}
+#gui-panel > button {
+    margin-bottom: 10px;
 }
 .invert #task-instructions-display {
     background: #1D1F21 !important;

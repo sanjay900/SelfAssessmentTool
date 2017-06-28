@@ -12,16 +12,22 @@ import sat.compiler.java.JavaCompiler;
 import sat.compiler.java.annotations.ClassToComplete;
 import sat.compiler.java.annotations.Hidden;
 import sat.compiler.java.annotations.Task;
+import sat.compiler.java.gui.Button;
+import sat.compiler.java.gui.TextField;
+import sat.compiler.java.gui.UIElement;
 import sat.compiler.task.TaskInfo;
 import sat.compiler.task.TaskNameInfo;
 import sat.util.InputUtils;
 import sat.util.PrintUtils;
+import sat.util.Utils;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.lang.model.util.Elements;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -204,6 +210,10 @@ public class AnnotationProcessor extends AbstractProcessor {
         String endClass = packageStmt+flatten(path.getCompilationUnit().getImports()) +
                 "import static "+PrintUtils.class.getName()+".*;" +
                 "import static "+InputUtils.class.getName()+".*;" +
+                "import static "+Utils.class.getName()+".*;" +
+                "import "+UIElement.class.getPackage().getName()+".*;" +
+                "import "+ Color.class.getName()+";" +
+                "import java.time.*;" +
                 "import java.util.*;" +
                 "import java.util.stream.*;" +
                 "import java.util.function.*;" +

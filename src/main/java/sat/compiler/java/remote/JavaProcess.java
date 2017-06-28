@@ -13,9 +13,11 @@ public class JavaProcess extends RemoteProcess {
     private Class<?> classToRun;
     private String[] args;
     private Consumer<String> printStream;
-    public JavaProcess(Class<?> classToRun, Consumer<String> printStream, String... args) {
+    private Consumer<String> clientCommunicator;
+    public JavaProcess(Class<?> classToRun, Consumer<String> clientCommunicator, Consumer<String> printStream, String... args) {
         this.classToRun = classToRun;
         this.args = args;
+        this.clientCommunicator = clientCommunicator;
         this.printStream = printStream;
     }
     @Override
@@ -29,6 +31,6 @@ public class JavaProcess extends RemoteProcess {
         String[] run = {javaBin, "-cp", classpath, className};
         String[] newArgs = Arrays.copyOf(run,run.length+args.length);
         System.arraycopy(args,0,newArgs,run.length,args.length);
-        startProcess(printStream,newArgs);
+        startProcess(printStream,clientCommunicator,newArgs);
     }
 }

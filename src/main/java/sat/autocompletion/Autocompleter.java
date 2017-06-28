@@ -5,12 +5,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.ClassUtils;
 import sat.compiler.java.JavaCompiler;
+import sat.compiler.java.gui.UIElement;
 import sat.compiler.task.TaskInfo;
 import sat.util.InputUtils;
 import sat.util.PrintUtils;
+import sat.util.Utils;
 import sat.webserver.AutocompleteRequest;
 import sat.webserver.CompileRequest;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -20,6 +23,7 @@ import java.lang.reflect.Parameter;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -349,7 +353,7 @@ public class Autocompleter {
      */
     private static boolean shouldComplete(String name) {
         //Note that we exclude inner classes as they are not useful to autocomplete.
-        return !name.contains("$") && (name.startsWith("java.util") || name.startsWith("java.lang"));
+        return !name.contains("$") && (name.startsWith("java.util") || name.startsWith("java.time")  ||name.startsWith("java.lang")  || name.startsWith(UIElement.class.getPackage().getName()) || name.equals(Color.class.getName()));
     }
     private static final Pattern SINGLE_STREAM_PARAM = Pattern.compile("(\\w+)\\s*->");
     private static final Pattern MULTI_STREAM_PARAM = Pattern.compile("((?:\\w+\\s*,\\s*)+\\s*\\w+)\\s*->");
@@ -393,6 +397,20 @@ public class Autocompleter {
             }
         }
         for (Method method: PrintUtils.class.getMethods()) {
+            if (Modifier.isStatic(method.getModifiers())) {
+                StringBuilder params = new StringBuilder();
+                for (Parameter parameter : method.getParameters()) {
+                    params.append(parameter.getType().getSimpleName()).append(" ").append(parameter.getName()).append(",");
+                }
+                String param = params.toString();
+                if (params.length() > 0) {
+                    param = params.substring(0,param.length()-1);
+                }
+                String m = method.getName()+"("+param+")";
+                printUtilMethods.add(new AutoCompletion(method.getName(), method.getName()+"(", "method",m));
+            }
+        }
+        for (Method method: Utils.class.getMethods()) {
             if (Modifier.isStatic(method.getModifiers())) {
                 StringBuilder params = new StringBuilder();
                 for (Parameter parameter : method.getParameters()) {

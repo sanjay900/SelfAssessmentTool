@@ -57,6 +57,17 @@ public class WebsocketServer {
                     String msg = (String) map.get("message");
                     processMap.get(user).inputString(msg);
                     break;
+                case "button_input":
+                case "textfield_input":
+                case "color-picker_input":
+                case "date-picker_input":
+                case "time-picker_input":
+                case "datetime-picker_input":
+                case "integer-picker_input":
+                case "slider_input":
+                    if (!processMap.containsKey(user)) return;
+                    processMap.get(user).sendMessage(message);
+                    break;
             }}).start();
     }
 }

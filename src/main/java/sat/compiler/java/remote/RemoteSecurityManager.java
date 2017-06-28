@@ -2,6 +2,7 @@ package sat.compiler.java.remote;
 
 import java.net.InetAddress;
 import java.security.Permission;
+import java.util.Arrays;
 
 /**
  * Created by sanjay on 1/06/17.
@@ -67,13 +68,9 @@ public class RemoteSecurityManager extends SecurityManager {
         error("You may not print!");
     }
     private void error(String msg) {
-        if (allowAll) return;
+        Class[] ctx = getClassContext();
+        if (ctx[1] == CompilerProcess.class || ctx[ctx.length-1] == CompilerProcess.class || ctx[ctx.length-3] == CompilerProcess.class) return;
         System.out.println(msg);
         throw new SecurityException(msg);
-    }
-    public void setAllowAll(boolean allowAll) {
-        //Only allow access to setAllowAll from CompilerProcess.
-        if (getClassContext()[1] != CompilerProcess.class) error("You do not have permission to modify the security manager");
-        this.allowAll = allowAll;
     }
 }

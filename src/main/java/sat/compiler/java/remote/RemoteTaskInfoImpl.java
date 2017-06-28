@@ -9,7 +9,6 @@ import sat.webserver.ProjectRequest;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -22,22 +21,23 @@ public class RemoteTaskInfoImpl extends UnicastRemoteObject implements RemoteTas
 
     private String messageSent;
     private String messageReceived;
-    private HashMap<Integer,BlockingQueue<String>> remote = new HashMap<>();
-    private HashMap<Integer,ProjectRequest> local = new HashMap<>();
+    private HashMap<Integer,BlockingQueue<String>> messagesForServer = new HashMap<>();
+    private HashMap<Integer,BlockingQueue<String>> messagesForClient = new HashMap<>();
+    private HashMap<Integer,ProjectRequest> requestToID = new HashMap<>();
     private String compiled;
     public RemoteTaskInfoImpl() throws RemoteException {
         super(0);
         compiled = JSONUtils.toJSON(JavaCompiler.tasks);
     }
     @Override
-    public ProjectRequest getMessageFrom(int id) throws RemoteException {
-        return local.get(id);
+    public ProjectRequest getProjectFor(int id) throws RemoteException {
+        return requestToID.get(id);
     }
 
     @Override
-    public void addMessage(String message, int id) throws RemoteException {
-        remote.putIfAbsent(id,new LinkedBlockingQueue<>());
-        remote.get(id).add(message);
+    public void sendMessageToServer(String message, int id) throws RemoteException {
+        messagesForServer.putIfAbsent(id,new LinkedBlockingQueue<>());
+        messagesForServer.get(id).add(message);
     }
 
     @Override
@@ -45,5 +45,10 @@ public class RemoteTaskInfoImpl extends UnicastRemoteObject implements RemoteTas
         return compiled;
     }
 
+    @Override
+    public String getMessagesForClient(int id) throws InterruptedException {
+        messagesForClient.putIfAbsent(id,new LinkedBlockingQueue<>());
+        return messagesForClient.get(id).take();
+    }
 
 }
