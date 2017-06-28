@@ -51,10 +51,9 @@ function addClass() {
         let fname = name.val() +" ("+fileName.replace(name+".","")+")";
         fileName = orig+"."+className.val();
         if (!fileName.endsWith(".java")) fileName+=".java";
-        tabs.append(`<li><a onclick="loadIndex(${result})">${fname}<button type="button" onclick="removeIndex(${result}); return false" style="color:red" class="close" aria-label="Close">
+        multiTabs[fileName] = $(`<li><a onclick="loadIndex(${result})">${fname}<button type="button" onclick="removeIndex(${result}); return false" style="color:red" class="close" aria-label="Close">
   <span aria-hidden="true">&nbsp;&times;</span>
-</button></a></li>`);
-        multiTabs[fileName] = $($(tabs.children()[result]).children()[0]);
+</button></a></li>`).appendTo(tabs).children();
         const addClass = $('#add-class');
         addClass.parent().append(addClass);
         if (!customFiles[orig]) {
@@ -304,6 +303,10 @@ socket.onmessage = function(data) {
             editor.clearAnnotations();
             editorDisplay.clearAnnotations();
             _.each(editor.$backMarkers,(val,key)=>editor.removeMarker(key));
+
+            for (const tab in multiTabs) {
+                multiTabs[tab].html(multiTabs[tab].html().replace(` (Compilation Error)`,""))
+            }
         }
         $("#status").html(results.running?"Running":"Stopped");
     }
@@ -423,9 +426,6 @@ function loadContent(results,i) {
             }
         }
         editorDisplay.setAnnotations(anno);
-        for (const tab in multiTabs) {
-            multiTabs[tab].html(multiTabs[tab].html().replace(` (Compilation Error)`,""))
-        }
     };
     showCompilationErrors();
     setTimeout(function() {
@@ -457,8 +457,7 @@ function loadFile(name) {
                 if (code.isMain) {
                     fname = `<span class="glyphicon glyphicon-play"></span> `+fname;
                 }
-                tabs.append(`<li><a onclick="loadIndex(${result})">${fname}</a></li>`);
-                multiTabs[code.fileName] = $($(tabs.children()[result]).children()[0]);
+                multiTabs[code.fileName] = $(`<li><a onclick="loadIndex(${result})">${fname}</a></li>`).appendTo(tabs).children();
             }
             if (customFiles[rname]) {
                 result++;
@@ -466,10 +465,9 @@ function loadFile(name) {
                 for (const res2 in results2) {
                     const code = results2[res2];
                     let fname = code.name +" ("+code.fileName.replace(name+".","")+")";
-                    tabs.append(`<li><a onclick="loadIndex(${result})">${fname}<button type="button" onclick="removeIndex(${result}); return false" style="color:red" class="close" aria-label="Close">
+                    multiTabs[code.fileName] = $(`<li><a onclick="loadIndex(${result})">${fname}<button type="button" onclick="removeIndex(${result}); return false" style="color:red" class="close" aria-label="Close">
   <span aria-hidden="true">&nbsp;&times;</span>
-</button></a></li>`);
-                    multiTabs[code.fileName] = $($(tabs.children()[result++]).children()[0]);
+</button></a></li>`).appendTo(tabs).children();
                     multi.push(code);
                 }
             }
