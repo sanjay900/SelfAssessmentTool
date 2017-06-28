@@ -12,7 +12,9 @@ import java.util.function.Consumer;
 public class Slider extends UIElement {
     private int lastValue;
     private int max=100,min=0;
+    private boolean immediateUpdate = false;
     transient Consumer<Integer> changeListener;
+    private boolean valueChanged = false;
     public Slider(String label, int defaultValue, Consumer<Integer> changeListener) {
         super("slider",label);
         this.lastValue = defaultValue;
@@ -27,8 +29,10 @@ public class Slider extends UIElement {
 
     public void setValue(Integer value) {
         this.lastValue = value;
+        this.valueChanged = true;
         changeListener.accept(value);
         update();
+        this.valueChanged = false;
     }
     public void setMax(int max) {
         this.max = max;
@@ -36,6 +40,10 @@ public class Slider extends UIElement {
     }
     public void setMin(int min) {
         this.min = min;
+        update();
+    }
+    public void setImmediateUpdate(boolean immediateUpdate) {
+        this.immediateUpdate = immediateUpdate;
         update();
     }
 }

@@ -57,7 +57,6 @@ public class CompilerProcess {
                             InputUtils.updateIntegerPicker(eid,(String)map.get("value"));
                             break;
                     }
-                    Thread.sleep(100);
                 } catch (InterruptedException | RemoteException e) {
                     e.printStackTrace();
                 }

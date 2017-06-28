@@ -192,9 +192,11 @@ socket.onmessage = function(data) {
                     hasMax = element.hasMaxMin;
                 case "slider":
                     lbl.html(element.label);
-                    main.val(element.lastValue);
-                        main.attr("max",hasMax?element.max:"");
-                        main.attr("min",hasMax?element.min:"");
+                    if (element.valueChanged)
+                        main.val(element.lastValue);
+                    main.attr("oninput",element.immediateUpdate?"sendChange(this)":"");
+                    main.attr("max",hasMax?element.max:"");
+                    main.attr("min",hasMax?element.min:"");
                     break;
 
             }
