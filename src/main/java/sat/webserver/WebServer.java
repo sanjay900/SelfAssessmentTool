@@ -45,7 +45,7 @@ public class WebServer {
                     }
                     responseList.add(info);
                 }
-                responseList.sort((s1,s2)->s1.isMain()?-1:s1.getName().compareTo(s2.getName()));
+                responseList.sort((s1,s2)->s1.isMain()?-1:s2.isMain()?1:s1.getName().compareTo(s2.getName()));
                 return JSONUtils.toJSON(responseList);
             }
             if (!SelfAssessmentTool.getCompilerMap().containsKey(ext)) {
