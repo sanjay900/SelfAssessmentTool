@@ -188,8 +188,6 @@ socket.onmessage = function(data) {
         const lines = {};
         for (const i in results.errors) {
             const error = results.errors[i];
-            console.log(error);
-            console.log(multiTabs);
             if (multiTabs && multiTabs[error.file].html().indexOf(" (Compilation Error)") === -1) {
                 multiTabs[error.file].html(multiTabs[error.file].html()+" (Compilation Error)");
             }
@@ -373,6 +371,7 @@ let multi = null;
 let multiTabs = {};
 function removeIndex(idx) {
    multiTabs[multi[idx].fileName].remove();
+   delete multiTabs[multi[idx].fileName];
     customFiles[orig].splice(customFiles[orig].indexOf(multi[idx]));
     multi.splice(idx,1);
     localStorage.customFiles = JSON.stringify(customFiles);
@@ -383,6 +382,8 @@ function loadIndex(idx) {
 }
 let showCompilationErrors = function() {};
 function loadContent(results,i) {
+    //If results is null / undefined, then the tab it was referred to was just deleted, so ignore.
+    if (!results) return;
     const tabs = $("#tabs");
     file = results.fileName;
     if (multi.length > 1) {
@@ -470,7 +471,6 @@ function loadFile(name) {
 </button></a></li>`);
                     multiTabs[code.fileName] = $($(tabs.children()[result++]).children()[0]);
                     multi.push(code);
-                    console.log(multi);
                 }
             }
             tabs.append(`<li id="add-class"><a onclick="dialog.dialog('open');"><span class="glyphicon glyphicon-plus"></span></a></li>`);
