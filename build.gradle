@@ -12,6 +12,9 @@ sourceCompatibility = 1.8
 repositories {
     mavenCentral()
 }
+dart {
+    pubspecDirectory "app"
+}
 shadowJar {
     baseName = 'SelfAssessmentTool'
     classifier = null
@@ -53,6 +56,9 @@ sourceSets {
     main {
         java {
             srcDir 'src/main/java'
+        }
+        resources {
+            srcDirs "src/main/resources", "site/build"
         }
     }
 }

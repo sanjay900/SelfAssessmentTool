@@ -57,6 +57,7 @@ public class SelfAssessmentTool {
                     return FileVisitResult.CONTINUE;
                 }
                 @Override
+                @SuppressWarnings("unchecked")
                 public FileVisitResult postVisitDirectory(Path dir, IOException exc)
                         throws IOException
                 {

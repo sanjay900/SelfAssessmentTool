@@ -11,6 +11,6 @@ public class ConsoleUpdateResponse {
     @NonNull
     String text;
     @NonNull
-    boolean clear;
+    boolean shouldClear;
     String id = "console";
 }

@@ -5,7 +5,7 @@ import sat.compiler.task.TaskList;
 import sat.util.InputUtils;
 import sat.util.JSONUtils;
 import sat.webserver.ProjectRequest;
-import sat.webserver.UIUpdateRequest;
+import sat.webserver.UIUpdateResponse;
 
 import java.io.IOException;
 import java.rmi.Naming;
@@ -74,7 +74,7 @@ public class CompilerProcess {
                 e.printStackTrace();
             }
         };
-        InputUtils.setUIElementConsumer(element -> processCommunicator.accept(new UIUpdateRequest(element)));
+        InputUtils.setUIElementConsumer(element -> processCommunicator.accept(new UIUpdateResponse(element)));
         JavaCompiler.compile(request,processCommunicator);
         if (InputUtils.usesGUI()) return;
         thread.interrupt();
