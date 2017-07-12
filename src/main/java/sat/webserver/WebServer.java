@@ -26,9 +26,13 @@ public class WebServer {
     public void startServer() {
         logger.info(""+ansi().render("@|green Starting Web Server|@"));
         if (checkPortInUse()) return;
-        Spark.staticFileLocation("web");
+        Spark.staticFileLocation("static");
         Spark.port(port);
         webSocket("/socket", WebsocketServer.class);
+        get("/node_modules",(req,res) -> {
+            System.out.println(req);
+            return "t";
+        });
         get("/listTasks", (req, res) -> JSONUtils.toJSON(SelfAssessmentTool.taskDirs));
         post("/getTask", (Request req, Response res) -> {
             String name = FilenameUtils.getBaseName(req.body());

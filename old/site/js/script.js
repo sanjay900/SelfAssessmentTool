@@ -488,6 +488,8 @@ function invert() {
     body.toggleClass("invert");
     const inverted = body.hasClass("invert");
     const theme = "ace/theme/"+(inverted?"vibrant_ink":"crimson_editor");
+    const nav = $(".navbar");
+    inverted?nav.addClass("navbar-inverse"):nav.removeClass("navbar-inverse");
     userInput.setTheme(theme);
     codeDisplay.setTheme(theme);
     localStorage.setItem("config_invert",inverted);

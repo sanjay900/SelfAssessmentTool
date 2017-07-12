@@ -3,6 +3,9 @@
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
     <output url="file://$MODULE_DIR$/../../build/classes/main" />
     <exclude-output />
+    <content url="file://$MODULE_DIR$/../../node.js">
+      <sourceFolder url="file://$MODULE_DIR$/../../node.js" type="java-resource" />
+    </content>
     <content url="file://$MODULE_DIR$/../../site">
       <sourceFolder url="file://$MODULE_DIR$/../../site/build" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/../../site/.pub" />
@@ -58,15 +61,5 @@
     <orderEntry type="library" scope="PROVIDED" name="Gradle: org.projectlombok:lombok:1.16.16" level="project" />
     <orderEntry type="library" name="Gradle: org.eclipse.jetty:jetty-util:9.3.2.v20150730" level="project" />
     <orderEntry type="library" name="Gradle: org.eclipse.jetty:jetty-security:9.3.2.v20150730" level="project" />
-    <orderEntry type="library" name="Dart SDK" level="project" />
-    <orderEntry type="library" name="Dart Packages" level="project" />
-    <orderEntry type="library" name="jquery-ui" level="application" />
-    <orderEntry type="library" name="reconnecting-websocket" level="application" />
-    <orderEntry type="library" name="bootstrap" level="application" />
-    <orderEntry type="library" name="html5shiv" level="application" />
-    <orderEntry type="library" name="respond" level="application" />
-    <orderEntry type="library" name="jquery-3.2.1" level="application" />
-    <orderEntry type="library" name="ace" level="application" />
-    <orderEntry type="library" name="ext-language_tools" level="application" />
   </component>
 </module>

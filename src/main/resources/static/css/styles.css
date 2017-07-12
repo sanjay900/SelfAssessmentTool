@@ -16,7 +16,22 @@ html,body {
   background-color: #1f1e1e !important;
   color: #dcdcdc;
 }
+.invert .nav {
+  background-color: #222222 !important;
+}
 
+.invert .nav-tabs>li.active>a, .invert .nav-tabs>li.active>a:focus, .invert .nav-tabs>li.active>a:hover {
+  background-color: #1f1e1e !important;
+  color: #9d9d9d;
+  border: 1px solid #0F0F0F;
+  border-bottom-color: transparent;
+}
+.invert .nav-tabs>li>a, .invert .nav-tabs>li>a:focus {
+  background-color: #222222 !important;
+  color: #9d9d9d;
+  border-bottom-color: black;
+
+}
 .invert .ui-widget-header {
   background-color: #4d4c4c !important;
   color: #9d9d9d;
@@ -25,7 +40,11 @@ html,body {
   background-color: #313030 !important;
   color: #9d9d9d;
 }
-
+.invert .nav-tabs>li>a:hover {
+  background-color: #3f3e3e !important;
+  border: 1px solid #0F0F0F;
+  border-bottom-color: transparent;
+}
 .invert button {
   background-color: #0F0F0F;
   border: 1px solid black;
@@ -35,6 +54,12 @@ html,body {
   background-color: #0F0F0F;
   border: 1px solid black;
   border-top: transparent
+}
+.invert .nav>li>a {
+  color: #9d9d9d;
+}
+.invert .nav-tabs {
+  border-bottom: 1px solid #0F0F0F;
 }
 /*
  * Global add-ons
@@ -319,11 +344,11 @@ th {
 }
 /*Show icons for tests (pass)*/
 #code-output-display .ace_gutter-cell.ace_info {
-  background-image: url("images/testPassed.png") !important
+  background-image: url("../images/testPassed.png") !important
 }
 /*Show icons for tests (fail)*/
 #code-output-display .ace_gutter-cell.ace_error {
-  background-image: url("images/testError.png") !important
+  background-image: url("../images/testError.png") !important
 }
 /**/
 .ace_marker-layer .ace_underline {

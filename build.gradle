@@ -1,7 +1,11 @@
+import com.moowork.gradle.node.NodeExtension
+import com.moowork.gradle.node.variant.VariantBuilder
 plugins {
     id 'com.github.johnrengelman.shadow' version '2.0.0'
     id 'java'
     id 'application'
+    id "com.moowork.node" version "1.2.0"
+    id "de.richsource.gradle.plugins.typescript" version "1.8.0"
 }
 mainClassName = "sat.SelfAssessmentTool"
 group 'nz.ac.vuw'
@@ -11,9 +15,6 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
-}
-dart {
-    pubspecDirectory "app"
 }
 shadowJar {
     baseName = 'SelfAssessmentTool'
@@ -58,7 +59,24 @@ sourceSets {
             srcDir 'src/main/java'
         }
         resources {
-            srcDirs "src/main/resources", "site/build"
+            srcDirs "src/main/resources", "site/build", "node.js"
         }
     }
+}
+
+String nodeExecutable() {
+    NodeExtension nodeExt = NodeExtension.get(project)
+    return new VariantBuilder(nodeExt).build().nodeExec
+}
+node {
+    download = true
+    // Version of npm to use.
+    npmVersion = '3.10.10'
+    nodeModulesDir = file("${project.projectDir}/node.js/node_modules")
+}
+compileTypeScript {
+    declaration = true
+    target = "ES6"
+    compilerExecutable "${nodeExecutable()} node.js/node_modules/typescript/lib/tsc.js"
+    dependsOn "npmInstall"
 }
