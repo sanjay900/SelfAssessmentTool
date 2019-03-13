@@ -3,6 +3,7 @@ package Scratchpad_project;
 import org.junit.Test;
 import sat.compiler.java.annotations.Hidden;
 import sat.compiler.java.annotations.Task;
+import sat.util.InputUtils;
 
 
 /**

@@ -267,7 +267,7 @@ socket.onmessage = function(data) {
                     break;
                 case "textfield":
                     const readonly = !element.editable;
-                    gui.append(`<label for="${id}" id="${id}-lbl">${element.label}: </label><input id="${id}" onchange="sendChange(this)" readonly="${readonly}"/>`);
+                    gui.append(`<label for="${id}" id="${id}-lbl">${element.label}: </label><input id="${id}" onchange="sendChange(this)" "${readonly?"readonly":""}"/>`);
                     break;
                 case "color-picker":
                     gui.append(`<label for="${id}" id="${id}-lbl">${element.label}: </label><input type="color" id="${id}" value="${element.lastColor}" onchange="sendChange(this)"/>`);
